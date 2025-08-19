@@ -30,6 +30,8 @@
     "lint": "eslint . && ruff .",
     "lint:server": "cd server && npm run lint",
     "lint:client": "cd client && npm run lint",
+    "lint:security": "eslint -c eslint.security.ci.json \"apps/**/src/**/*.{ts,tsx,js}\" \"api/src/**/*.{ts,js,tsx}\" \"notify-api/src/**/*.{ts,js}\" \"audit-janitor/src/**/*.{ts,js}\" \"server/src/**/*.{ts,js}\"",
+    "lint:baseline": "eslint -f json . > reports/eslint-full.json",
     "typecheck": "tsc -b --pretty false",
     "typecheck:server": "cd server && tsc --noEmit",
     "typecheck:client": "cd client && tsc --noEmit",

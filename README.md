@@ -289,6 +289,8 @@ npm run test:unit    # Unit tests only
 npm run test:e2e     # End-to-end tests
 npm run test:smoke   # Smoke tests for deployment validation
 npm run lint         # ESLint code quality checks
+npm run lint:security # Security-focused lint gate
+npm run lint:baseline # Generate full ESLint report
 npm run typecheck    # TypeScript type checking
 npm run format       # Prettier code formatting
 

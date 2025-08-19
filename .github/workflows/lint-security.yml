@@ -1,0 +1,26 @@
+name: lint-security
+
+on:
+  pull_request:
+
+jobs:
+  lint-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run lint:security
+      - name: Lint baseline
+        if: always()
+        run: |
+          mkdir -p reports
+          npm run lint:baseline
+      - name: Upload ESLint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eslint-full
+          path: reports/eslint-full.json
