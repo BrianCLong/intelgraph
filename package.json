@@ -52,7 +52,9 @@
     "db:neo4j:migrate": "node scripts/neo4j-migrate.js",
     "changeset": "changeset",
     "release": "changeset version && changeset publish",
-    "precommit": "lint-staged"
+    "precommit": "lint-staged",
+    "codemod:console": "npx jscodeshift -t scripts/codemods/console-to-logger.js \"apps/**/src/**/*.{ts,tsx,js}\" \"api/src/**/*.{ts,js,tsx}\" \"notify-api/src/**/*.{ts,js}\" \"server/src/**/*.{ts,js}\" \"audit-janitor/src/**/*.{ts,js}\"",
+    "codemod:cjs": "npx jscodeshift -t scripts/codemods/cjs-to-esm.js \"api/src/**/*.{ts,js}\" \"notify-api/src/**/*.{ts,js}\" \"server/src/**/*.{ts,js}\""
   },
   "keywords": [
     "intelligence-analysis",

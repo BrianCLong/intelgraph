@@ -887,6 +887,17 @@ Use the [Feature Request template](https://github.com/BrianCLong/intelgraph/issu
 
 ---
 
+## Rapid Lint Burn-Down
+
+To clean up logs and migrate modules quickly:
+
+```bash
+npm run codemod:console
+npm run codemod:cjs
+npm run lint
+npm run format
+```
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
