@@ -25,6 +25,7 @@ reset-db: ; docker compose down; \
   if [ -n "$$V" ]; then docker volume rm $$V; fi; \
   echo "🗑️  Neo4j volume removed"
 
+<<<<<<< HEAD
 
 
 sprint23:
@@ -37,3 +38,16 @@ ingest-assets:
 	@if [ -z "$(path)" ]; then echo "path=<csv> required"; exit 1; fi; \
 	if [ -z "$(org)" ]; then echo "org=<ORG> required"; exit 1; fi; \
 	$(PY) data-pipelines/universal-ingest/assets_csv.py $(path) --org $(org)
+=======
+preflight:
+	@ts-node scripts/migrate/preflight_cli.ts
+
+migrate-1_0_0:
+	@ts-node server/src/migrations/1.0.0_migration.ts
+
+cost-report:
+	@bash scripts/ops/cost_report.sh
+
+ga:
+	make preflight && npm test && npx @cyclonedx/cyclonedx-npm --output-file sbom.json && ./scripts/release/verify_install.sh
+>>>>>>> origin/codex/prepare-intelgraph-1.0.0-ga-release

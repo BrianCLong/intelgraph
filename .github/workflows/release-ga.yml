@@ -1,0 +1,29 @@
+name: release-ga
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+jobs:
+  build_sign_provenance:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm ci && npm run build && npm test
+      - name: Generate SBOM (CycloneDX)
+        run: npx @cyclonedx/cyclonedx-npm --output-file sbom.json
+      - name: Build container
+        run: docker build -t ghcr.io/intelgraph/platform:${GITHUB_REF_NAME} .
+      - name: Cosign sign & attest
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          cosign sign ghcr.io/intelgraph/platform:${GITHUB_REF_NAME}
+          cosign attest --predicate sbom.json --type cyclonedx ghcr.io/intelgraph/platform:${GITHUB_REF_NAME}
+      - name: SLSA provenance
+        uses: slsa-framework/slsa-github-generator/actions/generator@v2
+        with:
+          artifact_path: "dist/**"

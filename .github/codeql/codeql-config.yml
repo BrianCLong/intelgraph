@@ -1,0 +1,7 @@
+name: 'CodeQL config'
+paths-ignore:
+  - '**/node_modules'
+  - '**/build'
+  - '**/dist'
+  - '**/coverage'
+  - 'packages/graphql/__generated__'
