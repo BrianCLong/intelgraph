@@ -1,6 +1,9 @@
 import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../logging';
 import { CacheService } from './CacheService';
+import { getNeo4jDriver } from '../db/neo4j.js';
+import { explanationRequestDuration } from '../monitoring/metrics.js';
 
 /**
  * Advanced ML Service Integration
@@ -450,6 +453,78 @@ export class AdvancedMLService {
     } catch (error) {
       logger.error('Quantum graph optimization failed', { error: error.message });
       throw new Error(`Quantum graph optimization failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Request explanation or counterfactuals from Graph-XAI service
+   */
+  async getExplanations(
+    params: {
+      sourceId?: string;
+      targetId?: string;
+      edgeId?: string;
+      target?: number;
+      mode: 'why' | 'counterfactual';
+    }
+  ): Promise<any> {
+    const traceId = uuidv4();
+    const cacheKey = `explain:${params.mode}:${params.sourceId || ''}:${params.targetId || ''}:${params.edgeId || ''}:${params.target ?? ''}`;
+    const cached = await this.cacheService.get(cacheKey);
+    if (cached) {
+      return { ...JSON.parse(cached), traceId };
+    }
+
+    const start = Date.now();
+    try {
+      const response = await axios.post(
+        `${this.mlServiceUrl}/explain`,
+        params,
+        {
+          timeout: this.defaultTimeout,
+          headers: { 'x-trace-id': traceId }
+        }
+      );
+      const data = response.data;
+      await this.cacheService.set(cacheKey, data, 900000);
+      const duration = (Date.now() - start) / 1000;
+      explanationRequestDuration.observe(duration);
+      return { ...data, traceId };
+    } catch (error) {
+      const duration = (Date.now() - start) / 1000;
+      explanationRequestDuration.observe(duration);
+      logger.error('Graph-XAI explanation failed, falling back', { error: error.message, traceId });
+      if (params.sourceId && params.targetId) {
+        const fallback = await this.shortestPath(params.sourceId, params.targetId);
+        return {
+          paths: fallback ? [fallback] : [],
+          featureAttributions: [],
+          fairnessFlags: [],
+          limitations: ['Graph-XAI unavailable; using shortest-path'],
+          traceId
+        };
+      }
+      throw new Error('Explanation service unavailable');
+    }
+  }
+
+  private async shortestPath(source: string, target: string): Promise<any | null> {
+    const driver = getNeo4jDriver();
+    const session = driver.session();
+    try {
+      const res = await session.run(
+        `MATCH p=shortestPath((a:Entity {id:$src})-[*..5]-(b:Entity {id:$dst})) RETURN p`,
+        { src: source, dst: target }
+      );
+      const record = res.records[0];
+      if (!record) return null;
+      const path = record.get('p');
+      return {
+        nodes: path.nodes().map((n: any) => n.properties.id),
+        edges: path.relationships().map((r: any) => r.properties.id)
+      };
+    } finally {
+      await session.close();
     }
   }
 }
