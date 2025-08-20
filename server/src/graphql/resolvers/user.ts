@@ -1,6 +1,6 @@
-import pino from 'pino';
+import logger from '../../config/logger';
 
-const logger = pino();
+const logger = logger.child({ name: 'userResolvers' });
 
 const userResolvers = {
   Query: {

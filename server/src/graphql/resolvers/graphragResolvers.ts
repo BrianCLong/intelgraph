@@ -15,10 +15,10 @@ import {
   SimilarEntity,
 } from "../../services/SimilarityService.js";
 import { getNeo4jDriver, getRedisClient } from "../../config/database.js";
-import pino from "pino";
+import logger from '../../config/logger';
 import { GraphQLError } from "graphql";
 
-const logger = pino({ name: "graphragResolvers" });
+const logger = logger.child({ name: "graphragResolvers" });
 
 // Service initialization
 let graphRAGService: GraphRAGService | null = null;

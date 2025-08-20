@@ -13,9 +13,9 @@ import cors from 'cors';
 import compression from 'compression';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import pino from 'pino';
+import logger from './config/logger';
 
-const logger = pino({ name: 'intelgraph-live' });
+const logger = logger.child({ name: 'intelgraph-live' });
 
 // Simplified GraphQL Schema for live demonstration
 const typeDefs = `

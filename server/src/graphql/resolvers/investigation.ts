@@ -1,7 +1,7 @@
-import pino from 'pino';
+import logger from '../../config/logger';
 import { getPostgresPool } from '../../config/database.js';
 
-const logger = pino();
+const logger = logger.child({ name: 'investigationResolvers' });
 
 const investigationResolvers = {
   Query: {

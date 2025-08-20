@@ -1,6 +1,6 @@
 import * as neo4j from "neo4j-driver";
 import dotenv from "dotenv";
-import pino from "pino";
+import logger from '../config/logger';
 import {
   neo4jConnectivityUp,
   neo4jQueryErrorsTotal,
@@ -10,7 +10,7 @@ import {
 
 dotenv.config();
 
-const logger: pino.Logger = pino();
+const logger = logger.child({ name: 'neo4j' });
 
 const NEO4J_URI = process.env.NEO4J_URI || "bolt://neo4j:7687";
 const NEO4J_USER = process.env.NEO4J_USER || "neo4j";

@@ -1,5 +1,4 @@
 import { Pool } from 'pg';
-import pino from 'pino';
 import path from 'path';
 import { createReadStream } from 'fs';
 import { spawn } from 'child_process';
@@ -9,13 +8,15 @@ import { SpeechToTextEngine } from './engines/SpeechToTextEngine.js';
 import { FaceDetectionEngine } from './engines/FaceDetectionEngine.js';
 import { TextAnalysisEngine } from './engines/TextAnalysisEngine.js';
 import { EmbeddingService } from './services/EmbeddingService.js';
-import { MediaType } from '../services/MultimodalDataService.js';
+// TODO: Fix MediaType import when MultimodalDataService is converted to ESM
+type MediaType = 'text' | 'image' | 'audio' | 'video';
 import { VideoFrameExtractor, ExtractedFrame, ExtractedAudio } from './engines/VideoFrameExtractor.js'; // WAR-GAMED SIMULATION - Import VideoFrameExtractor
 import ffmpegStatic from 'ffmpeg-static'; // WAR-GAMED SIMULATION - Import ffmpeg-static
 import ffprobeStatic from 'ffprobe-static'; // WAR-GAMED SIMULATION - Import ffprobe-static
 import fs from 'fs/promises'; // WAR-GAMED SIMULATION - For file system operations
+import logger from '../config/logger';
 
-const logger = pino({ name: 'ExtractionEngine' });
+const logger = logger.child({ name: 'ExtractionEngine' });
 
 export interface ExtractionEngineConfig {
   pythonPath: string;

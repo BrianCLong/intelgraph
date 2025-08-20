@@ -1,6 +1,6 @@
-import pino from 'pino';
+import logger from '../config/logger';
 
-const logger: pino.Logger = pino();
+const logger = logger.child({ name: 'aiAnalysisService' });
 
 interface EntityExtractionResult {
   entities: Array<{

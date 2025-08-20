@@ -1,10 +1,10 @@
 import ffmpeg from 'fluent-ffmpeg';
 import path from 'path';
 import fs from 'fs/promises';
-import pino from 'pino';
+import logger from '../../config/logger';
 import { v4 as uuidv4 } from 'uuid';
 
-const logger = pino({ name: 'VideoFrameExtractor' });
+const logger = logger.child({ name: 'VideoFrameExtractor' });
 
 export interface FrameExtractionOptions {
   frameRate?: number; // Frames per second (e.g., 1 for 1fps)

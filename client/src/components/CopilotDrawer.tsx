@@ -1,85 +1,92 @@
 /* eslint-disable indent */
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from 'react';
 import {
   Box,
   Button,
   Drawer,
   IconButton,
+  TextField,
+  Typography,
   List,
   ListItem,
   ListItemText,
-  TextField,
-  Typography,
-} from "@mui/material";
-import ChatIcon from "@mui/icons-material/Chat";
-import { io, Socket } from "socket.io-client";
+} from '@mui/material';
+import ChatIcon from '@mui/icons-material/Chat';
+import { useLazyQuery } from '@apollo/client';
+import { COPILOT_QUERY } from '../lib/graphql';
 
-interface Message {
-  from: "user" | "ai";
-  text: string;
-}
-
-/**
- * CopilotDrawer provides a lightweight chat interface that
- * streams messages from an AI endpoint via Socket.IO.
- */
-const CopilotDrawer: React.FC = () => {
+const CopilotDrawer: React.FC<{ caseId?: string }> = ({ caseId = 'demo' }) => {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const socketRef = useRef<Socket | null>(null);
+  const [input, setInput] = useState('');
+  const [runQuery, { data, loading, error }] = useLazyQuery(COPILOT_QUERY);
 
-  useEffect(() => {
-    socketRef.current = io("/copilot");
-    socketRef.current.on("copilot:response", (text: string) => {
-      setMessages((m) => [...m, { from: "ai", text }]);
-    });
-    return () => socketRef.current?.disconnect();
-  }, []);
-
-  const send = () => {
+  const send = async (preview = true) => {
     if (!input.trim()) return;
-    setMessages((m) => [...m, { from: "user", text: input }]);
-    socketRef.current?.emit("copilot:question", input);
-    setInput("");
+    try {
+      await runQuery({ variables: { question: input, caseId, preview } });
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error(e);
+    }
   };
+
+  const answer = data?.copilotQuery;
 
   return (
     <>
       <IconButton
         aria-label="open copilot"
         onClick={() => setOpen(true)}
-        sx={{ position: "fixed", bottom: 16, right: 16 }}
+        sx={{ position: 'fixed', bottom: 16, right: 16 }}
       >
         <ChatIcon />
       </IconButton>
       <Drawer anchor="right" open={open} onClose={() => setOpen(false)}>
-        <Box sx={{ width: 320, p: 2 }}>
+        <Box sx={{ width: 360, p: 2 }}>
           <Typography variant="h6" gutterBottom>
             Copilot
           </Typography>
-          <List sx={{ height: 360, overflowY: "auto" }}>
-            {messages.map((m, idx) => (
-              <ListItem key={idx}>
-                <ListItemText
-                  primary={m.text}
-                  secondary={m.from === "ai" ? "AI" : "You"}
-                />
-              </ListItem>
-            ))}
-          </List>
-          <Box sx={{ display: "flex", gap: 1 }}>
+          <Box sx={{ mb: 2 }}>
             <TextField
               value={input}
               onChange={(e) => setInput(e.target.value)}
               fullWidth
               size="small"
               placeholder="Ask a question"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') send();
+              }}
             />
-            <Button onClick={send} variant="contained">
-              Send
-            </Button>
           </Box>
+          {loading && <Typography>Loading...</Typography>}
+          {error && <Typography color="error">{error.message}</Typography>}
+          {answer && (
+            <Box>
+              <Typography variant="subtitle2">Preview</Typography>
+              <pre>{answer.preview}</pre>
+              <Typography variant="caption">
+                Policy: {answer.policy.allowed ? 'allowed' : `denied: ${answer.policy.reason}`}
+              </Typography>
+              {answer.citations.length > 0 && (
+                <List>
+                  {answer.citations.map((c: any, i: number) => (
+                    <ListItem key={i}>
+                      <ListItemText
+                        primary={c.source}
+                        secondary={`node ${c.nodeId} (${c.confidence.toFixed(2)})`}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              )}
+              {!answer.cypher && answer.policy.allowed && (
+                <Button sx={{ mt: 1 }} onClick={() => send(false)}>
+                  Run with guardrails
+                </Button>
+              )}
+              {answer.cypher && <Typography sx={{ mt: 1 }}>Executed query.</Typography>}
+            </Box>
+          )}
         </Box>
       </Drawer>
     </>

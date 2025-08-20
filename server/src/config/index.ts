@@ -1,3 +1,16 @@
+const isProd = process.env.NODE_ENV === 'production';
+const bad = [
+  process.env.JWT_SECRET === 'dev_jwt_secret_12345',
+  (process.env.POSTGRES_PASSWORD || '').startsWith('dev'),
+  (process.env.REDIS_PASSWORD || '').startsWith('dev'),
+].some(Boolean);
+
+if (isProd && bad) {
+  // eslint-disable-next-line no-console
+  console.error('Refusing to start with default secrets in production.');
+  process.exit(1);
+}
+
 import dotenv from 'dotenv';
 dotenv.config();
 

@@ -6,10 +6,10 @@
  */
 
 import Redis from 'ioredis';
-import pino from 'pino';
+import logger from '../config/logger';
 import { TenantContext, TenantValidator } from '../middleware/tenantValidator.js';
 
-const logger = pino({ name: 'neighborhoodCache' });
+const logger = logger.child({ name: 'neighborhoodCache' });
 
 export interface NeighborhoodData {
   nodeId: string;

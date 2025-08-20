@@ -6,9 +6,9 @@
  */
 
 import { Driver, Session } from 'neo4j-driver';
-import pino from 'pino';
+import logger from '../config/logger';
 
-const logger = pino({ name: 'Neo4jOptimizer' });
+const logger = logger.child({ name: 'Neo4jOptimizer' });
 
 interface QueryProfile {
   cypher: string;
