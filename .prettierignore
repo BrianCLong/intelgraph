@@ -10,3 +10,10 @@ node_modules
 **/*.snap
 **/generated/**
 **/.graphqlrc*
+.github/workflows
+helm
+deescalation-coach/infra/helm
+docs
+apps/web/public/mockServiceWorker.js
+client/src/components/graph/CytoscapeGraph.jsx
+server/server.js

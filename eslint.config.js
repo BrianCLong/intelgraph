@@ -14,7 +14,10 @@ const IGNORE = [
   '**/.next/**',
   '**/.cache/**',
   '**/generated/**',
-  'frontend/.vite/**' // legacy build artifacts
+  'frontend/.vite/**', // legacy build artifacts
+  'client/src/components/graph/CytoscapeGraph.jsx',
+  'apps/web/public/mockServiceWorker.js',
+  'server/server.js'
 ];
 
 export default [

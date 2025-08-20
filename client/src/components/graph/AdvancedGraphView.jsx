@@ -5,7 +5,15 @@ import dagre from 'cytoscape-dagre';
 import coseBilkent from 'cytoscape-cose-bilkent';
 import { useDispatch, useSelector } from 'react-redux'; // Import useSelector
 import { graphInteractionActions as g } from '../../store/slices/graphInteractionSlice';
-import { Box, CircularProgress, FormControlLabel, Switch, Select, MenuItem, Tooltip } from '@mui/material';
+import {
+  Box,
+  CircularProgress,
+  FormControlLabel,
+  Switch,
+  Select,
+  MenuItem,
+  Tooltip,
+} from '@mui/material';
 import GraphContextMenu from './GraphContextMenu';
 import AIInsightsPanel from './AIInsightsPanel';
 import EdgeInspectorDialog from './EdgeInspectorDialog';
@@ -18,19 +26,28 @@ cytoscape.use(coseBilkent);
 
 const LABEL_ZOOM_THRESHOLD = 1.2;
 
-export default function AdvancedGraphView({ elements = { nodes: [], edges: [] }, layout = 'cose-bilkent' }) {
+export default function AdvancedGraphView({
+  elements = { nodes: [], edges: [] },
+  layout = 'cose-bilkent',
+}) {
   const dispatch = useDispatch();
   const params = useParams?.() || {};
   const selectedNode = useSelector((state) => state.graphInteraction.selectedNode); // Get selectedNode from Redux store
   const containerRef = useRef(null);
   const cyRef = useRef(null);
   const [loading, setLoading] = useState(true);
-  const [insightsOpen, setInsightsOpen] = useState(() => localStorage.getItem('graph.aiPanelOpen') === '0' ? false : true);
+  const [insightsOpen, setInsightsOpen] = useState(() =>
+    localStorage.getItem('graph.aiPanelOpen') === '0' ? false : true,
+  );
   const [lodLabels, setLodLabels] = useState(true);
-  const [layoutName, setLayoutName] = useState(() => localStorage.getItem('graph.layoutName') || layout);
+  const [layoutName, setLayoutName] = useState(
+    () => localStorage.getItem('graph.layoutName') || layout,
+  );
   const tooltipRef = useRef(null);
   const overlayCanvasRef = useRef(null);
-  const [spriteLabels, setSpriteLabels] = useState(() => localStorage.getItem('graph.spriteLabels') === '1' ? true : false);
+  const [spriteLabels, setSpriteLabels] = useState(() =>
+    localStorage.getItem('graph.spriteLabels') === '1' ? true : false,
+  );
   const [edgeInspectorOpen, setEdgeInspectorOpen] = useState(false);
   const [edgeDetail, setEdgeDetail] = useState(null);
   const [ttpOverlayOpen, setTtpOverlayOpen] = useState(false); // New state for TTP overlay
@@ -39,17 +56,24 @@ export default function AdvancedGraphView({ elements = { nodes: [], edges: [] },
   const [subgraphElements, setSubgraphElements] = useState([]);
 
   const addElementsChunked = useMemo(() => {
-    const ric = window.requestIdleCallback || ((cb) => setTimeout(() => cb({ timeRemaining: () => 16 }), 0));
+    const ric =
+      window.requestIdleCallback || ((cb) => setTimeout(() => cb({ timeRemaining: () => 16 }), 0));
     return (cy, nodes = [], edges = [], chunk = 2000) => {
-      let i = 0, j = 0;
+      let i = 0,
+        j = 0;
       function step() {
         const nSlice = nodes.slice(i, i + chunk);
         const eSlice = edges.slice(j, j + chunk);
         cy.startBatch();
-        nSlice.forEach((n) => { if (!cy.getElementById(n.id).nonempty()) cy.add({ group: 'nodes', data: n }); });
-        eSlice.forEach((e) => { if (!cy.getElementById(e.id).nonempty()) cy.add({ group: 'edges', data: e }); });
+        nSlice.forEach((n) => {
+          if (!cy.getElementById(n.id).nonempty()) cy.add({ group: 'nodes', data: n });
+        });
+        eSlice.forEach((e) => {
+          if (!cy.getElementById(e.id).nonempty()) cy.add({ group: 'edges', data: e });
+        });
         cy.endBatch();
-        i += chunk; j += chunk;
+        i += chunk;
+        j += chunk;
         if (i < nodes.length || j < edges.length) ric(step);
       }
       ric(step);
@@ -62,8 +86,21 @@ export default function AdvancedGraphView({ elements = { nodes: [], edges: [] },
     const cy = cytoscape({
       container: containerRef.current,
       style: [
-        { selector: 'node', style: { 'background-color': '#888', label: 'data(label)', 'font-size': 10 } },
-        { selector: 'edge', style: { width: 1, 'line-color': '#bbb', 'target-arrow-shape': 'triangle', 'target-arrow-color': '#bbb', label: 'data(label)', 'font-size': 8 } },
+        {
+          selector: 'node',
+          style: { 'background-color': '#888', label: 'data(label)', 'font-size': 10 },
+        },
+        {
+          selector: 'edge',
+          style: {
+            width: 1,
+            'line-color': '#bbb',
+            'target-arrow-shape': 'triangle',
+            'target-arrow-color': '#bbb',
+            label: 'data(label)',
+            'font-size': 8,
+          },
+        },
       ],
       wheelSensitivity: 0.2,
       textureOnViewport: true,
@@ -95,13 +132,14 @@ export default function AdvancedGraphView({ elements = { nodes: [], edges: [] },
     }
 
     const runLayout = () => {
-      const cfg = layoutName === 'dagre'
-        ? { name: 'dagre', rankDir: 'LR' }
-        : layoutName === 'grid'
-        ? { name: 'grid', fit: true }
-        : layoutName === 'concentric'
-        ? { name: 'concentric', minNodeSpacing: 15 }
-        : { name: 'cose-bilkent', randomize: true, animate: false };
+      const cfg =
+        layoutName === 'dagre'
+          ? { name: 'dagre', rankDir: 'LR' }
+          : layoutName === 'grid'
+            ? { name: 'grid', fit: true }
+            : layoutName === 'concentric'
+              ? { name: 'concentric', minNodeSpacing: 15 }
+              : { name: 'cose-bilkent', randomize: true, animate: false };
       cy.layout(cfg).run();
     };
     runLayout();
@@ -117,7 +155,7 @@ export default function AdvancedGraphView({ elements = { nodes: [], edges: [] },
     } catch (_) {}
 
     const updateLabelsForLOD = () => {
-      const show = lodLabels && !spriteLabels && (cy.zoom() >= LABEL_ZOOM_THRESHOLD);
+      const show = lodLabels && !spriteLabels && cy.zoom() >= LABEL_ZOOM_THRESHOLD;
       cy.batch(() => {
         const nodeLabel = show ? (ele) => ele.data('label') : () => '';
         const edgeLabel = show ? (ele) => ele.data('label') : () => '';
@@ -140,10 +178,19 @@ export default function AdvancedGraphView({ elements = { nodes: [], edges: [] },
     cy.on('tap', 'edge', (evt) => {
       dispatch(g.selectEdge(evt.target.id()));
       const e = evt.target;
-      setEdgeDetail({ id: e.id(), type: e.data('type'), label: e.data('label'), properties: e.data('properties'), source: e.source().data(), target: e.target().data() });
+      setEdgeDetail({
+        id: e.id(),
+        type: e.data('type'),
+        label: e.data('label'),
+        properties: e.data('properties'),
+        source: e.source().data(),
+        target: e.target().data(),
+      });
       setEdgeInspectorOpen(true);
     });
-    cy.on('tap', (evt) => { if (evt.target === cy) dispatch(g.clearSelection()); });
+    cy.on('tap', (evt) => {
+      if (evt.target === cy) dispatch(g.clearSelection());
+    });
     cy.on('cxttap', 'node, edge', (evt) => {
       const pos = evt.renderedPosition || evt.position;
       const pageX = evt.originalEvent?.pageX || pos.x;
@@ -177,7 +224,10 @@ export default function AdvancedGraphView({ elements = { nodes: [], edges: [] },
     cy.on('select', 'node,edge', (evt) => {
       const ele = evt.target;
       const pos = ele.position();
-      cy.animate({ center: { eles: ele }, zoom: Math.max(0.6, cy.zoom()), duration: 250 }, { queue: true });
+      cy.animate(
+        { center: { eles: ele }, zoom: Math.max(0.6, cy.zoom()), duration: 250 },
+        { queue: true },
+      );
     });
 
     // Throttled hover tooltip
@@ -204,13 +254,16 @@ export default function AdvancedGraphView({ elements = { nodes: [], edges: [] },
       tooltip.style.top = `${y + 12}px`;
       tooltip.style.display = 'block';
     };
-    const hideTooltip = () => { tooltip.style.display = 'none'; };
+    const hideTooltip = () => {
+      tooltip.style.display = 'none';
+    };
 
     cy.on('mouseover', 'node,edge', (evt) => {
       const text = evt.target.data('label') || evt.target.id();
       const px = evt.renderedPosition;
       const rect = containerRef.current.getBoundingClientRect();
-      const x = rect.left + px.x; const y = rect.top + px.y;
+      const x = rect.left + px.x;
+      const y = rect.top + px.y;
       showTooltip(text, x, y);
     });
     cy.on('mouseout', 'node,edge', hideTooltip);
@@ -227,7 +280,14 @@ export default function AdvancedGraphView({ elements = { nodes: [], edges: [] },
       const edgeId = ev.detail?.edgeId;
       const e = cy.getElementById(edgeId);
       if (e && e.nonempty() && e.isEdge()) {
-        setEdgeDetail({ id: e.id(), type: e.data('type'), label: e.data('label'), properties: e.data('properties'), source: e.source().data(), target: e.target().data() });
+        setEdgeDetail({
+          id: e.id(),
+          type: e.data('type'),
+          label: e.data('label'),
+          properties: e.data('properties'),
+          source: e.source().data(),
+          target: e.target().data(),
+        });
         setEdgeInspectorOpen(true);
       }
     };
@@ -236,8 +296,14 @@ export default function AdvancedGraphView({ elements = { nodes: [], edges: [] },
     const onExploreSubgraph = () => {
       const sel = cy.elements(':selected');
       if (sel.length === 0) return;
-      const nodes = sel.nodes().map((n) => ({ data: { ...n.data(), id: n.id() }, position: n.position() }));
-      const edges = sel.edges().map((e) => ({ data: { ...e.data(), id: e.id(), source: e.source().id(), target: e.target().id() } }));
+      const nodes = sel
+        .nodes()
+        .map((n) => ({ data: { ...n.data(), id: n.id() }, position: n.position() }));
+      const edges = sel
+        .edges()
+        .map((e) => ({
+          data: { ...e.data(), id: e.id(), source: e.source().id(), target: e.target().id() },
+        }));
       setSubgraphElements([...nodes, ...edges]);
       setSubgraphOpen(true);
     };
@@ -272,7 +338,8 @@ export default function AdvancedGraphView({ elements = { nodes: [], edges: [] },
       if (!overlayCanvasRef.current) return;
       const c = overlayCanvasRef.current;
       const rect = containerRef.current.getBoundingClientRect();
-      c.width = rect.width; c.height = rect.height;
+      c.width = rect.width;
+      c.height = rect.height;
       const ctx = c.getContext('2d');
       ctx.clearRect(0, 0, c.width, c.height);
       if (!spriteLabels) return;
@@ -303,7 +370,10 @@ export default function AdvancedGraphView({ elements = { nodes: [], edges: [] },
         overlayCanvasRef.current.remove();
         overlayCanvasRef.current = null;
       }
-      if (tooltipRef.current) { tooltipRef.current.remove(); tooltipRef.current = null; }
+      if (tooltipRef.current) {
+        tooltipRef.current.remove();
+        tooltipRef.current = null;
+      }
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       cy.off('zoom pan', persistCamera);
@@ -329,19 +399,70 @@ export default function AdvancedGraphView({ elements = { nodes: [], edges: [] },
   return (
     <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
       {loading && (
-        <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10,
+          }}
+        >
           <CircularProgress />
         </Box>
       )}
 
       <Box ref={containerRef} sx={{ width: '100%', height: '100%' }} />
 
-      <Box sx={{ position: 'absolute', top: 8, left: 8, p: 1, bgcolor: 'background.paper', borderRadius: 1, boxShadow: 1, display: 'flex', gap: 1, alignItems: 'center' }}>
-        <FormControlLabel control={<Switch checked={insightsOpen} onChange={(e) => setInsightsOpen(e.target.checked)} />} label="AI Panel" />
-        <FormControlLabel control={<Switch checked={lodLabels} onChange={(e) => setLodLabels(e.target.checked)} />} label="LOD Labels" />
-        <FormControlLabel control={<Switch checked={spriteLabels} onChange={(e) => setSpriteLabels(e.target.checked)} />} label="Sprite Labels" />
-        <FormControlLabel control={<Switch checked={ttpOverlayOpen} onChange={(e) => setTtpOverlayOpen(e.target.checked)} />} label="TTP Overlay" />
-        <FormControlLabel control={<Switch checked={triagePanelOpen} onChange={(e) => setTriagePanelOpen(e.target.checked)} />} label="Triage Panel" />
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 8,
+          left: 8,
+          p: 1,
+          bgcolor: 'background.paper',
+          borderRadius: 1,
+          boxShadow: 1,
+          display: 'flex',
+          gap: 1,
+          alignItems: 'center',
+        }}
+      >
+        <FormControlLabel
+          control={
+            <Switch checked={insightsOpen} onChange={(e) => setInsightsOpen(e.target.checked)} />
+          }
+          label="AI Panel"
+        />
+        <FormControlLabel
+          control={<Switch checked={lodLabels} onChange={(e) => setLodLabels(e.target.checked)} />}
+          label="LOD Labels"
+        />
+        <FormControlLabel
+          control={
+            <Switch checked={spriteLabels} onChange={(e) => setSpriteLabels(e.target.checked)} />
+          }
+          label="Sprite Labels"
+        />
+        <FormControlLabel
+          control={
+            <Switch
+              checked={ttpOverlayOpen}
+              onChange={(e) => setTtpOverlayOpen(e.target.checked)}
+            />
+          }
+          label="TTP Overlay"
+        />
+        <FormControlLabel
+          control={
+            <Switch
+              checked={triagePanelOpen}
+              onChange={(e) => setTriagePanelOpen(e.target.checked)}
+            />
+          }
+          label="Triage Panel"
+        />
         <Select size="small" value={layoutName} onChange={(e) => setLayoutName(e.target.value)}>
           <MenuItem value="cose-bilkent">CoSE</MenuItem>
           <MenuItem value="dagre">Dagre</MenuItem>
@@ -349,33 +470,52 @@ export default function AdvancedGraphView({ elements = { nodes: [], edges: [] },
           <MenuItem value="concentric">Concentric</MenuItem>
         </Select>
         {import.meta?.env?.VITE_SEED_BUTTON === '1' && (
-          <button onClick={() => {
-            const seedNodes = [
-              { id: 'n1', label: 'Alice', type: 'PERSON' },
-              { id: 'n2', label: 'Bob', type: 'PERSON' },
-              { id: 'n3', label: 'Acme Corp', type: 'ORGANIZATION' },
-            ];
-            const seedEdges = [
-              { id: 'e1', source: 'n1', target: 'n2', type: 'KNOWS', label: 'KNOWS' },
-              { id: 'e2', source: 'n2', target: 'n3', type: 'WORKS_FOR', label: 'WORKS_FOR' },
-            ];
-            const cy = cyRef.current; if (!cy) return;
-            addElementsChunked(cy, seedNodes, seedEdges, 1000);
-          }}>Seed Demo</button>
+          <button
+            onClick={() => {
+              const seedNodes = [
+                { id: 'n1', label: 'Alice', type: 'PERSON' },
+                { id: 'n2', label: 'Bob', type: 'PERSON' },
+                { id: 'n3', label: 'Acme Corp', type: 'ORGANIZATION' },
+              ];
+              const seedEdges = [
+                { id: 'e1', source: 'n1', target: 'n2', type: 'KNOWS', label: 'KNOWS' },
+                { id: 'e2', source: 'n2', target: 'n3', type: 'WORKS_FOR', label: 'WORKS_FOR' },
+              ];
+              const cy = cyRef.current;
+              if (!cy) return;
+              addElementsChunked(cy, seedNodes, seedEdges, 1000);
+            }}
+          >
+            Seed Demo
+          </button>
         )}
       </Box>
 
       <GraphContextMenu />
       <AIInsightsPanel open={insightsOpen} onClose={() => setInsightsOpen(false)} />
-      <EdgeInspectorDialog open={edgeInspectorOpen} onClose={() => setEdgeInspectorOpen(false)} edge={edgeDetail} />
-<<<<<<< HEAD
+      <EdgeInspectorDialog
+        open={edgeInspectorOpen}
+        onClose={() => setEdgeInspectorOpen(false)}
+        edge={edgeDetail}
+      />
       {/* TTP Correlation Overlay */}
-      <TTPCorrelationOverlay cy={cyRef.current} nodes={elements.nodes} edges={elements.edges} open={ttpOverlayOpen} />
+      <TTPCorrelationOverlay
+        cy={cyRef.current}
+        nodes={elements.nodes}
+        edges={elements.edges}
+        open={ttpOverlayOpen}
+      />
       {/* TTP Triage Panel */}
-      <TTPTriagePanel open={triagePanelOpen} onClose={() => setTriagePanelOpen(false)} selectedEntity={elements.nodes.find(n => n.id === selectedNode)} />
-=======
-      <SubgraphExplorerDialog open={subgraphOpen} onClose={() => setSubgraphOpen(false)} elements={subgraphElements} />
->>>>>>> 1ae8cd71faa0d57638f1dd82b1f544b60eae109f
+      <TTPTriagePanel
+        open={triagePanelOpen}
+        onClose={() => setTriagePanelOpen(false)}
+        selectedEntity={elements.nodes.find((n) => n.id === selectedNode)}
+      />
+      <SubgraphExplorerDialog
+        open={subgraphOpen}
+        onClose={() => setSubgraphOpen(false)}
+        elements={subgraphElements}
+      />
     </Box>
   );
 }
