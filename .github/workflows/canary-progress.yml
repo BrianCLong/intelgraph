@@ -1,0 +1,30 @@
+name: Canary Weight Progression
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: 'Environment (dev|staging|prod)'
+        required: true
+        default: 'staging'
+      weight:
+        description: 'Canary weight (0-100)'
+        required: true
+        default: '10'
+
+jobs:
+  set-weight:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.env }}
+    steps:
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with: { version: 'v1.30.0' }
+      - name: Auth to cluster
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+
+      - name: Update canary weight annotation
+        run: |
+          kubectl annotate --overwrite ingress $(kubectl get ing -o name | grep server)             nginx.ingress.kubernetes.io/canary-weight="${{ github.event.inputs.weight }}"

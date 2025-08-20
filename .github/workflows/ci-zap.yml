@@ -1,0 +1,33 @@
+name: CI Security (OWASP ZAP)
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  zap-baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Boot stack
+        run: |
+          docker compose -f docker-compose.yml up -d server client
+          for i in {1..60}; do
+            curl -fsS http://localhost:3000 && exit 0 || true
+            sleep 5
+          done
+
+      - name: ZAP Baseline
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: 'http://localhost:3000'
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a -m 5'
+      - name: Upload ZAP report
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report
+          path: |
+            report_html.html
+            report_json.json

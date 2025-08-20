@@ -9,7 +9,8 @@ import { SpeechToTextEngine } from './engines/SpeechToTextEngine.js';
 import { FaceDetectionEngine } from './engines/FaceDetectionEngine.js';
 import { TextAnalysisEngine } from './engines/TextAnalysisEngine.js';
 import { EmbeddingService } from './services/EmbeddingService.js';
-import { MediaType } from '../services/MultimodalDataService.js';
+// TODO: Fix MediaType import when MultimodalDataService is converted to ESM
+type MediaType = 'text' | 'image' | 'audio' | 'video';
 import { VideoFrameExtractor, ExtractedFrame, ExtractedAudio } from './engines/VideoFrameExtractor.js'; // WAR-GAMED SIMULATION - Import VideoFrameExtractor
 import ffmpegStatic from 'ffmpeg-static'; // WAR-GAMED SIMULATION - Import ffmpeg-static
 import ffprobeStatic from 'ffprobe-static'; // WAR-GAMED SIMULATION - Import ffprobe-static

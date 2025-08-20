@@ -6,6 +6,11 @@ jobs:
   dependabot:
     runs-on: ubuntu-latest
     if: ${{ github.actor == 'dependabot[bot]' }}
+    permissions:
+      pull-requests: write
+      contents: write
     steps:
-      - uses: fastify/github-action-merge-dependabot@v3
-        with: { github-token: ${{ secrets.GITHUB_TOKEN }}, target: minor }
+      - uses: fastify/github-action-merge-dependabot@9e3b0035baf695d18723687b4f9ed38e9978d28a # v3.10.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          target: 'patch'

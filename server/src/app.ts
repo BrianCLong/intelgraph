@@ -12,6 +12,7 @@ import { auditLogger } from "./middleware/audit-logger.js";
 import monitoringRouter from "./routes/monitoring.js";
 import aiRouter from "./routes/ai.js";
 import { register } from "./monitoring/metrics.js";
+import rbacRouter from "./routes/rbacRoutes.js";
 import { typeDefs } from "./graphql/schema.js";
 import resolvers from "./graphql/resolvers/index.js";
 import { getContext } from "./lib/auth.js";
@@ -40,6 +41,7 @@ export const createApp = async () => {
   // Rate limiting (exempt monitoring endpoints)
   app.use("/monitoring", monitoringRouter);
   app.use("/api/ai", aiRouter);
+  app.use("/rbac", rbacRouter);
   app.get("/metrics", async (_req, res) => {
     res.set("Content-Type", register.contentType);
     res.end(await register.metrics());
@@ -126,10 +128,13 @@ export const createApp = async () => {
   );
   const { depthLimit } = await import("./graphql/validation/depthLimit.js");
 
+  import { otelApolloPlugin } from './graphql/middleware/otelPlugin';
+
   const apollo = new ApolloServer({
     schema,
     // Security plugins - Order matters for execution lifecycle
     plugins: [
+      otelApolloPlugin(),
       persistedQueriesPlugin as any,
       resolverMetricsPlugin as any,
       auditLoggerPlugin as any,
