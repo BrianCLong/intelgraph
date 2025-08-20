@@ -65,6 +65,26 @@ const copilotTypeDefs = gql`
     avgDurationSeconds: Float
   }
 
+  """Inline citation reference"""
+  type Citation {
+    nodeId: ID!
+    snippet: String!
+  }
+
+  """Policy evaluation result"""
+  type CopilotPolicy {
+    allowed: Boolean!
+    reason: String
+  }
+
+  """Answer returned from natural language Copilot query"""
+  type CopilotAnswer {
+    preview: String!
+    citations: [Citation!]!
+    redactions: [String!]!
+    policy: CopilotPolicy!
+  }
+
   input StartCopilotRunInput {
     goalId: ID
     goalText: String
@@ -92,6 +112,13 @@ const copilotTypeDefs = gql`
     
     # Get statistics for monitoring
     copilotStats(timeRange: String = "24 hours"): [CopilotStats!]!
+
+    # Draft and optionally execute a natural language query
+    copilotQuery(
+      question: String!
+      caseId: ID!
+      preview: Boolean = true
+    ): CopilotAnswer!
   }
 
   extend type Mutation {

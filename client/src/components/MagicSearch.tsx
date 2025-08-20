@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { gql, useApolloClient, DocumentNode } from "@apollo/client";
+import { gql, useApolloClient } from "@apollo/client";
 import {
   Autocomplete,
   TextField,
@@ -8,57 +8,47 @@ import {
   List,
   ListItem,
   ListItemText,
+  Button,
 } from "@mui/material";
 
-interface ParsedQuery {
-  query: DocumentNode;
-  variables: Record<string, any>;
-}
-
-const ENTITY_SUGGESTIONS = ["APT actor", "campaign", "target", "malware"];
-
-const RELATION_SUGGESTIONS = ["linked to", "associated with", "targets"];
+const COPILOT_QUERY = gql`
+  query Copilot($q: String!, $preview: Boolean!) {
+    copilotQuery(question: $q, caseId: "demo", preview: $preview) {
+      preview
+      citations { nodeId snippet }
+      policy { allowed reason }
+    }
+  }
+`;
 
 const EXAMPLE = "Show all APT actors linked to finance-themed targets";
-
-function parseNaturalQuery(text: string): ParsedQuery | null {
-  const m = /show all (.+) linked to (.+)-themed targets/i.exec(text);
-  if (m) {
-    const theme = m[2];
-    return {
-      query: gql`
-        query ($theme: String!) {
-          aptActors(filter: { targetTheme: $theme }) {
-            id
-            name
-          }
-        }
-      `,
-      variables: { theme },
-    };
-  }
-  return null;
-}
 
 export default function MagicSearch() {
   const client = useApolloClient();
   const [input, setInput] = useState("");
   const [graphql, setGraphql] = useState("");
-  const [results, setResults] = useState<any[]>([]);
-  const options = [...ENTITY_SUGGESTIONS, ...RELATION_SUGGESTIONS];
+  const [citations, setCitations] = useState<any[]>([]);
+  const [policy, setPolicy] = useState<{ allowed: boolean; reason: string } | null>(null);
+  const [needsConfirm, setNeedsConfirm] = useState(false);
+  const options: string[] = [];
 
-  const runSearch = async () => {
-    const parsed = parseNaturalQuery(input);
-    if (!parsed) return;
-    setGraphql(parsed.query.loc?.source.body || "");
-    try {
-      const { data } = await client.query({
-        query: parsed.query,
-        variables: parsed.variables,
-      });
-      setResults(data?.aptActors || []);
-    } catch (err) {
-      console.error(err);
+  const runSearch = async (execute = false) => {
+    const { data } = await client.query({
+      query: COPILOT_QUERY,
+      variables: { q: input, preview: !execute },
+      fetchPolicy: "no-cache",
+    });
+    const ans = data.copilotQuery;
+    setGraphql(ans.preview);
+    setPolicy(ans.policy);
+    if (execute) {
+      if (ans.policy.allowed) {
+        setCitations(ans.citations);
+      }
+      setNeedsConfirm(false);
+    } else {
+      setNeedsConfirm(true);
+      setCitations([]);
     }
   };
 
@@ -85,16 +75,24 @@ export default function MagicSearch() {
 
       {graphql && (
         <Box sx={{ mt: 2 }}>
-          <Typography variant="subtitle2">Generated GraphQL query</Typography>
+          <Typography variant="subtitle2">Query preview</Typography>
           <pre>{graphql}</pre>
+          {policy && !policy.allowed && (
+            <Typography color="error">Denied: {policy.reason}</Typography>
+          )}
+          {needsConfirm && policy?.allowed && (
+            <Button sx={{ mt: 1 }} variant="outlined" onClick={() => runSearch(true)}>
+              Execute
+            </Button>
+          )}
         </Box>
       )}
 
-      {results.length > 0 && (
+      {citations.length > 0 && (
         <List>
-          {results.map((r) => (
-            <ListItem key={r.id}>
-              <ListItemText primary={r.name || r.id} />
+          {citations.map((c, idx) => (
+            <ListItem key={idx}>
+              <ListItemText primary={c.nodeId} secondary={c.snippet} />
             </ListItem>
           ))}
         </List>

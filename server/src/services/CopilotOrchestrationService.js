@@ -1246,6 +1246,39 @@ class CopilotOrchestrationService extends EventEmitter {
       (currentAvg * (queryCount - 1) + executionTime) / queryCount;
   }
 
+  /**
+   * Handle natural language query with optional preview mode.
+   * Generates a draft Cypher query and runs policy checks before execution.
+   */
+  async copilotQuery(question, caseId, preview = true) {
+    const traceId = uuidv4();
+    this.logger.info({ traceId, caseId }, 'copilotQuery start');
+
+    const draft = this.generatePreviewQuery(question);
+    const policy = this.evaluatePolicy(question);
+
+    if (preview || !policy.allowed) {
+      // Only return the draft; execution requires explicit confirmation
+      return { preview: draft, citations: [], redactions: [], policy };
+    }
+
+    const citations = [{ nodeId: 'n0', snippet: 'example snippet' }];
+    this.logger.info({ traceId, executed: true }, 'copilotQuery executed');
+    return { preview: draft, citations, redactions: [], policy };
+  }
+
+  generatePreviewQuery(question) {
+    const sanitized = question.replace(/`/g, '');
+    return `// NLQ: ${sanitized}\nMATCH (n) RETURN n LIMIT 5`;
+  }
+
+  evaluatePolicy(question) {
+    if (/export/i.test(question)) {
+      return { allowed: false, reason: 'export blocked: data license X' };
+    }
+    return { allowed: true, reason: '' };
+  }
+
   // Public API Methods
 
   getActiveQueries() {

@@ -44,9 +44,17 @@ class CopilotAgent:
             answer = "Mocked reasoning output."
 
         self._record(case_id, "assistant", answer)
+        policy = {"allowed": True, "reason": ""}
+        if "export" in question.lower():
+            policy = {"allowed": False, "reason": "export blocked: data license X"}
+
         return {
             "reasoning": answer,
             "hypotheses": [],
             "confidence": 0.5,
             "expanded": expand_depth > 0,
+            "preview": "MATCH (n) RETURN n LIMIT 5",
+            "citations": [],
+            "redactions": [],
+            "policy": policy,
         }

@@ -1,5 +1,5 @@
 /* eslint-disable indent */
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import {
   Box,
   Button,
@@ -12,7 +12,6 @@ import {
   Typography,
 } from "@mui/material";
 import ChatIcon from "@mui/icons-material/Chat";
-import { io, Socket } from "socket.io-client";
 
 interface Message {
   from: "user" | "ai";
@@ -27,21 +26,40 @@ const CopilotDrawer: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const socketRef = useRef<Socket | null>(null);
+  const [pending, setPending] = useState<{ question: string } | null>(null);
 
-  useEffect(() => {
-    socketRef.current = io("/copilot");
-    socketRef.current.on("copilot:response", (text: string) => {
-      setMessages((m) => [...m, { from: "ai", text }]);
-    });
-    return () => socketRef.current?.disconnect();
-  }, []);
+  const runQuery = async (question: string, preview: boolean) => {
+    const res = await fetch("/graphql", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query:
+          "query($q:String!,$case:ID!,$preview:Boolean!){copilotQuery(question:$q,caseId:$case,preview:$preview){preview citations{nodeId} policy{allowed reason}}}",
+        variables: { q: question, case: "demo", preview },
+      }),
+    }).then((r) => r.json());
+    return res.data.copilotQuery;
+  };
 
-  const send = () => {
+  const send = async () => {
     if (!input.trim()) return;
-    setMessages((m) => [...m, { from: "user", text: input }]);
-    socketRef.current?.emit("copilot:question", input);
+    const question = input;
+    setMessages((m) => [...m, { from: "user", text: question }]);
     setInput("");
+    const ans = await runQuery(question, true);
+    setMessages((m) => [...m, { from: "ai", text: ans.preview }]);
+    setPending({ question });
+  };
+
+  const confirm = async () => {
+    if (!pending) return;
+    const ans = await runQuery(pending.question, false);
+    if (ans.policy.allowed) {
+      setMessages((m) => [...m, { from: "ai", text: `Executed (${ans.citations.length} citations)` }]);
+    } else {
+      setMessages((m) => [...m, { from: "ai", text: `Denied: ${ans.policy.reason}` }]);
+    }
+    setPending(null);
   };
 
   return (
@@ -80,6 +98,13 @@ const CopilotDrawer: React.FC = () => {
               Send
             </Button>
           </Box>
+          {pending && (
+            <Box sx={{ mt: 1 }}>
+              <Button onClick={confirm} variant="outlined" fullWidth>
+                Execute query
+              </Button>
+            </Box>
+          )}
         </Box>
       </Drawer>
     </>

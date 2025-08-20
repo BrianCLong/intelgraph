@@ -24,6 +24,15 @@ const copilotResolvers = {
     copilotStats: async (_, { timeRange = '24 hours' }, { dataSources }) => {
       const { copilotOrchestrator } = dataSources;
       return copilotOrchestrator.getStats(timeRange);
+    },
+
+    copilotQuery: async (
+      _,
+      { question, caseId, preview = true },
+      { dataSources }
+    ) => {
+      const { copilotOrchestrator } = dataSources;
+      return copilotOrchestrator.copilotQuery(question, caseId, preview);
     }
   },
 
