@@ -2,6 +2,7 @@ import entityResolvers from './entity';
 import relationshipResolvers from './relationship';
 import userResolvers from './user';
 import investigationResolvers from './investigation';
+import geoResolvers from './geo';
 import { WargameResolver } from '../../resolvers/WargameResolver.js'; // WAR-GAMED SIMULATION - FOR DECISION SUPPORT ONLY
 
 // Instantiate the WargameResolver
@@ -12,6 +13,7 @@ const resolvers = {
     ...entityResolvers.Query,
     ...userResolvers.Query,
     ...investigationResolvers.Query,
+    ...geoResolvers.Query,
     // WAR-GAMED SIMULATION - FOR DECISION SUPPORT ONLY
     getCrisisTelemetry: wargameResolver.getCrisisTelemetry.bind(wargameResolver),
     getAdversaryIntentEstimates: wargameResolver.getAdversaryIntentEstimates.bind(wargameResolver),

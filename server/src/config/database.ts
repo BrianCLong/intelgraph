@@ -135,6 +135,9 @@ async function createPostgresTables(): Promise<void> {
   const client = await postgresPool.connect();
 
   try {
+    // Ensure PostGIS extension is available
+    await client.query("CREATE EXTENSION IF NOT EXISTS postgis");
+
     // Users table
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (

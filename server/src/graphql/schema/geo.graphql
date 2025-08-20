@@ -1,0 +1,18 @@
+type GeoEntity {
+  id: ID!
+  type: String
+  name: String
+  geom: String
+}
+
+type PathResult {
+  fromId: ID!
+  toId: ID!
+  distanceM: Float!
+}
+
+type Query {
+  entitiesInBbox(bbox: [Float!]!): [GeoEntity!]!
+  nearbyEntities(lat: Float!, lon: Float!, radiusMeters: Float!): [GeoEntity!]!
+  pathsBetween(entityIds: [ID!]!): [PathResult!]!
+}

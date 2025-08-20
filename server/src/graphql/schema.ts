@@ -1,4 +1,10 @@
-export const typeDefs = `
+import fs from 'fs';
+import path from 'path';
+
+const geoSchema = fs.readFileSync(path.join(__dirname, 'schema/geo.graphql'), 'utf8');
+
+export const typeDefs =
+  `
   scalar JSON
   scalar DateTime
   type Entity { id: ID!, type: String!, props: JSON, createdAt: DateTime!, updatedAt: DateTime, canonicalId: ID }
@@ -445,4 +451,4 @@ input SemanticSearchFilter {
     entityDeleted: ID!
     aiRecommendationUpdated: AIRecommendation!
   }
-`;
+` + geoSchema;

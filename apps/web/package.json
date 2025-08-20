@@ -35,6 +35,7 @@
     "graphql": "^16.11.0",
     "graphql-ws": "^6.0.6",
     "lucide-react": "^0.292.0",
+    "maplibre-gl": "^3.6.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.47.0",
