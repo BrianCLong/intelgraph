@@ -11,6 +11,7 @@ import { pinoHttp } from "pino-http";
 import { auditLogger } from "./middleware/audit-logger.js";
 import monitoringRouter from "./routes/monitoring.js";
 import aiRouter from "./routes/ai.js";
+import nl2cypherRouter from "./routes/nl2cypher.js";
 import { register } from "./monitoring/metrics.js";
 import { typeDefs } from "./graphql/schema.js";
 import resolvers from "./graphql/resolvers/index.js";
@@ -40,6 +41,7 @@ export const createApp = async () => {
   // Rate limiting (exempt monitoring endpoints)
   app.use("/monitoring", monitoringRouter);
   app.use("/api/ai", aiRouter);
+  app.use("/api/nl2cypher", nl2cypherRouter);
   app.get("/metrics", async (_req, res) => {
     res.set("Content-Type", register.contentType);
     res.end(await register.metrics());
