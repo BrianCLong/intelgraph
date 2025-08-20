@@ -68,6 +68,9 @@ RUN pip install --upgrade pip setuptools wheel
 COPY --chown=aiuser:aiuser server/requirements.txt ./
 
 # Install PyTorch with CUDA support
+# Install PyTorch with CUDA support
+# Note: Model downloads are the primary cause of slow build times and large image sizes.
+# Consider externalizing these downloads or only including necessary models.
 RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
 # Install other Python dependencies

@@ -1,0 +1,64 @@
+name: CI Performance (k6)
+on:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 4 * * 1'  # weekly
+
+jobs:
+  k6:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:14
+        ports: ['5432:5432']
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Boot stack (server+client)
+        run: |
+          docker compose -f docker-compose.yml up -d server client
+          for i in {1..60}; do
+            curl -fsS http://localhost:4000/health && curl -fsS http://localhost:3000 && exit 0 || true
+            sleep 5
+          done
+          echo "Services failed to become healthy" >&2
+          docker compose -f docker-compose.yml logs server client
+          exit 1
+
+      - name: Install k6
+        run: |
+          curl -sSL https://github.com/grafana/k6/releases/download/v0.49.0/k6-v0.49.0-linux-amd64.tar.gz             | tar xz --strip-components=1 -C /usr/local/bin k6-v0.49.0-linux-amd64/k6
+          k6 version
+
+      - name: API Load (p95 < 350ms)
+        run: |
+          k6 run --summary-export api_summary.json tests/performance/api_load_test.js             || (cat api_summary.json; exit 1)
+
+      - name: Read-Heavy (p95 < 350ms)
+        run: |
+          k6 run --summary-export read_summary.json tests/performance/read_heavy_load_test.js             || (cat read_summary.json; exit 1)
+
+      - name: Write-Mix (p95 < 350ms)
+        run: |
+          k6 run --summary-export write_summary.json tests/performance/write_mix_load_test.js             || (cat write_summary.json; exit 1)
+
+      - name: WS Fan-Out (connect p95 < 1000ms)
+        run: |
+          k6 run --summary-export ws_summary.json tests/performance/ws_fan_out_load_test.js             || (cat ws_summary.json; exit 1)
+
+      - name: Upload k6 artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-summaries
+          path: |
+            *summary.json

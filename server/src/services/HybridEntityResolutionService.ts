@@ -1,9 +1,9 @@
 import path from "path";
 import { PythonShell } from "python-shell";
-import pino from "pino";
+import logger from '../config/logger';
 import { v4 as uuidv4 } from "uuid";
 
-const log = pino({ name: "HybridEntityResolutionService" });
+const log = logger.child({ name: "HybridEntityResolutionService" });
 
 export interface ERServiceResult {
   version: string;

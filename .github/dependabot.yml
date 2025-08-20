@@ -4,6 +4,17 @@ updates:
     directory: '/'
     schedule: { interval: 'weekly' }
     open-pull-requests-limit: 10
+    groups:
+      eslint:
+        patterns:
+          - 'eslint'
+          - '@typescript-eslint/eslint-plugin'
+          - '@typescript-eslint/parser'
+      jest:
+        patterns:
+          - 'jest'
+          - 'ts-jest'
+          - '@types/jest'
   - package-ecosystem: 'pip'
     directory: '/'
     schedule: { interval: 'weekly' }

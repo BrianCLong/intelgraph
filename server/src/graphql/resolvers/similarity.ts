@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import pino from 'pino';
+import logger from '../../config/logger';
 import { GraphQLError } from 'graphql';
 import { createHash } from 'crypto';
 import { getPostgresPool } from '../../config/database.js';
@@ -8,7 +8,7 @@ import client from 'prom-client';
 import { register } from '../../monitoring/metrics.js';
 import EmbeddingService from '../../services/EmbeddingService.js';
 
-const log = pino({ name: 'similarity' });
+const log = logger.child({ name: 'similarity' });
 let pool: any = null;
 
 interface CacheEntry {

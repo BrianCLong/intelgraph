@@ -1,11 +1,13 @@
 name: Auto Assign Reviewers
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, reopened, ready_for_review]
 
 jobs:
   auto-assign:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     steps:
-      - uses: kentaro-m/auto-assign-action@v1.2.1
+      - uses: kentaro-m/auto-assign-action@2ab3c9d5b947463af333219e833b4642331a8a21 # v1.2.1
         with: { configuration-path: '.github/auto-assign.yml' }

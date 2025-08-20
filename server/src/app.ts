@@ -6,12 +6,12 @@ import { makeExecutableSchema } from "@graphql-tools/schema";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
-import pino from "pino";
 import { pinoHttp } from "pino-http";
 import { auditLogger } from "./middleware/audit-logger.js";
 import monitoringRouter from "./routes/monitoring.js";
 import aiRouter from "./routes/ai.js";
 import { register } from "./monitoring/metrics.js";
+import rbacRouter from "./routes/rbacRoutes.js";
 import { typeDefs } from "./graphql/schema.js";
 import resolvers from "./graphql/resolvers/index.js";
 import { getContext } from "./lib/auth.js";
@@ -20,13 +20,14 @@ import path from "path";
 import { fileURLToPath } from "url";
 import jwt from "jsonwebtoken"; // Assuming jsonwebtoken is available or will be installed
 import { Request, Response, NextFunction } from "express"; // Import types for middleware
+import logger from './config/logger';
 
 export const createApp = async () => {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
 
   const app = express();
-  const logger: pino.Logger = pino();
+  const appLogger = logger.child({ name: 'app' });
   app.use(helmet());
   app.use(
     cors({
@@ -34,12 +35,13 @@ export const createApp = async () => {
       credentials: true,
     }),
   );
-  app.use(pinoHttp({ logger, redact: ["req.headers.authorization"] }));
+  app.use(pinoHttp({ logger: appLogger, redact: ["req.headers.authorization"] }));
   app.use(auditLogger);
 
   // Rate limiting (exempt monitoring endpoints)
   app.use("/monitoring", monitoringRouter);
   app.use("/api/ai", aiRouter);
+  app.use("/rbac", rbacRouter);
   app.get("/metrics", async (_req, res) => {
     res.set("Content-Type", register.contentType);
     res.end(await register.metrics());
@@ -126,10 +128,13 @@ export const createApp = async () => {
   );
   const { depthLimit } = await import("./graphql/validation/depthLimit.js");
 
+  import { otelApolloPlugin } from './graphql/middleware/otelPlugin';
+
   const apollo = new ApolloServer({
     schema,
     // Security plugins - Order matters for execution lifecycle
     plugins: [
+      otelApolloPlugin(),
       persistedQueriesPlugin as any,
       resolverMetricsPlugin as any,
       auditLoggerPlugin as any,
@@ -146,7 +151,7 @@ export const createApp = async () => {
     formatError: (err) => {
       // Don't expose internal errors in production
       if (process.env.NODE_ENV === 'production') {
-        logger.error(`GraphQL Error: ${err.message}`, { stack: err.stack });
+        appLogger.error(`GraphQL Error: ${err.message}`, { stack: err.stack });
         return new Error('Internal server error');
       }
       return err;

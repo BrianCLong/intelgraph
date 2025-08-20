@@ -333,4 +333,4 @@ const graphSlice = createSlice({
     },
     setMinConfidenceFilter: (state, action) => {
       state.minConfidenceFilter = action.payload;
-    },
+    },}

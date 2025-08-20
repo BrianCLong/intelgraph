@@ -1,4 +1,4 @@
-### IntelGraph — Velocity Plan v4: Tenant Safety & Performance Hardening
+# IntelGraph — Velocity Plan v4: Tenant Safety & Performance Hardening
 
 **Owner:** Guy — Theme: multi-tenant isolation + big graph performance
 

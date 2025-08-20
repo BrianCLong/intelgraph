@@ -6,7 +6,7 @@
 import express, { Request, Response } from "express";
 import { body, query, validationResult } from "express-validator";
 import rateLimit from "express-rate-limit";
-import pino from "pino";
+import logger from '../config/logger';
 import EntityLinkingService from "../services/EntityLinkingService.js";
 import { Queue, QueueScheduler, Worker } from 'bullmq';
 import { Job } from 'bullmq'; // Import Job type for better typing
@@ -20,7 +20,7 @@ import { v4 as uuidv4 } from 'uuid'; // WAR-GAMED SIMULATION - For job IDs
 import AdversaryAgentService from '../ai/services/AdversaryAgentService.js';
 import { MediaType } from '../services/MultimodalDataService.js'; // WAR-GAMED SIMULATION - Import MediaType
 
-const logger = pino();
+const logger = logger.child({ name: 'aiRoutes' });
 const router = express.Router();
 
 // WAR-GAMED SIMULATION - BullMQ setup for video analysis jobs

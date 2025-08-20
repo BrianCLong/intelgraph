@@ -1,3 +1,3 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-npx --no commitlint --edit "$1"
+#!/bin/sh
+echo "commit-msg hook: \$1 is $1"
+cat "$1" | ./node_modules/.bin/commitlint

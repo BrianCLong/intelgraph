@@ -1,8 +1,8 @@
 import { Driver } from 'neo4j-driver';
-import pino from 'pino';
+import logger from '../config/logger';
 import { writeAudit } from '../utils/audit'; // Assuming audit utility exists
 
-const logger = pino();
+const logger = logger.child({ name: 'DataRetentionService' });
 
 interface RetentionPolicy {
   label: string; // Node or Relationship label

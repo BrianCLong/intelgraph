@@ -1,6 +1,6 @@
 import { getNeo4jDriver } from "../config/database.js";
-import GNNService from "./GNNService";
 import logger from "../utils/logger.js";
+import * as GNNModule from "./GNNService.js";
 
 /**
  * Entity Linking Service
@@ -64,7 +64,7 @@ class EntityLinkingService {
       const candidateEdges = candidates.map((c) => [entityId, c.id]);
       const graphData = { edges: existingEdges || [] };
 
-      const result = await GNNService.predictLinks({
+      const result = await GNNModule.default.predictLinks({
         investigationId,
         graphData,
         nodeFeatures,
