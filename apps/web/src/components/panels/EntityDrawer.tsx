@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { X, ExternalLink, Edit3, Trash2, Tag, Calendar, User, MapPin } from 'lucide-react'
+import { X, ExternalLink, Edit3, Trash2, Tag, Calendar, User, MapPin, HelpCircle } from 'lucide-react'
 import {
   Drawer,
   DrawerContent,
@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/Tooltip'
 import { formatDate, getRiskColor, capitalizeFirst } from '@/lib/utils'
 import type { Entity, Relationship, PanelProps } from '@/types'
+import { ExplainDrawer } from './ExplainDrawer'
 
 interface EntityDrawerProps extends PanelProps<Entity[]> {
   open: boolean
@@ -34,6 +35,7 @@ export function EntityDrawer({
   relationships = [],
 }: EntityDrawerProps) {
   const selectedEntity = entities.find(e => e.id === selectedEntityId)
+  const [explainOpen, setExplainOpen] = React.useState(false)
 
   const getEntityIcon = (type: string) => {
     switch (type) {
@@ -82,6 +84,7 @@ export function EntityDrawer({
   }
 
   return (
+    <>
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent side="right" className="w-96">
         <DrawerHeader>
@@ -137,6 +140,19 @@ export function EntityDrawer({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Export entity</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setExplainOpen(true)}
+                  >
+                    <HelpCircle className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Explain</TooltipContent>
               </Tooltip>
             </div>
           </div>
@@ -293,6 +309,13 @@ export function EntityDrawer({
         </div>
       </DrawerContent>
     </Drawer>
+    <ExplainDrawer
+      sourceId={selectedEntity.id}
+      targetId={relatedEntities[0]?.id || selectedEntity.id}
+      open={explainOpen}
+      onOpenChange={setExplainOpen}
+    />
+    </>
   )
 }
 

@@ -125,6 +125,7 @@ export const createApp = async () => {
     "./graphql/plugins/auditLogger.js"
   );
   const { depthLimit } = await import("./graphql/validation/depthLimit.js");
+  const { rateLimiting } = await import('./graphql/middleware/rateLimiting.js');
 
   const apollo = new ApolloServer({
     schema,
@@ -178,8 +179,9 @@ export const createApp = async () => {
 
   app.use(
     "/graphql",
-    express.json(),
+    express.json({ limit: '1mb' }),
     authenticateToken, // WAR-GAMED SIMULATION - Add authentication middleware here
+    rateLimiting,
     expressMiddleware(apollo, { context: getContext }),
   );
 

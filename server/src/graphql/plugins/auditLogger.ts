@@ -30,6 +30,31 @@ const auditLoggerPlugin: ApolloServerPlugin = {
     return {
       async willSendResponse(ctx) {
         const operation = ctx.operation;
+        const userId = ctx.contextValue?.user?.id ?? null;
+
+        if (ctx.contextValue?.audit?.action === "explanation_requested") {
+          const logEntry = {
+            timestamp: start.toISOString(),
+            userId: ANONYMIZE ? anonymize(userId) : userId,
+            action: "explanation_requested",
+            traceId: ctx.contextValue.audit.traceId,
+            input: ctx.contextValue.audit.input,
+            latency: ctx.contextValue.audit.latency,
+          };
+          try {
+            if (ELASTIC_URL) {
+              await axios.post(`${ELASTIC_URL}/audit/_doc`, logEntry, {
+                timeout: 2000,
+              });
+            } else {
+              throw new Error("No Elasticsearch URL");
+            }
+          } catch (_err) {
+            fs.appendFileSync(LOG_FILE, JSON.stringify(logEntry) + "\n");
+          }
+          return;
+        }
+
         if (!operation || operation.operation !== "mutation") {
           return;
         }
@@ -37,7 +62,6 @@ const auditLoggerPlugin: ApolloServerPlugin = {
         const entity =
           (operation.selectionSet.selections[0] as any)?.name?.value ||
           "unknown";
-        const userId = ctx.contextValue?.user?.id ?? null;
 
         const before = ctx.contextValue?.audit?.before;
         const after =

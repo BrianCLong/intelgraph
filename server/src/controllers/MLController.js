@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const { getNeo4jDriver, getPostgresPool } = require('../config/database');
+const { advancedMLService } = require('../services/AdvancedMLService.js');
 
 class MLController {
   async trainModel(req, res) {
@@ -97,6 +98,24 @@ class MLController {
       }
     } catch (e) {
       return res.status(500).json({ success: false, error: e.message });
+    }
+  }
+
+  async getExplanations(req, res) {
+    try {
+      const { sourceId, targetId, edgeId, mode = 'why' } = req.query || {};
+      const data = await advancedMLService.getExplanations({
+        sourceId,
+        targetId,
+        edgeId,
+        mode
+      });
+      if (data.traceId) {
+        res.set('x-trace-id', data.traceId);
+      }
+      return res.json(data);
+    } catch (e) {
+      return res.status(500).json({ error: e.message });
     }
   }
 }

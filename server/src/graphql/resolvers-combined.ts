@@ -4,6 +4,7 @@ const copilotResolvers = require('./resolvers.copilot.js');
 const graphResolvers = require('./resolvers.graphops.js');
 const aiResolvers = require('./resolvers.ai.js');
 const annotationsResolvers = require('./resolvers.annotations.js');
+import { advancedMLService } from '../services/AdvancedMLService.js';
 import { v4 as uuidv4 } from 'uuid';
 
 interface User {
@@ -66,6 +67,28 @@ export const resolvers = {
       return investigationId
         ? goals.filter(g => g.investigationId === String(investigationId))
         : goals;
+    },
+    explainConnection: async (_: any, { sourceId, targetId }: any, ctx: Context) => {
+      const start = Date.now();
+      const result = await advancedMLService.getExplanations({ sourceId, targetId, mode: 'why' });
+      ctx.audit = {
+        action: 'explanation_requested',
+        traceId: result.traceId,
+        input: { sourceId, targetId },
+        latency: Date.now() - start
+      };
+      return result;
+    },
+    counterfactualEdge: async (_: any, { edgeId, target }: any, ctx: Context) => {
+      const start = Date.now();
+      const result = await advancedMLService.getExplanations({ edgeId, target, mode: 'counterfactual' });
+      ctx.audit = {
+        action: 'explanation_requested',
+        traceId: result.traceId,
+        input: { edgeId, target },
+        latency: Date.now() - start
+      };
+      return result;
     }
   },
 

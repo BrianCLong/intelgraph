@@ -49,6 +49,13 @@ const graphqlErrors = new client.Counter({
   labelNames: ["operation", "error_type"],
 });
 
+// Explanation service metrics
+const explanationRequestDuration = new client.Histogram({
+  name: 'explanation_request_duration_seconds',
+  help: 'Latency of explanation requests',
+  buckets: [0.1, 0.5, 1, 1.5, 2, 5]
+});
+
 // Tenant isolation violations
 const tenantScopeViolationsTotal = new client.Counter({
   name: "tenant_scope_violations_total",
@@ -193,6 +200,7 @@ register.registerMetric(httpRequestsTotal);
 register.registerMetric(graphqlRequestDuration);
 register.registerMetric(graphqlRequestsTotal);
 register.registerMetric(graphqlErrors);
+register.registerMetric(explanationRequestDuration);
 register.registerMetric(tenantScopeViolationsTotal);
 register.registerMetric(dbConnectionsActive);
 register.registerMetric(dbQueryDuration);
@@ -338,6 +346,7 @@ export {
   graphqlRequestDuration,
   graphqlRequestsTotal,
   graphqlErrors,
+  explanationRequestDuration,
   dbConnectionsActive,
   dbQueryDuration,
   dbQueriesTotal,
