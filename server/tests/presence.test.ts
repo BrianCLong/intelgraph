@@ -53,4 +53,22 @@ describe('presence websocket', () => {
       });
     });
   });
+
+  it('updates cursor on heartbeat', (done) => {
+    const client = ioClient(url, {
+      auth: { token: 't1', workspaceId: 'ws1' },
+      transports: ['websocket'],
+    });
+    client.once('presence:update', () => {
+      client.emit('presence:heartbeat', { cursor: { x: 1, y: 2 } });
+    });
+    client.on('presence:update', (list: any[]) => {
+      const me = list.find((p: any) => p.userId === '1');
+      if (me?.cursor) {
+        expect(me.cursor).toEqual({ x: 1, y: 2 });
+        client.close();
+        done();
+      }
+    });
+  });
 });
