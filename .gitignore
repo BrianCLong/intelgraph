@@ -123,3 +123,4 @@ conflicts/
 __pycache__/
 *.pyc
 
+client/test-results/
