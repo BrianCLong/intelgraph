@@ -84,4 +84,35 @@ async function evaluate(action, user, resource = {}, env = {}) {
   return { allow: true };
 }
 
-export { evaluate };
+/**
+ * Compile row-level security predicates for Neo4j queries based on user attributes.
+ * Currently supports territory scoping and sensitivity clearance. Returns an
+ * object containing a Cypher fragment prefixed with `AND` and the parameters to
+ * bind.
+ */
+function buildRlsPredicate(user = {}) {
+  const territories = user.territories || [];
+  const clearance = user.clearance || "public";
+  const clauseParts = [];
+  const params = {};
+
+  if (territories.length > 0) {
+    clauseParts.push("n.territory IN $rls_territories");
+    params.rls_territories = territories;
+  }
+
+  const order = ["public", "internal", "confidential", "secret", "topsecret"];
+  const idx = order.indexOf(clearance);
+  if (idx >= 0) {
+    // Allow access to resources up to the user's clearance level
+    params.rls_allowed_sensitivity = order.slice(0, idx + 1);
+    clauseParts.push(
+      "coalesce(n.sensitivity, 'public') IN $rls_allowed_sensitivity",
+    );
+  }
+
+  const clause = clauseParts.length ? ` AND ${clauseParts.join(" AND ")}` : "";
+  return { clause, params };
+}
+
+export { evaluate, buildRlsPredicate };

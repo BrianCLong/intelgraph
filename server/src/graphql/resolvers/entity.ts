@@ -11,6 +11,7 @@ import {
 import { requireTenant } from "../../middleware/withTenant.js";
 import { getPostgresPool } from "../../db/postgres.js";
 import axios from "axios"; // For calling ML service
+import { buildRlsPredicate } from "../../services/AccessControl.js";
 
 const logger = logger.child({ name: 'entityResolvers' });
 const driver = getNeo4jDriver();
@@ -26,10 +27,12 @@ const entityResolvers = {
       const session = driver.session();
       try {
         const tenantId = requireTenant(context);
-        const result = await session.run(
-          "MATCH (n:Entity {id: $id, tenantId: $tenantId}) RETURN n",
-          { id, tenantId },
-        );
+        let query =
+          "MATCH (n:Entity {id: $id, tenantId: $tenantId}) WHERE 1=1";
+        const rls = buildRlsPredicate(context.user);
+        query += `${rls.clause} RETURN n`;
+        const params = { id, tenantId, ...rls.params };
+        const result = await session.run(query, params);
         if (result.records.length === 0) {
           return null;
         }
@@ -85,9 +88,11 @@ const entityResolvers = {
           params.q = q;
         }
 
-        query += " RETURN n SKIP $offset LIMIT $limit";
+        const rls = buildRlsPredicate(context.user);
+        query += `${rls.clause} RETURN n SKIP $offset LIMIT $limit`;
         params.limit = limit;
         params.offset = offset;
+        Object.assign(params, rls.params);
 
         const result = await session.run(query, params);
         return result.records.map((record) => {
