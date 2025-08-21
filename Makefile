@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 PY := python3
 
-.PHONY: bootstrap up down logs ps server client ingest graph smoke clean reset-db ingest-assets
+.PHONY: bootstrap up down logs ps server client ingest graph smoke clean reset-db ingest-assets lint-python format-python
 
 bootstrap: ; @test -f .env || cp .env.example .env; 
 	npm ci; 
@@ -28,6 +28,12 @@ reset-db: ; docker compose down; \
   V=$$(docker volume ls -q | grep neo4j_data || true); \
   if [ -n "$$V" ]; then docker volume rm $$V; fi; \
   echo "🗑️  Neo4j volume removed"
+
+lint-python:
+	ruff check . --fix
+
+format-python:
+	black .
 
 # MVP-1++ Sprint Targets
 preflight:
