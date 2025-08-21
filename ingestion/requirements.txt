@@ -4,3 +4,4 @@ redis
 sentence-transformers
 hdbscan
 prometheus-client
+requests
