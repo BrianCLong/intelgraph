@@ -1,0 +1,219 @@
+components:
+  schemas:
+    EntityIn:
+      properties:
+        email:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Email
+        name:
+          title: Name
+          type: string
+        type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Type
+      required:
+      - name
+      title: EntityIn
+      type: object
+    FeatureScore:
+      properties:
+        attribute:
+          title: Attribute
+          type: string
+        score:
+          title: Score
+          type: number
+        weight:
+          title: Weight
+          type: number
+      required:
+      - attribute
+      - weight
+      - score
+      title: FeatureScore
+      type: object
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          title: Detail
+          type: array
+      title: HTTPValidationError
+      type: object
+    MatchRequest:
+      properties:
+        entity:
+          $ref: '#/components/schemas/EntityIn'
+      required:
+      - entity
+      title: MatchRequest
+      type: object
+    MatchResponse:
+      properties:
+        cluster_id:
+          title: Cluster Id
+          type: integer
+        details:
+          items:
+            $ref: '#/components/schemas/FeatureScore'
+          title: Details
+          type: array
+        pair_id:
+          title: Pair Id
+          type: string
+        score:
+          title: Score
+          type: number
+      required:
+      - cluster_id
+      - pair_id
+      - score
+      - details
+      title: MatchResponse
+      type: object
+    MergeRequest:
+      properties:
+        source_id:
+          title: Source Id
+          type: integer
+        target_id:
+          title: Target Id
+          type: integer
+      required:
+      - source_id
+      - target_id
+      title: MergeRequest
+      type: object
+    MergeResponse:
+      properties:
+        cluster_id:
+          title: Cluster Id
+          type: integer
+        pair_id:
+          title: Pair Id
+          type: string
+      required:
+      - cluster_id
+      - pair_id
+      title: MergeResponse
+      type: object
+    ScorecardResponse:
+      properties:
+        features:
+          items:
+            $ref: '#/components/schemas/FeatureScore'
+          title: Features
+          type: array
+        pair_id:
+          title: Pair Id
+          type: string
+        total_score:
+          title: Total Score
+          type: number
+      required:
+      - pair_id
+      - total_score
+      - features
+      title: ScorecardResponse
+      type: object
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          title: Location
+          type: array
+        msg:
+          title: Message
+          type: string
+        type:
+          title: Error Type
+          type: string
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+      type: object
+info:
+  title: Entity Resolution Service
+  version: 0.1.0
+openapi: 3.1.0
+paths:
+  /er/explain/{pair_id}:
+    get:
+      operationId: explain_er_explain__pair_id__get
+      parameters:
+      - in: path
+        name: pair_id
+        required: true
+        schema:
+          title: Pair Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScorecardResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Explain
+  /er/match:
+    post:
+      operationId: match_er_match_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatchRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Match
+  /er/merge:
+    post:
+      operationId: merge_er_merge_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MergeRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MergeResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Merge
