@@ -535,3 +535,75 @@ Detect synthetic content and psychological manipulation in collaboration channel
 - Detection API exposing confidence scores
 - Alerting integration with existing notification system
 - Benchmark dataset and accuracy report","AI,enhancement,backend,security"
+"Entity Model v2 (full catalog)","## Description
+Folder: /services/graph-api/model-v2/ • API: GraphQL v2
+Expand the graph entity schema with core objects: Asset, Location, Device, and Case; incorporate policy and provenance metadata on nodes and edges.
+
+## Acceptance Criteria
+- GraphQL v2 schema exposes Asset, Location, Device, Case types
+- Nodes and relationships carry policy tags and provenance fields
+- Endpoints accept and return policy and provenance attributes
+- Unit tests for new entity types and tag propagation","backend,graph,enhancement"
+"Temporal Versioning (Bitemporal)","## Description
+Folder: /services/graph-api/temporal/ • API: asOf/validFrom/validTo args
+Add bitemporal versioning with asOf, validFrom, and validTo parameters so queries can access consistent snapshots at any point in history.
+
+## Acceptance Criteria
+- GraphQL APIs accept asOf/validFrom/validTo arguments
+- Queries return consistent snapshot results for given temporal parameters
+- Tests cover overlapping and non-overlapping validity ranges
+- Documentation for temporal query semantics","backend,graph,enhancement,performance"
+"Geo-Temporal Indexes & Trajectories","## Description
+Folder: /services/graph-api/geotemp/
+Implement spatial-temporal indexing to support trajectory and stay-point queries over up to 10k nodes with sub-200ms latency.
+
+## Acceptance Criteria
+- Geo-temporal indexes built for movement events
+- API supports trajectory and stay-point queries
+- Benchmarks show under 200ms latency for 10k nodes
+- Integration tests for query accuracy","backend,graph,performance"
+"Policy Tags Enrichment","## Description
+Folder: /services/graph-api/policy-tags/
+Augment graph nodes and edges with ABAC facets (origin, clearance, legal basis, need-to-know) and enforce access controls.
+
+## Acceptance Criteria
+- Policy tag model captures origin, clearance, legal basis, and need-to-know
+- Enforcement layer filters queries based on policy tags
+- API to add and query policy tags
+- Unit tests verifying access restrictions","backend,security,graph"
+"Provenance/Lineage Chain","## Description
+Folder: /services/graph-api/provenance/
+Track full lineage of data via source→assertion→transformation edges stored and queryable in the graph.
+
+## Acceptance Criteria
+- Schema supports source, assertion, and transformation nodes/edges
+- Provenance chain persisted on ingest
+- Graph queries expose lineage for entities
+- Tests ensuring chain integrity","backend,graph,enhancement"
+"Time-Travel Reads API","## Description
+Folder: /services/graph-api/snapshots/
+Provide deterministic time-travel read endpoint that returns graph state as of a specified timestamp and supports contract tests.
+
+## Acceptance Criteria
+- API endpoint accepts asOf timestamp and returns consistent view
+- Deterministic results for repeated asOf queries
+- Contract tests verifying time-travel semantics pass
+- Documentation with example usage","backend,graph"
+"Graph Migration/Constraints Pack","## Description
+Folder: /services/graph-api/migrations/
+Deliver idempotent migrations and unique constraint coverage exceeding 95% for the graph database.
+
+## Acceptance Criteria
+- Migration scripts are idempotent
+- Unique constraints cover more than 95% of schema
+- Validation scripts report constraint coverage
+- Tests ensure migrations can rerun without side effects","backend,graph,maintenance"
+"Read-only Analytics Views (safe)","## Description
+Folder: /services/graph-api/readonly-views/
+Expose policy-aware materialized read models for analytics without modifying source data.
+
+## Acceptance Criteria
+- Materialized views for analytics created read-only
+- Views respect policy tags and access controls
+- Documented refresh mechanism
+- Tests ensuring read-only enforcement","backend,analytics,graph"
