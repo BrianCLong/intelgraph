@@ -9,14 +9,13 @@ import json
 import os
 import sys
 import warnings
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Any, Optional
 
 import cv2
 import numpy as np
 import torch
-from ultralytics import YOLO
 from PIL import Image
+from ultralytics import YOLO
 
 # Suppress warnings
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -55,8 +54,8 @@ class YOLODetection:
         confidence_threshold: float = 0.5,
         nms_threshold: float = 0.4,
         max_detections: int = 100,
-        custom_classes: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
+        custom_classes: Optional[list[str]] = None
+    ) -> dict[str, Any]:
         """Detect objects in image using YOLO"""
         try:
             # Load and validate image
@@ -94,11 +93,11 @@ class YOLODetection:
     
     def detect_objects_batch(
         self,
-        image_paths: List[str],
+        image_paths: list[str],
         confidence_threshold: float = 0.5,
         nms_threshold: float = 0.4,
         max_detections: int = 100
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Detect objects in multiple images"""
         results = []
         
@@ -136,8 +135,8 @@ class YOLODetection:
     def _process_detections(
         self,
         result,
-        custom_classes: Optional[List[str]] = None
-    ) -> List[Dict[str, Any]]:
+        custom_classes: Optional[list[str]] = None
+    ) -> list[dict[str, Any]]:
         """Process YOLO detection results"""
         detections = []
         
@@ -163,7 +162,7 @@ class YOLODetection:
             class_ids = np.zeros(len(coords), dtype=int)
         
         # Process each detection
-        for i, (coord, conf, class_id) in enumerate(zip(coords, confidences, class_ids)):
+        for coord, conf, class_id in zip(coords, confidences, class_ids):
             x1, y1, x2, y2 = coord
             
             # Get class name
@@ -193,10 +192,10 @@ class YOLODetection:
     def draw_detections(
         self,
         image_path: str,
-        detections: List[Dict[str, Any]],
+        detections: list[dict[str, Any]],
         output_path: Optional[str] = None,
         show_confidence: bool = True,
-        color_map: Optional[Dict[str, Tuple[int, int, int]]] = None
+        color_map: Optional[dict[str, tuple[int, int, int]]] = None
     ) -> Optional[str]:
         """Draw detection boxes on image"""
         try:
@@ -266,7 +265,7 @@ class YOLODetection:
             print(f"Error drawing detections: {e}", file=sys.stderr)
             return None
     
-    def _get_default_colors(self) -> Dict[str, Tuple[int, int, int]]:
+    def _get_default_colors(self) -> dict[str, tuple[int, int, int]]:
         """Get default colors for different classes"""
         colors = [
             (255, 0, 0),    # Red
@@ -287,7 +286,7 @@ class YOLODetection:
         
         return color_map
     
-    def get_model_info(self) -> Dict[str, Any]:
+    def get_model_info(self) -> dict[str, Any]:
         """Get information about the loaded model"""
         return {
             "model_name": getattr(self.model, 'model_name', 'unknown'),
