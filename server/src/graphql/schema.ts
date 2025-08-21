@@ -1,8 +1,8 @@
 export const typeDefs = `
   scalar JSON
   scalar DateTime
-  type Entity { id: ID!, type: String!, props: JSON, createdAt: DateTime!, updatedAt: DateTime, canonicalId: ID }
-  type Relationship { id: ID!, from: ID!, to: ID!, type: String!, props: JSON, createdAt: DateTime! }
+  type Entity { id: ID!, type: String!, props: JSON, policy: JSON, labels: [String!], createdAt: DateTime!, updatedAt: DateTime, canonicalId: ID }
+  type Relationship { id: ID!, from: ID!, to: ID!, type: String!, props: JSON, policy: JSON, labels: [String!], createdAt: DateTime! }
   type GeneratedEntitiesResult {
     entities: [Entity!]!
     relationships: [Relationship!]!
@@ -405,6 +405,10 @@ input SemanticSearchFilter {
     createRelationship(input: RelationshipInput!): Relationship!
     updateRelationship(id: ID!, input: RelationshipInput!): Relationship!
     deleteRelationship(id: ID!): Boolean!
+    setEntityPolicy(id: ID!, policy: JSON!, labels: [String!]): Entity!
+    clearEntityPolicy(id: ID!): Entity!
+    setRelationshipPolicy(id: ID!, policy: JSON!, labels: [String!]): Relationship!
+    clearRelationshipPolicy(id: ID!): Relationship!
     createUser(input: UserInput!): User!
     updateUser(id: ID!, input: UserInput!): User!
     deleteUser(id: ID!): Boolean!
