@@ -1,0 +1,14 @@
+[
+  {"name": "sprint-07", "color": "8A2BE2", "description": "Sprint 07 (Aug 25–Sep 5, 2025)"},
+  {"name": "area:frontend", "color": "1f77b4"},
+  {"name": "area:backend", "color": "ff7f0e"},
+  {"name": "area:graph", "color": "2ca02c"},
+  {"name": "area:ai", "color": "d62728"},
+  {"name": "area:devx", "color": "9467bd"},
+  {"name": "area:qa", "color": "17becf"},
+  {"name": "type:feature", "color": "0366d6"},
+  {"name": "type:test", "color": "0e8a16"},
+  {"name": "type:infra", "color": "b60205"},
+  {"name": "priority:p0", "color": "b60205"},
+  {"name": "priority:p1", "color": "d93f0b"}
+]

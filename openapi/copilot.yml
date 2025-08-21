@@ -1,0 +1,20 @@
+openapi: 3.0.3
+info: { title: IntelGraph Copilot, version: 0.1.0 }
+paths:
+  /copilot/preview:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, properties: { prompt: { type: string } }, required: [prompt] }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cypher: { type: string }
+                  estimate: { type: object, properties: { rows: { type: integer }, cost: { type: number } } }
