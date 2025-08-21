@@ -1,0 +1,82 @@
+[
+  {
+    "tenant": "default",
+    "record": {
+      "id": "1",
+      "name": "Alice Smith",
+      "address": "1 Main St",
+      "latitude": 40.0,
+      "longitude": -70.0,
+      "timestamp": "2024-01-01T00:00:00"
+    },
+    "candidate": {
+      "id": "2",
+      "name": "Alice Smith",
+      "address": "1 Main St",
+      "latitude": 40.0,
+      "longitude": -70.0,
+      "timestamp": "2024-01-01T00:00:00"
+    },
+    "label": 1
+  },
+  {
+    "tenant": "default",
+    "record": {
+      "id": "1",
+      "name": "Alice Smith",
+      "address": "1 Main St",
+      "latitude": 40.0,
+      "longitude": -70.0,
+      "timestamp": "2024-01-01T00:00:00"
+    },
+    "candidate": {
+      "id": "3",
+      "name": "Bob Jones",
+      "address": "99 Broadway",
+      "latitude": 41.0,
+      "longitude": -71.0,
+      "timestamp": "2024-01-02T00:00:00"
+    },
+    "label": 0
+  },
+  {
+    "tenant": "default",
+    "record": {
+      "id": "4",
+      "name": "Charlie Brown",
+      "address": "22 Pine Rd",
+      "latitude": 42.0,
+      "longitude": -72.0,
+      "timestamp": "2024-01-01T12:00:00"
+    },
+    "candidate": {
+      "id": "5",
+      "name": "Charles Brown",
+      "address": "22 Pine Road",
+      "latitude": 42.1,
+      "longitude": -72.1,
+      "timestamp": "2024-01-01T12:30:00"
+    },
+    "label": 1
+  },
+  {
+    "tenant": "default",
+    "record": {
+      "id": "6",
+      "name": "Diane Miller",
+      "address": "500 Oak St",
+      "latitude": 39.0,
+      "longitude": -69.0,
+      "timestamp": "2024-01-03T00:00:00"
+    },
+    "candidate": {
+      "id": "7",
+      "name": "Eve Davis",
+      "address": "700 Elm St",
+      "latitude": 35.0,
+      "longitude": -65.0,
+      "timestamp": "2023-12-31T00:00:00"
+    },
+    "label": 0
+  }
+]
