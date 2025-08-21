@@ -1,0 +1,2 @@
+IntelGraph enables analysts to explore complex relationships.
+The copilot feature assists in generating queries.

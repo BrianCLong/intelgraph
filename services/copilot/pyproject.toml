@@ -1,0 +1,22 @@
+[project]
+name = "intelgraph-copilot-service"
+version = "0.1.0"
+description = "AI Copilot service for NL2Cypher/GraphQL and RAG"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi",
+  "uvicorn",
+  "pydantic",
+  "aiosqlite",
+]
+
+[tool.black]
+line-length = 88
+
+[tool.mypy]
+python_version = "3.12"
+disallow_untyped_defs = true
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 88
