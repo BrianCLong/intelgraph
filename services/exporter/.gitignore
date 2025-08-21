@@ -1,0 +1,6 @@
+node_modules
+coverage
+dist
+*.zip
+*.pdf
+package-lock.json
