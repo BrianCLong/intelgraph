@@ -3,11 +3,12 @@
  * Provides database operations with automatic tenant isolation
  */
 
-import { Driver, Session, Transaction } from 'neo4j-driver';
+import neo4j, { Driver, Session, Transaction } from 'neo4j-driver';
 import { Pool } from 'pg';
 import Redis from 'ioredis';
 import logger from '../config/logger';
 import { TenantContext, TenantValidator } from '../middleware/tenantValidator.js';
+import { getTenantConfig, getConfigVersion } from '../config/tenant-database.js';
 
 const logger = logger.child({ name: 'tenantDatabase' });
 
@@ -31,11 +32,55 @@ export class TenantDatabase {
   private neo4j?: Driver;
   private postgres?: Pool;
   private redis?: Redis;
+  private redisPrefix: string;
 
-  constructor(config: DatabaseConfig) {
+  private static pgPools: Map<string, Pool> = new Map();
+  private static neo4jDrivers: Map<string, Driver> = new Map();
+  private static configVersion = 0;
+
+  constructor(config: DatabaseConfig, redisPrefix = '') {
     this.neo4j = config.neo4j;
     this.postgres = config.postgres;
     this.redis = config.redis;
+    this.redisPrefix = redisPrefix;
+  }
+
+  static async forTenant(tenantId: string, redis?: Redis): Promise<TenantDatabase> {
+    const version = getConfigVersion();
+    if (version !== this.configVersion) {
+      await this.clearCaches();
+      this.configVersion = version;
+    }
+
+    const cfg = getTenantConfig(tenantId);
+    if (!cfg) {
+      throw new Error(`No database configuration for tenant ${tenantId}`);
+    }
+
+    let pg = this.pgPools.get(tenantId);
+    if (!pg) {
+      pg = new Pool(cfg.postgres);
+      this.pgPools.set(tenantId, pg);
+    }
+
+    let driver = this.neo4jDrivers.get(tenantId);
+    if (!driver) {
+      driver = neo4j.driver(cfg.neo4j.uri, neo4j.auth.basic(cfg.neo4j.username, cfg.neo4j.password));
+      this.neo4jDrivers.set(tenantId, driver);
+    }
+
+    return new TenantDatabase({ postgres: pg, neo4j: driver, redis }, cfg.redisPrefix || `tenant:${tenantId}`);
+  }
+
+  private static async clearCaches() {
+    for (const pool of this.pgPools.values()) {
+      try { await pool.end(); } catch {}
+    }
+    this.pgPools.clear();
+    for (const driver of this.neo4jDrivers.values()) {
+      try { await driver.close(); } catch {}
+    }
+    this.neo4jDrivers.clear();
   }
 
   /**
@@ -313,7 +358,8 @@ export class TenantDatabase {
     tenantContext: TenantContext
   ): string {
     const queryHash = Buffer.from(query + JSON.stringify(parameters)).toString('base64').slice(0, 32);
-    return TenantValidator.getTenantCacheKey(`query:${queryHash}`, tenantContext);
+    const baseKey = this.redisPrefix ? `${this.redisPrefix}:query:${queryHash}` : `query:${queryHash}`;
+    return TenantValidator.getTenantCacheKey(baseKey, tenantContext);
   }
 
   /**
