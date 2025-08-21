@@ -1,0 +1,31 @@
+[project]
+name = "ingest-service"
+version = "0.1.0"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "redis>=5",
+    "requests",
+    "python-magic",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "fakeredis", "black", "ruff", "mypy"]
+
+[tool.black]
+line-length = 88
+
+[tool.ruff]
+line-length = 88
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["ingest"]

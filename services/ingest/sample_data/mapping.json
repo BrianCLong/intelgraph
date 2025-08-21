@@ -1,0 +1,8 @@
+{
+  "tenant": "tenantId",
+  "type": "entityType",
+  "id": "entityId",
+  "name": "fullName",
+  "email": "email",
+  "phone": "phone"
+}

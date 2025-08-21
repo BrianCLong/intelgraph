@@ -1,0 +1,3 @@
+tenant,type,id,name,email,phone
+t1,person,1,Alice,alice@example.com,555-123-4567
+t1,person,2,Bob,bob@example.com,555-987-6543
