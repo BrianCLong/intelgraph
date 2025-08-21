@@ -397,7 +397,11 @@ input SemanticSearchFilter {
   
   input EntityInput { type: String!, props: JSON }
   input RelationshipInput { from: ID!, to: ID!, type: String!, props: JSON }
-  
+
+  input FieldMappingInput { source: String!, target: String!, maskingMode: String }
+  input IngestJobSpec { source: JSON!, mapping: [FieldMappingInput!]!, policyTags: [String!] }
+  type IngestJob { id: ID!, status: String!, metrics: JSON, lineageURI: String, policyFindings: [String!] }
+
   type Mutation {
     createEntity(input: EntityInput!): Entity!
     updateEntity(id: ID!, input: EntityInput!): Entity!
@@ -437,6 +441,9 @@ input SemanticSearchFilter {
     Useful when investigation data has changed significantly.
     """
     clearGraphRAGCache(investigationId: ID!): CacheOperationResult!
+
+    startIngest(spec: IngestJobSpec!): IngestJob!
+    ingestStatus(id: ID!): IngestJob!
   }
   
   type Subscription {
