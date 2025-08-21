@@ -1,9 +1,12 @@
 ## API Endpoints
+- `POST /claims`
 - `POST /claims/extract`
+- `POST /evidence`
 - `POST /evidence/register`
 - `POST /claims/{id}/attach`
 - `GET /claims/{id}`
 - `GET /claims/{id}/corroboration`
 - `GET /claims/{id}/ledger`
+- `GET /bundles/{id}/export`
 - `GET /export/prov`
 - `GET /healthz`, `GET /readyz`, `GET /metrics`

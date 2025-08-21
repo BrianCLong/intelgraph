@@ -1,14 +1,13 @@
-from fixtures import client
 
 
 def test_provenance_graph(client):
     claim = client.post(
-        "/claims/extract",
+        "/claims",
         json={"text": "Mars was visited."},
         headers={"X-API-Key": "testkey"},
-    ).json()[0]
+    ).json()
     evid = client.post(
-        "/evidence/register",
+        "/evidence",
         json={"kind": "url", "url": "http://nasa.gov"},
         headers={"X-API-Key": "testkey"},
     ).json()
@@ -22,3 +21,10 @@ def test_provenance_graph(client):
     node_ids = {n["id"] for n in data["nodes"]}
     assert claim["id"] in node_ids
     assert evid["id"] in node_ids
+
+    bundle = client.get(
+        f"/bundles/{claim['id']}/export", headers={"X-API-Key": "testkey"}
+    ).json()
+    bundle_ids = {n["id"] for n in bundle["nodes"]}
+    assert claim["id"] in bundle_ids
+    assert evid["id"] in bundle_ids
