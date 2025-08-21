@@ -1,0 +1,5 @@
+{
+  "id": "connector-s3csv",
+  "version": "0.1.0",
+  "entrypoint": "ig-connector s3csv"
+}
