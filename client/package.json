@@ -47,7 +47,7 @@
     "date-fns": "^4.1.0",
     "fuse.js": "^7.1.0",
     "graphql": "^16.11.0",
-    "graphql-ws": "^5.16.2",
+    "graphql-ws": "^6.0.6",
     "jest-environment-jsdom": "^30.0.5",
     "jquery": "^3.7.1",
     "leaflet": "^1.9.4",
