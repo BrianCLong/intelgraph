@@ -1,0 +1,35 @@
+{
+  "id": null,
+  "uid": "query-latency-slo",
+  "title": "Query Latency SLO",
+  "timezone": "browser",
+  "schemaVersion": 36,
+  "version": 1,
+  "panels": [
+    {
+      "type": "heatmap",
+      "title": "Query Latency Heatmap",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(query_latency_seconds_bucket[5m])) by (le)",
+          "format": "heatmap"
+        }
+      ],
+      "xAxis": {
+        "mode": "time"
+      },
+      "yAxis": {
+        "format": "s",
+        "label": "Latency",
+        "min": 0
+      },
+      "color": {
+        "mode": "spectrum"
+      }
+    }
+  ]
+}
