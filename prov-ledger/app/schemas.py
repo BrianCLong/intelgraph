@@ -14,6 +14,11 @@ class Claim(BaseModel):
     normalized: str
     embedding: Optional[List[float]] = None
     created_at: str
+    source_uri: Optional[str] = None
+    connector: Optional[str] = None
+    transforms: List[str] = []
+    payload_hash: Optional[str] = None
+    actor: Optional[str] = None
 
 
 class Evidence(BaseModel):
@@ -26,6 +31,10 @@ class Evidence(BaseModel):
     created_at: Optional[str] = None
     signed: Optional[bool] = False
     signer_fp: Optional[str] = None
+    source_uri: Optional[str] = None
+    connector: Optional[str] = None
+    transforms: List[str] = []
+    actor: Optional[str] = None
 
 
 class AttachEvidenceRequest(BaseModel):

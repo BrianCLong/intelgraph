@@ -33,7 +33,15 @@ async def extract(submit: SubmitText, _: None = Depends(api_key_auth)):
 @router.post("/evidence/register", response_model=Evidence)
 async def register_evidence(e: Evidence, _: None = Depends(api_key_auth)):
     check_request(e.title or "")
-    evid = evidence.register_evidence(e.kind, url=e.url, title=e.title)
+    evid = evidence.register_evidence(
+        e.kind,
+        url=e.url,
+        title=e.title,
+        source_uri=e.source_uri,
+        connector=e.connector,
+        transforms=e.transforms,
+        actor=e.actor or "system",
+    )
     provenance.add_evidence(evid)
     return Evidence(**evid)
 

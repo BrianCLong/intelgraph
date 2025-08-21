@@ -1,5 +1,6 @@
 import networkx as nx
 from typing import Dict
+from datetime import datetime
 
 _graph = nx.DiGraph()
 
@@ -14,7 +15,12 @@ def add_evidence(evid: dict) -> None:
 
 def attach(claim_id: str, evidence_id: str, agent: str = "system") -> None:
     act_id = f"attach:{claim_id}:{evidence_id}"
-    _graph.add_node(act_id, type="activity", agent=agent)
+    _graph.add_node(
+        act_id,
+        type="activity",
+        agent=agent,
+        timestamp=datetime.utcnow().isoformat(),
+    )
     _graph.add_edge(act_id, claim_id)
     _graph.add_edge(act_id, evidence_id)
 

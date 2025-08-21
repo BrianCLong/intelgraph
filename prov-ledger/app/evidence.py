@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict
+from typing import Dict, List, Optional
 import uuid
 from io import BytesIO
 
@@ -9,7 +9,18 @@ from .signatures import verify_signature
 _evidence: Dict[str, dict] = {}
 
 
-def register_evidence(kind: str, url: str | None = None, content: bytes | None = None, title: str | None = None, signature: bytes | None = None, public_key: str | None = None) -> dict:
+def register_evidence(
+    kind: str,
+    url: Optional[str] = None,
+    content: bytes | None = None,
+    title: Optional[str] = None,
+    signature: bytes | None = None,
+    public_key: str | None = None,
+    source_uri: Optional[str] = None,
+    connector: Optional[str] = None,
+    transforms: Optional[List[str]] = None,
+    actor: str = "system",
+) -> dict:
     evid_id = str(uuid.uuid4())
     data = content or (url or "").encode()
     h, length = sha256_digest(BytesIO(data))
@@ -27,6 +38,10 @@ def register_evidence(kind: str, url: str | None = None, content: bytes | None =
         "created_at": datetime.utcnow().isoformat(),
         "signed": signed,
         "signer_fp": signer_fp,
+        "source_uri": source_uri,
+        "connector": connector,
+        "transforms": transforms or [],
+        "actor": actor,
     }
     _evidence[evid_id] = evid
     return evid
