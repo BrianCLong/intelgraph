@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Observability SLO Dashboard</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      #charts {
+        display: flex;
+        gap: 20px;
+      }
+      svg {
+        border: 1px solid #ccc;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Observability SLO Dashboard</h1>
+    <div id="charts">
+      <svg id="ingest" width="200" height="100"></svg>
+      <svg id="er" width="200" height="100"></svg>
+      <svg id="policy" width="200" height="100"></svg>
+    </div>
+    <h2>Query Latency Heatmap</h2>
+    <svg id="heatmap" width="300" height="300"></svg>
+    <script>
+      async function fetchMetric(name) {
+        const res = await fetch(`http://localhost:9090/api/v1/query?query=${name}`);
+        const data = await res.json();
+        return parseFloat(data.data.result[0]?.value[1] || 0);
+      }
+      function drawBar(svgId, value, max) {
+        const svg = document.getElementById(svgId);
+        svg.innerHTML = '';
+        const h = svg.getAttribute('height');
+        const w = svg.getAttribute('width');
+        const barHeight = (value / max) * h;
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', 0);
+        rect.setAttribute('y', h - barHeight);
+        rect.setAttribute('width', w);
+        rect.setAttribute('height', barHeight);
+        rect.setAttribute('fill', '#4caf50');
+        svg.appendChild(rect);
+      }
+      async function update() {
+        const ingest = await fetchMetric('ingest_rate_total');
+        const er = await fetchMetric('er_latency_ms');
+        const policy = await fetchMetric('policy_eval_ms');
+        drawBar('ingest', ingest, 100);
+        drawBar('er', er, 200);
+        drawBar('policy', policy, 100);
+      }
+      function drawHeatmap() {
+        const svg = document.getElementById('heatmap');
+        const size = 10;
+        const cell = 30;
+        for (let x = 0; x < size; x++) {
+          for (let y = 0; y < size; y++) {
+            const latency = Math.random() * 200;
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            rect.setAttribute('x', x * cell);
+            rect.setAttribute('y', y * cell);
+            rect.setAttribute('width', cell);
+            rect.setAttribute('height', cell);
+            rect.setAttribute('fill', `rgba(255,0,0,${latency / 200})`);
+            svg.appendChild(rect);
+          }
+        }
+      }
+      update();
+      setInterval(update, 5000);
+      drawHeatmap();
+    </script>
+  </body>
+</html>

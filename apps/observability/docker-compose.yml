@@ -1,0 +1,22 @@
+version: '3.9'
+services:
+  metrics-publisher:
+    image: python:3.11-slim
+    working_dir: /app
+    volumes:
+      - ./metrics-publisher.py:/app/metrics-publisher.py
+    command: bash -c "pip install prometheus_client && python metrics-publisher.py"
+    expose:
+      - '8000'
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - '9090:9090'
+  dashboard:
+    image: nginx:alpine
+    volumes:
+      - .:/usr/share/nginx/html:ro
+    ports:
+      - '8080:80'
