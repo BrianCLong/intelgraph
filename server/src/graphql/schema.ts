@@ -8,6 +8,27 @@ export const typeDefs = `
     relationships: [Relationship!]!
   }
 
+  type CopilotPolicy {
+    allowed: Boolean!
+    reason: String!
+    deniedRules: [String!]!
+  }
+
+  type CopilotCitation {
+    nodeId: ID!
+    source: String!
+    confidence: Float!
+  }
+
+  type CopilotAnswer {
+    preview: String!
+    cypher: String
+    citations: [CopilotCitation!]!
+    redactions: [String!]!
+    policy: CopilotPolicy!
+    metrics: JSON!
+  }
+
 type AISuggestionExplanation {
   score: Float!
   factors: [String!]!
@@ -389,6 +410,7 @@ input SemanticSearchFilter {
       topK: Int = 10
       investigationId: ID!
     ): [SimilarEntity!]!
+    copilotQuery(question: String!, caseId: ID!, preview: Boolean! = true): CopilotAnswer!
     auditTrace(
       investigationId: ID!
       filter: AuditLogFilter

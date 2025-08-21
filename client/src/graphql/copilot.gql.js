@@ -1,4 +1,4 @@
-import { gql } from "@apollo/client";
+import { gql } from '@apollo/client';
 
 export const START_RUN = gql`
   mutation StartCopilotRun($goalId: ID!) {
@@ -46,6 +46,27 @@ export const GENERATE_ENTITIES_FROM_TEXT = gql`
         to
         type
       }
+    }
+  }
+`;
+
+export const COPILOT_QUERY = gql`
+  query CopilotQuery($question: String!, $caseId: ID!, $preview: Boolean!) {
+    copilotQuery(question: $question, caseId: $caseId, preview: $preview) {
+      preview
+      cypher
+      citations {
+        nodeId
+        source
+        confidence
+      }
+      redactions
+      policy {
+        allowed
+        reason
+        deniedRules
+      }
+      metrics
     }
   }
 `;
