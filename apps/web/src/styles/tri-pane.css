@@ -1,0 +1,34 @@
+.tri-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: 2fr 1fr;
+  gap: 8px;
+  height: 100vh;
+  padding: 8px;
+}
+#pane-graph {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  position: relative;
+}
+#pane-map {
+  grid-column: 2;
+  grid-row: 1;
+  position: relative;
+}
+#pane-timeline {
+  grid-column: 2;
+  grid-row: 2;
+  position: relative;
+}
+#pane-explain {
+  position: fixed;
+  right: 8px;
+  top: 8px;
+  width: 360px;
+  height: 44vh;
+  background: #111a;
+  backdrop-filter: blur(6px);
+  border-radius: 12px;
+  overflow: auto;
+}
