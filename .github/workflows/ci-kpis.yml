@@ -1,0 +1,29 @@
+name: CI KPIs Snapshot
+on:
+  schedule: [{ cron: '17 * * * *' }] # hourly
+  workflow_dispatch:
+jobs:
+  kpis:
+    runs-on: ubuntu-latest
+    permissions: { issues: write, contents: read }
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const owner="BrianCLong", repo="intelgraph";
+            const prs = await github.paginate(github.rest.pulls.list, { owner, repo, state: "open", per_page: 100 });
+            const since = new Date(Date.now()-3600*1000);
+            const runs = await github.paginate(github.rest.actions.listWorkflowRunsForRepo, { owner, repo, per_page: 100 });
+            const recent = runs.filter(r => new Date(r.created_at) > since);
+            const ok = recent.filter(r => r.conclusion==="success").length;
+            const fail = recent.filter(r => r.conclusion==="failure").length;
+            const q = prs.filter(p=>new Date(p.updated_at)>since).length;
+            const body = [
+              `**CI KPIs (last hour)**`,
+              `- Runs: ${recent.length} (✅ ${ok} / ❌ ${fail})`,
+              `- Open PRs touched: ${q}`,
+              `- Queue velocity target: 5–10 PRs/day`,
+              `- Updated: ${new Date().toISOString()}`
+            ].join("\n");
+            const issue = 762; // stabilization keystone issue
+            await github.rest.issues.createComment({ owner, repo, issue_number: issue, body });

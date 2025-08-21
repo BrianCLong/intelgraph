@@ -1,0 +1,47 @@
+# CodeQL Configuration for IntelGraph
+name: "IntelGraph CodeQL Config"
+
+# Disable default queries temporarily for faster scans
+disable-default-queries: false
+
+# Paths to analyze
+paths:
+  - "src"
+  - "server/src"
+  - "client/src"
+  - "services"
+  - "ml"
+  - "scripts"
+
+# Paths to ignore
+paths-ignore:
+  - "**/node_modules/**"
+  - "**/dist/**"
+  - "**/build/**"
+  - "**/coverage/**"
+  - "**/generated/**"
+  - "**/lib/**"
+  - "**/*.min.js"
+  - "**/*.bundle.js"
+  - "**/vendor/**"
+  - "**/__pycache__/**"
+  - "**/*.pyc"
+  - "**/test-results/**"
+  - "**/playwright-report/**"
+
+# Query suites to run
+queries:
+  - uses: security-extended
+  - uses: security-and-quality
+
+# Language-specific configurations
+packs:
+  javascript:
+    - "codeql/javascript-queries:AlertSuppression.ql"
+    - "codeql/javascript-queries:Security"
+  python:
+    - "codeql/python-queries:AlertSuppression.ql"
+    - "codeql/python-queries:Security"
+  typescript:
+    - "codeql/javascript-queries:AlertSuppression.ql"
+    - "codeql/javascript-queries:Security"
