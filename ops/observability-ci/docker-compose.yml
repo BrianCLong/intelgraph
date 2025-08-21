@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  neo4j:
+    image: neo4j:5
+    ports:
+      - '7474:7474'
+      - '7687:7687'
+  redis:
+    image: redis:7
+    ports:
+      - '6379:6379'
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml
+    ports:
+      - '9090:9090'
+  grafana:
+    image: grafana/grafana:latest
+    volumes:
+      - ./grafana:/var/lib/grafana/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - '3000:3000'
+  opa:
+    image: openpolicyagent/opa:latest
+    ports:
+      - '8181:8181'

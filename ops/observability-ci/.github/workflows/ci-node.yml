@@ -1,0 +1,22 @@
+name: ci-node
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        required: true
+        type: string
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+      - run: npm ci
+      - run: npm test -- --coverage
+      - run: node "$GITHUB_WORKSPACE/ops/observability-ci/scripts/verify-coverage.js" "${{ inputs.working-directory }}"

@@ -1,0 +1,26 @@
+name: ci-python
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        required: true
+        type: string
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: |
+          pip install pytest coverage black ruff mypy
+          black --check .
+          ruff .
+          mypy .
+          pytest --cov=. --cov-report=json:coverage-summary.json
+      - run: node "$GITHUB_WORKSPACE/ops/observability-ci/scripts/verify-coverage.js" "${{ inputs.working-directory }}"
