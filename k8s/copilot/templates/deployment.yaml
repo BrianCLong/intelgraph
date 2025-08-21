@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: { { include "copilot.fullname" . } } }
+spec:
+  replicas: { { .Values.replicaCount } }
+  selector:
+    matchLabels: { app: { { include "copilot.name" . } } }
+  template:
+    metadata:
+      labels: { app: { { include "copilot.name" . } } }
+    spec:
+      containers:
+        - name: app
+          image: '{{ .Values.image.repository }}:{{ .Values.image.tag }}'
+          imagePullPolicy: { { .Values.image.pullPolicy } }
+          ports:
+            - name: http
+              containerPort: 4002
+          env:
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: { { .Values.env.OTEL_EXPORTER_OTLP_ENDPOINT | quote } }
+          readinessProbe:
+            { httpGet: { path: /healthz, port: 4002 }, initialDelaySeconds: 5, periodSeconds: 10 }
+          livenessProbe:
+            { httpGet: { path: /healthz, port: 4002 }, initialDelaySeconds: 20, periodSeconds: 20 }
+          resources: { { - toYaml .Values.resources | nindent 12 } }

@@ -1,0 +1,32 @@
+{
+  "title": "IntelGraph — SLOs",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Copilot Preview — p95 (ms)",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(otel_request_duration_seconds_bucket{service_name=\"copilot\",route=\"/copilot/preview\"}[5m])) by (le)) * 1000"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Sandbox Errors (rate)",
+      "targets": [
+        {
+          "expr": "sum(rate(otel_requests_errors_total{service_name=\"sandbox\"}[5m]))"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Ingest E2E Timing — p95 (ms)",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(otel_ingest_duration_seconds_bucket[5m])) by (le)) * 1000"
+        }
+      ]
+    }
+  ]
+}

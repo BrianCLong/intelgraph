@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: { { include "sandbox.fullname" . } } }
+spec:
+  replicas: { { .Values.replicaCount } }
+  selector:
+    matchLabels: { app: { { include "sandbox.name" . } } }
+  template:
+    metadata:
+      labels: { app: { { include "sandbox.name" . } } }
+    spec:
+      containers:
+        - name: app
+          image: '{{ .Values.image.repository }}:{{ .Values.image.tag }}'
+          imagePullPolicy: { { .Values.image.pullPolicy } }
+          ports:
+            - name: http
+              containerPort: 4003
+          env:
+            - name: NEO4J_URI
+              value: { { .Values.env.NEO4J_URI | quote } }
+            - name: NEO4J_USER
+              value: { { .Values.env.NEO4J_USER | quote } }
+            - name: NEO4J_PASS
+              valueFrom: { secretKeyRef: { name: neo4j-pass, key: password } }
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: { { .Values.env.OTEL_EXPORTER_OTLP_ENDPOINT | quote } }
+          readinessProbe:
+            { httpGet: { path: /healthz, port: 4003 }, initialDelaySeconds: 5, periodSeconds: 10 }
+          livenessProbe:
+            { httpGet: { path: /healthz, port: 4003 }, initialDelaySeconds: 20, periodSeconds: 20 }
+          resources: { { - toYaml .Values.resources | nindent 12 } }

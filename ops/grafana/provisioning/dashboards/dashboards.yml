@@ -1,0 +1,5 @@
+apiVersion: 1
+disableDeletion: false
+dashboards:
+  - name: IntelGraph SLOs
+    options: { path: /var/lib/grafana/dashboards }

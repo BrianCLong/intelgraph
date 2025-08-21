@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Service
+metadata: { name: { { include "copilot.fullname" . } } }
+spec:
+  selector: { app: { { include "copilot.name" . } } }
+  ports:
+    - name: http
+      port: { { .Values.service.port } }
+      targetPort: 4002

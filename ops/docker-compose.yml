@@ -1,0 +1,116 @@
+version: '3.9'
+
+x-common-env: &common-env
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+  OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME}
+  NODE_ENV: production
+
+services:
+  neo4j:
+    image: neo4j:5.22-community
+    container_name: neo4j
+    environment:
+      - NEO4J_AUTH=neo4j/${NEO4J_PASS:-pass}
+      - NEO4J_server_memory_pagecache_size=1G
+      - NEO4J_server_memory_heap_initial__size=1G
+      - NEO4J_server_memory_heap_max__size=1G
+      - NEO4J_server_config_strict__validation_enabled=true
+      - NEO4J_dbms_tx__log_rotation_retention_policy=7 days
+      - NEO4J_db_tx__timeout=5s
+      - NEO4J_PLUGINS=["apoc"]
+    ports: ['7474:7474', '7687:7687']
+    volumes:
+      - neo4j-data:/data
+      - neo4j-logs:/logs
+    healthcheck:
+      test: ['CMD', 'cypher-shell', '-u', 'neo4j', '-p', '${NEO4J_PASS:-pass}', 'RETURN 1']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  opa:
+    image: openpolicyagent/opa:0.69.0-rootless
+    command:
+      [
+        'run',
+        '--server',
+        '--set=decision_logs.console=true',
+        '--set=distributed.status.console=true',
+        '/policies/exports.rego',
+      ]
+    volumes:
+      - ../policies:/policies:ro
+    ports: ['8181:8181']
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:8181/health?plugins']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  otel-collector:
+    image: otel/opentelemetry-collector:0.103.0
+    command: ['--config=/etc/otel-collector-config.yaml']
+    volumes:
+      - ./otel/otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - '4317:4317' # OTLP gRPC
+      - '9464:9464' # Prometheus exporter endpoint
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.58
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports: ['16686:16686']
+
+  prometheus:
+    image: prom/prometheus:v2.53.1
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command: ['--config.file=/etc/prometheus/prometheus.yml']
+    ports: ['9090:9090']
+
+  grafana:
+    image: grafana/grafana:11.1.3
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASS:-grafana}
+    ports: ['3001:3000']
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+
+  prov-ledger:
+    build: { context: ../services/prov-ledger, dockerfile: Dockerfile }
+    environment:
+      <<: *common-env
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASS: ${NEO4J_PASS:-pass}
+      OPA_URL: http://opa:8181/v1/data/intelgraph/exports
+      PORT: 4001
+      OTEL_SERVICE_NAME: prov-ledger
+    depends_on: { neo4j: { condition: service_healthy } }
+    ports: ['4001:4001']
+
+  copilot:
+    build: { context: ../services/copilot, dockerfile: Dockerfile }
+    environment:
+      <<: *common-env
+      PORT: 4002
+      OTEL_SERVICE_NAME: copilot
+    ports: ['4002:4002']
+
+  sandbox:
+    build: { context: ../services/sandbox, dockerfile: Dockerfile }
+    environment:
+      <<: *common-env
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASS: ${NEO4J_PASS:-pass}
+      PORT: 4003
+      OTEL_SERVICE_NAME: sandbox
+    depends_on: { neo4j: { condition: service_healthy } }
+    ports: ['4003:4003']
+
+volumes:
+  neo4j-data: {}
+  neo4j-logs: {}

@@ -1,0 +1,4 @@
+image:
+  repository: openpolicyagent/opa
+  tag: 0.69.0-rootless
+  pullPolicy: IfNotPresent

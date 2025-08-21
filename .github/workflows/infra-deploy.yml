@@ -54,3 +54,20 @@ jobs:
 
       - name: Health Check
         run: kubectl get pods --all-namespaces
+
+      - name: Helm Lint
+        run: |
+          helm lint k8s/prov-ledger k8s/copilot k8s/sandbox k8s/opa k8s/otel-collector k8s/grafana
+
+      - name: Kind Cluster Smoke
+        uses: helm/kind-action@v1
+      - name: Install charts
+        run: |
+          kubectl create ns intelgraph || true
+          helm install neo4j oci://registry-1.docker.io/neo4j/neo4j --namespace intelgraph --set acceptLicenseAgreement=yes || true
+          helm install opa k8s/opa -n intelgraph
+          helm install otel k8s/otel-collector -n intelgraph
+          helm install prov-ledger k8s/prov-ledger -n intelgraph
+          helm install copilot k8s/copilot -n intelgraph
+          helm install sandbox k8s/sandbox -n intelgraph
+          helm install grafana k8s/grafana -n intelgraph

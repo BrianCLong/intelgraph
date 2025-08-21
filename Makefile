@@ -1,7 +1,8 @@
 SHELL := /bin/bash
 PY := python3
+export COMPOSE_PROJECT_NAME := intelgraph
 
-.PHONY: bootstrap up down logs ps server client ingest graph smoke clean reset-db ingest-assets
+.PHONY: bootstrap up down logs ps server client ingest graph smoke clean reset-db ingest-assets compose-up compose-down perf open
 
 bootstrap: ; @test -f .env || cp .env.example .env; 
 	npm ci; 
@@ -21,7 +22,7 @@ ingest: ; if [ ! -d ingestion/.venv ]; then $(PY) -m venv ingestion/.venv; fi; \
   source ingestion/.venv/bin/activate && pip install -r ingestion/requirements.txt && $(PY) ingestion/main.py
 graph: ; if [ ! -d graph-service/.venv ]; then $(PY) -m venv graph-service/.venv; fi; \
   source graph-service/.venv/bin/activate && pip install -r graph-service/requirements.txt && $(PY) graph-service/main.py
-smoke: ; node smoke-test.js
+smoke: ; bash scripts/smoke.sh
 clean: ; find . -name "node_modules" -type d -prune -exec rm -rf '{}' +; \
   find . -name ".venv" -type d -prune -exec rm -rf '{}' +; echo "🧹 cleaned node_modules and venvs"
 reset-db: ; docker compose down; \
@@ -47,3 +48,15 @@ ingest-assets:
 # GA Release Target
 ga:
 	make preflight && npm test && npx @cyclonedx/cyclonedx-npm --output-file sbom.json && ./scripts/release/verify_install.sh
+
+compose-up:
+	cd ops && docker compose up -d --build
+
+compose-down:
+	cd ops && docker compose down -v
+
+perf:
+	API_BASE=http://localhost:4002 node_modules/.bin/k6 run tests/perf/nl2cypher_preview_test.js
+
+open:
+	@echo "Neo4j http://localhost:7474  — Jaeger http://localhost:16686  — Grafana http://localhost:3001"
