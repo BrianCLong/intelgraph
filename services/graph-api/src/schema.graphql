@@ -1,0 +1,140 @@
+scalar DateTime
+
+interface BaseNode {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  provenance: Provenance!
+  policy: Policy!
+}
+
+type Provenance {
+  source: String!
+  confidence: Float!
+  chain: [String!]!
+}
+
+type Policy {
+  tenantId: ID!
+  sensitivity: String
+  legalBasis: String
+  needToKnow: String
+}
+
+type Person implements BaseNode {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  provenance: Provenance!
+  policy: Policy!
+}
+
+type Org implements BaseNode {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  provenance: Provenance!
+  policy: Policy!
+}
+
+type Event implements BaseNode {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  provenance: Provenance!
+  policy: Policy!
+}
+
+type Document implements BaseNode {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  provenance: Provenance!
+  policy: Policy!
+}
+
+type Account implements BaseNode {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  provenance: Provenance!
+  policy: Policy!
+}
+
+# Relationships
+
+type Query {
+  person(id: ID!, asOf: DateTime): Person
+  persons(limit: Int = 25, offset: Int = 0, asOf: DateTime): [Person!]!
+  org(id: ID!, asOf: DateTime): Org
+  orgs(limit: Int = 25, offset: Int = 0, asOf: DateTime): [Org!]!
+  event(id: ID!, asOf: DateTime): Event
+  events(limit: Int = 25, offset: Int = 0, asOf: DateTime): [Event!]!
+  document(id: ID!, asOf: DateTime): Document
+  documents(limit: Int = 25, offset: Int = 0, asOf: DateTime): [Document!]!
+  account(id: ID!, asOf: DateTime): Account
+  accounts(limit: Int = 25, offset: Int = 0, asOf: DateTime): [Account!]!
+}
+
+input ProvenanceInput {
+  source: String!
+  confidence: Float!
+  chain: [String!]!
+}
+
+input PolicyInput {
+  tenantId: ID!
+  sensitivity: String
+  legalBasis: String
+  needToKnow: String
+}
+
+input NodeInput {
+  provenance: ProvenanceInput!
+  policy: PolicyInput!
+}
+
+input EdgeInput {
+  from: ID!
+  to: ID!
+  provenance: ProvenanceInput!
+  policy: PolicyInput!
+}
+
+type Mutation {
+  createPerson(input: NodeInput!): Person!
+  updatePerson(id: ID!, input: NodeInput!): Person!
+  deletePerson(id: ID!): Boolean!
+
+  createOrg(input: NodeInput!): Org!
+  updateOrg(id: ID!, input: NodeInput!): Org!
+  deleteOrg(id: ID!): Boolean!
+
+  createEvent(input: NodeInput!): Event!
+  updateEvent(id: ID!, input: NodeInput!): Event!
+  deleteEvent(id: ID!): Boolean!
+
+  createDocument(input: NodeInput!): Document!
+  updateDocument(id: ID!, input: NodeInput!): Document!
+  deleteDocument(id: ID!): Boolean!
+
+  createAccount(input: NodeInput!): Account!
+  updateAccount(id: ID!, input: NodeInput!): Account!
+  deleteAccount(id: ID!): Boolean!
+
+  createActedFor(input: EdgeInput!): Boolean!
+  updateActedFor(input: EdgeInput!): Boolean!
+  deleteActedFor(from: ID!, to: ID!): Boolean!
+
+  createAttended(input: EdgeInput!): Boolean!
+  updateAttended(input: EdgeInput!): Boolean!
+  deleteAttended(from: ID!, to: ID!): Boolean!
+
+  createMentions(input: EdgeInput!): Boolean!
+  updateMentions(input: EdgeInput!): Boolean!
+  deleteMentions(from: ID!, to: ID!): Boolean!
+
+  createOwns(input: EdgeInput!): Boolean!
+  updateOwns(input: EdgeInput!): Boolean!
+  deleteOwns(from: ID!, to: ID!): Boolean!
+}
