@@ -1,0 +1,36 @@
+openapi: 3.0.3
+info:
+  title: Read-only Sandbox
+  version: 0.1.0
+paths:
+  /sandbox/run:
+    post:
+      summary: Run **read-only** Cypher with timeouts and budget
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - cypher
+              properties:
+                cypher:
+                  type: string
+                timeoutMs:
+                  type: integer
+                  minimum: 100
+                  maximum: 10000
+                  default: 5000
+                budgetRU:
+                  type: integer
+                  minimum: 1
+                  maximum: 100000
+                  default: 10000
+      responses:
+        '200':
+          description: OK
+        '403':
+          description: Write op detected
+        '408':
+          description: Timeout

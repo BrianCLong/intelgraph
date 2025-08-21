@@ -1,0 +1,91 @@
+openapi: 3.0.3
+info:
+  title: IntelGraph Copilot
+  version: 0.1.0
+servers:
+  - url: https://api.example.com
+paths:
+  /copilot/preview:
+    post:
+      summary: Generate Cypher + cost/row estimate (no execute)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - prompt
+              properties:
+                prompt:
+                  type: string
+                  minLength: 4
+                context:
+                  type: object
+                  additionalProperties: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - cypher
+                  - estimate
+                properties:
+                  cypher:
+                    type: string
+                  estimate:
+                    type: object
+                    properties:
+                      rows:
+                        type: integer
+                      cost:
+                        type: number
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+        "400":
+          description: Invalid prompt
+  /copilot/execute:
+    post:
+      summary: Execute a **read-only** query in sandbox
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - cypher
+              properties:
+                cypher:
+                  type: string
+                limit:
+                  type: integer
+                  minimum: 1
+                  maximum: 100000
+                  default: 10000
+      responses:
+        "200":
+          description: Result set (nodes/edges rows)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  columns:
+                    type: array
+                    items:
+                      type: string
+                  rows:
+                    type: array
+                    items:
+                      type: array
+                      items: {}
+        "403":
+          description: Write operations are not permitted in sandbox
+        "422":
+          description: Unsafe Cypher detected

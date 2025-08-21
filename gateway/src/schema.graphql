@@ -1,0 +1,61 @@
+scalar JSON
+
+
+type Evidence {
+  id: ID!
+  source: String!
+  license: String!
+  confidence: Float
+  artifacts: [Artifact!]!
+  createdAt: String!
+}
+
+type Artifact {
+  id: ID!
+  sha256: String!
+  url: String
+}
+
+type Claim {
+  id: ID!
+  statement: String!
+  evidence: [Evidence!]!
+  attribution: String
+  confidence: Float
+  createdAt: String!
+}
+
+# Policy labels surfaced from graph nodes/edges
+interface PolicyLabeled {
+  policy: String
+}
+
+type Node implements PolicyLabeled {
+  id: ID!
+  labels: [String!]!
+  properties: JSON!
+  policy: String
+}
+
+type Edge implements PolicyLabeled {
+  id: ID!
+  type: String!
+  from: ID!
+  to: ID!
+  properties: JSON!
+  policy: String
+}
+
+type Query {
+  claim(id: ID!): Claim
+  evidence(id: ID!): Evidence
+  searchNodes(q: String!, limit: Int = 50): [Node!]!
+}
+
+type Mutation {
+  createEvidence(source: String!, license: String!, confidence: Float, artifacts: [ArtifactInput!]!): Evidence!
+  createClaim(statement: String!, evidenceIds: [ID!]!, attribution: String, confidence: Float): Claim!
+  exportBundle(id: ID!): String! # returns a presigned URL or download token
+}
+
+input ArtifactInput { id: ID!, sha256: String!, url: String }

@@ -1,0 +1,91 @@
+openapi: 3.0.3
+info:
+  title: Provenance & Claim Ledger
+  version: 0.1.0
+paths:
+  /evidence:
+    post:
+      summary: Create evidence record + optional file hashes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - source
+                - license
+                - artifacts
+              properties:
+                source:
+                  type: string
+                license:
+                  type: string
+                  enum:
+                    - CC-BY
+                    - ODC-BY
+                    - CUSTOM
+                confidence:
+                  type: number
+                  minimum: 0
+                  maximum: 1
+                artifacts:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - id
+                      - sha256
+                    properties:
+                      id:
+                        type: string
+                      sha256:
+                        type: string
+                        pattern: '^[a-f0-9]{64}$'
+                      url:
+                        type: string
+      responses:
+        '201':
+          description: Created
+  /claims:
+    post:
+      summary: Create a claim linked to evidence
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - statement
+                - evidenceIds
+              properties:
+                statement:
+                  type: string
+                evidenceIds:
+                  type: array
+                  items:
+                    type: string
+                attribution:
+                  type: string
+                confidence:
+                  type: number
+                  minimum: 0
+                  maximum: 1
+      responses:
+        '201':
+          description: Created
+  /bundles/{id}/export:
+    get:
+      summary: Download disclosure bundle manifest + files
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Not found
