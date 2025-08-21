@@ -65,6 +65,26 @@ type Entity = {
   updatedAt?: string;
 };
 
+const GET_CANDIDATES = gql`
+  query CandidateDuplicates($id: ID!) {
+    candidateDuplicates(entityId: $id) {
+      id
+      score
+    }
+  }
+`;
+
+const DECIDE_MERGE = gql`
+  mutation DecideMerge($left: ID!, $right: ID!, $decision: MergeDecision!) {
+    decideMerge(left: $left, right: $right, decision: $decision) {
+      merged
+      explanation {
+        score
+      }
+    }
+  }
+`;
+
 type EntityDrawerProps = {
   entityId: string | null;
   open: boolean;
@@ -114,6 +134,14 @@ export default function EntityDrawer({
   });
   const [updateEntity] = useMutation(UPDATE_ENTITY);
   const { data: subData } = useSubscription(ENTITY_UPDATED);
+  const {
+    data: candidatesData,
+    refetch: refetchCandidates,
+  } = useQuery(GET_CANDIDATES, {
+    variables: { id: entityId },
+    skip: !entityId,
+  });
+  const [decideMerge] = useMutation(DECIDE_MERGE);
 
   const [entity, setEntity] = useState<Entity | null>(null);
   const [prevEntity, setPrevEntity] = useState<Entity | null>(null);
@@ -172,6 +200,13 @@ export default function EntityDrawer({
 
   const handleTagDelete = (tag: string) => {
     setTags(tags.filter((t) => t !== tag));
+  };
+
+  const handleDecision = (targetId: string, decision: "MERGE" | "SKIP") => {
+    if (!entityId) return;
+    decideMerge({ variables: { left: entityId, right: targetId, decision } })
+      .then(() => refetchCandidates())
+      .catch(() => {});
   };
 
   const diffSection = prevEntity && (
@@ -288,6 +323,38 @@ export default function EntityDrawer({
           </Button>
         )}
         {diffSection}
+        {candidatesData?.candidateDuplicates?.length ? (
+          <Box mt={2}>
+            <Typography variant="subtitle2">Merge Suggestions</Typography>
+            {candidatesData.candidateDuplicates.map((c: any) => (
+              <Box
+                key={c.id}
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+                mt={1}
+              >
+                <Typography variant="body2">
+                  {c.id} ({c.score.toFixed(2)})
+                </Typography>
+                <Box>
+                  <Button
+                    size="small"
+                    onClick={() => handleDecision(c.id, "MERGE")}
+                  >
+                    Merge
+                  </Button>
+                  <Button
+                    size="small"
+                    onClick={() => handleDecision(c.id, "SKIP")}
+                  >
+                    Skip
+                  </Button>
+                </Box>
+              </Box>
+            ))}
+          </Box>
+        ) : null}
       </Stack>
     </Drawer>
   );

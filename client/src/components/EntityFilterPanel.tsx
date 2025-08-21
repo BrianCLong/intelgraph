@@ -155,6 +155,14 @@ function EntityFilterPanel() {
             View Results
           </Button>
         </Box>
+        <Box>
+          <Typography variant="subtitle2" gutterBottom>
+            Pending Merge Decisions
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Review suggested merges in the entity drawer to finalize or skip.
+          </Typography>
+        </Box>
       </Stack>
     </Paper>
   );
