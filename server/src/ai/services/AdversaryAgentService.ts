@@ -1,6 +1,6 @@
 import { spawn } from "child_process";
 import path from "path";
-import pino from "pino";
+import logger from '../../config/logger';
 
 export interface AdversaryAgentOptions {
   temperature?: number;
@@ -10,7 +10,7 @@ export interface AdversaryAgentOptions {
 export class AdversaryAgentService {
   private pythonPath: string;
   private modelsPath: string;
-  private logger = pino({ name: "AdversaryAgentService" });
+  private logger = logger.child({ name: "AdversaryAgentService" });
 
   constructor(
     pythonPath = process.env.PYTHON_PATH || "python",

@@ -1,8 +1,8 @@
 import { aiAnalysisService } from '../../services/aiAnalysis.js';
 import { requireAuth } from '../../lib/auth.js';
-import pino from 'pino';
+import logger from '../../config/logger';
 
-const logger: pino.Logger = pino();
+const logger = logger.child({ name: 'aiAnalysisResolvers' });
 
 export const aiAnalysisResolvers = {
   Query: {

@@ -13,7 +13,7 @@ import { Driver, Session } from "neo4j-driver";
 import { Redis } from "ioredis";
 import { z } from "zod";
 import { createHash } from "crypto";
-import pino from "pino";
+import logger from '../config/logger';
 import { CircuitBreaker } from "../utils/CircuitBreaker.js"; // Import CircuitBreaker
 import { rankPaths, ScoreBreakdown } from "./PathRankingService.js";
 import {
@@ -23,7 +23,7 @@ import {
 import { mapGraphRAGError, UserFacingError } from "../lib/errors.js";
 import graphragConfig from "../config/graphrag.js";
 
-const logger: pino.Logger = pino({ name: "GraphRAGService" });
+const logger = logger.child({ name: "GraphRAGService" });
 
 // Zod schemas for type safety and validation
 const GraphRAGRequestSchema = z.object({

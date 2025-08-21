@@ -4,9 +4,9 @@ import { MultimodalDataService } from '../../services/MultimodalDataService.js';
 import { MediaUploadService } from '../../services/MediaUploadService.js';
 import { ExtractionJobService } from '../../services/ExtractionJobService.js';
 import { PubSub } from 'graphql-subscriptions';
-import pino from 'pino';
+import logger from '../../config/logger';
 
-const logger = pino({ name: 'MultimodalResolvers' });
+const logger = logger.child({ name: 'MultimodalResolvers' });
 const pubsub = new PubSub();
 
 export interface MultimodalContext {

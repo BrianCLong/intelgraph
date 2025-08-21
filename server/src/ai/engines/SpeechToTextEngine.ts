@@ -1,10 +1,10 @@
 import { spawn } from 'child_process';
 import { createReadStream, createWriteStream } from 'fs';
 import path from 'path';
-import pino from 'pino';
+import logger from '../../config/logger';
 import { ExtractionEngineConfig } from '../ExtractionEngine.js';
 
-const logger = pino({ name: 'SpeechToTextEngine' });
+const logger = logger.child({ name: 'SpeechToTextEngine' });
 
 export interface TranscriptionSegment {
   text: string;

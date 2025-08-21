@@ -9,10 +9,10 @@ import { Pool } from 'pg';
 import { getPostgresPool } from '../config/database.js';
 import EmbeddingService from './EmbeddingService.js';
 import { otelService } from '../monitoring/opentelemetry.js';
-import pino from 'pino';
+import logger from '../config/logger';
 import { z } from 'zod';
 
-const logger = pino({ name: 'SimilarityService' });
+const logger = logger.child({ name: 'SimilarityService' });
 
 // Input validation schemas
 const SimilarityQuerySchema = z.object({

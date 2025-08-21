@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  active-measures:
+    build: .
+    ports:
+      - "4001:4000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - NEO4J_URI=bolt://neo4j:7687  # Or local for airgap
+      - AIRGAPPED=true
+  neo4j:
+    image: neo4j:5.0-community
+    # ... (standard config, local auth)
+  redis:
+    image: redis:7
+    # Local only

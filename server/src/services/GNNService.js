@@ -2,10 +2,10 @@
  * Graph Neural Network Service for IntelGraph
  * Provides high-level interface for GNN operations
  */
-const fetch = require('node-fetch');
-const { v4: uuidv4 } = require('uuid');
+import fetch from 'node-fetch';
+import { v4 as uuidv4 } from 'uuid';
 import logger from '../utils/logger.js';
-const { trackGraphOperation, trackError } = require('../monitoring/middleware');
+import { trackGraphOperation, trackError } from '../monitoring/middleware.js';
 
 class GNNService {
   constructor() {
@@ -661,4 +661,4 @@ class GNNService {
   }
 }
 
-module.exports = new GNNService();
+export default new GNNService();

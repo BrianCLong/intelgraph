@@ -1,4 +1,4 @@
-### IntelGraph — Velocity Plan v6: Security, Compliance & Ops Excellence
+# IntelGraph — Velocity Plan v6: Security, Compliance & Ops Excellence
 
 **Owner:** Guy — Theme: production hardening & recovery confidence
 

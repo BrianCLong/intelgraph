@@ -1,8 +1,8 @@
 import { Namespace, Socket } from "socket.io";
 import Redis from "ioredis";
-import pino from "pino";
+import logger from '../config/logger';
 
-const logger = pino();
+const logger = logger.child({ name: 'graph-crdt' });
 
 interface GraphOperation {
   id: string;

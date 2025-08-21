@@ -1,10 +1,10 @@
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
-import pino from 'pino';
+import logger from '../config/logger';
 
 dotenv.config();
 
-const logger: pino.Logger = pino();
+const logger = logger.child({ name: 'postgres' });
 
 const POSTGRES_HOST = process.env.POSTGRES_HOST || 'postgres';
 const POSTGRES_USER = process.env.POSTGRES_USER || 'intelgraph';

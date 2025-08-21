@@ -1,0 +1,38 @@
+name: SOC2 Evidence Bundle
+on:
+  workflow_run:
+    workflows: ["CI", "CI Security", "CI Performance (k6)", "CodeQL", "SBOM"]
+    types: [completed]
+  workflow_dispatch:
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download prior artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: evidence
+        continue-on-error: true
+
+      - name: Collect metadata
+        run: |
+          mkdir -p evidence/meta
+          git log -1 --pretty=format:'%H%n%an%n%ae%n%ad%n%s' > evidence/meta/commit.txt
+          echo "${{ github.run_id }}" > evidence/meta/run_id.txt
+          echo "${{ github.ref }}" > evidence/meta/ref.txt
+
+      - name: SBOM (Node)
+        run: |
+          npx license-checker --production --summary > evidence/license-summary.txt || true
+
+      - name: Package
+        run: |
+          tar -czf soc2-evidence-${{ github.run_number }}.tar.gz evidence
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: soc2-evidence
+          path: soc2-evidence-*.tar.gz
