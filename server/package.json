@@ -83,7 +83,7 @@
     "node-nlp": "^4.27.0",
     "parquetjs": "^0.11.2",
     "pg": "^8.16.3",
-    "pgvector": "^0.1.8",
+    "pgvector": "^0.2.1",
     "pino": "^9.9.0",
     "pino-http": "^10.5.0",
     "prom-client": "^15.1.3",
