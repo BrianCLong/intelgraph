@@ -1,3 +1,7 @@
-schema: 'packages/graphql/schema.graphql'
+schema:
+  - "server/src/graphql/schema/*.graphql"
+  - "server/src/graphql/schemas/*.graphql"
+  - "server/src/schema/*.graphql"
 documents:
-  - 'apps/frontend/src/**/*.graphql'
+  - "client/src/**/*.graphql"
+  - "server/src/**/*.graphql"
