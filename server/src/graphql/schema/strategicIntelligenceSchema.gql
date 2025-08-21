@@ -58,7 +58,7 @@ type StegoOutput {
   note: String
 }
 
-extend type Mutation {
+type Mutation {
   correlateThreats(osintInput: JSON!): ThreatMap
   optimizeWargame(logsInput: JSON!): WargameOutput
   analyzeSentimentVolatility(signalsInput: JSON!): SentimentVolatilityOutput

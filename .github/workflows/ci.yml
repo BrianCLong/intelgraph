@@ -59,6 +59,8 @@ jobs:
 
       - name: Lint (JS/TS & Python)
         run: npm run lint
+      - name: GraphQL schema lint
+        run: bash -lc 'set -o pipefail; for f in server/src/schema/**/*.graphql server/src/schema/**/*.gql server/src/graphql/schema/**/*.graphql server/src/graphql/schema/**/*.gql server/src/graphql/schemas/**/*.graphql server/src/graphql/schemas/**/*.gql; do if [ -f "$f" ]; then npx graphql-schema-linter "$f"; fi; done'
 
       - name: Typecheck
         run: npm run typecheck

@@ -1,3 +1,5 @@
+scalar JSON
+
 # AI Analysis Schema
 # Comprehensive AI-powered analysis capabilities for entity extraction,
 # relationship detection, and intelligent insights generation
@@ -116,7 +118,7 @@ type AIEnhancementResult {
 }
 
 # AI Analysis Queries
-extend type Query {
+type Query {
   """
   Extract entities and relationships from text using AI/NLP techniques
   """
@@ -159,7 +161,7 @@ extend type Query {
 }
 
 # AI Analysis Mutations
-extend type Mutation {
+type Mutation {
   """
   Apply AI-generated suggestions to improve graph structure and data quality
   """

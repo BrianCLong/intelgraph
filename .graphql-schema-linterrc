@@ -1,0 +1,5 @@
+{
+  "rules": [
+    "input-object-values-are-camel-cased"
+  ]
+}

@@ -133,6 +133,8 @@ type ScoreBreakdown {
 """
 Similar entity result with similarity score
 """
+type Entity { id: ID! }
+
 type SimilarEntity {
   """
   The similar entity
@@ -161,7 +163,7 @@ type CacheOperationResult {
 }
 
 # Query extensions
-extend type Query {
+type Query {
   """
   Query the knowledge graph using explainable GraphRAG.
   Returns structured response with answer, confidence, citations, and why_paths.
@@ -181,10 +183,12 @@ extend type Query {
 }
 
 # Mutation extensions
-extend type Mutation {
+type Mutation {
   """
   Clear GraphRAG cache for an investigation.
   Useful when investigation data has changed significantly.
   """
   clearGraphRAGCache(investigationId: ID!): CacheOperationResult!
 }
+
+

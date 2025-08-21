@@ -1,3 +1,5 @@
+scalar JSON
+
 type AIJob {
   id: ID!
   kind: String!
@@ -25,12 +27,12 @@ type ERLink { a: ID!, b: ID!, score: Float! }
 type LinkPrediction { u: ID!, v: ID!, score: Float! }
 type Community { communityId: ID!, members: [ID!]! }
 
-extend type Query {
+type Query {
   aiJob(id: ID!): AIJob
   insights(status: String, kind: String): [Insight!]!
 }
 
-extend type Mutation {
+type Mutation {
   aiExtractEntities(docs: [JSON!]!, jobId: ID): AIJob!
   aiResolveEntities(records: [JSON!]!, threshold: Float, jobId: ID): AIJob!
   aiLinkPredict(graphSnapshotId: ID!, topK: Int, jobId: ID): AIJob!

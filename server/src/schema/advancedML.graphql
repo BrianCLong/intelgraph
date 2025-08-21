@@ -325,7 +325,7 @@ type DeleteMLModelResponse {
 }
 
 # Root Types
-extend type Query {
+type Query {
   # System Information
   mlSystemInfo: MLSystemInfo!
   
@@ -336,7 +336,7 @@ extend type Query {
   mlMetrics: MLMetrics!
 }
 
-extend type Mutation {
+type Mutation {
   # Model Lifecycle
   createMLModel(input: CreateMLModelInput!): CreateMLModelResponse!
   trainMLModel(modelId: String!, trainingConfig: MLTrainingConfig): TrainMLModelResponse!
@@ -364,7 +364,7 @@ extend type Mutation {
 }
 
 # Subscriptions for real-time ML monitoring
-extend type Subscription {
+type Subscription {
   # Real-time metrics updates
   mlMetricsUpdates: MLMetrics!
   
