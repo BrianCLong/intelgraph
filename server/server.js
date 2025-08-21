@@ -231,6 +231,7 @@ async function startServer() {
     app.use('/api/activity', require('./src/routes/activity'));
     app.use('/api/admin', require('./src/routes/admin'));
     app.use('/api/import', require('./src/routes/import'));
+    app.use('/api/nlq', require('./src/routes/nlq'));
     app.use('/api/templates', require('./src/routes/templateRoutes'));
 
     // Webhook endpoint to ingest completed GNN suggestions (production-safe)

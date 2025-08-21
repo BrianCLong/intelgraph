@@ -2,6 +2,7 @@ import React from 'react'
 import { Outlet, Navigate } from 'react-router-dom'
 import { Navigation } from './Navigation'
 import { GlobalSearch } from './GlobalSearch'
+import { QueryDrawer } from './QueryDrawer'
 import { useAuth } from '@/contexts/AuthContext'
 import { Skeleton } from '@/components/ui/Skeleton'
 
@@ -60,6 +61,7 @@ export function Layout() {
 
       {/* Global Search Modal */}
       <GlobalSearch />
+      <QueryDrawer />
     </div>
   )
 }
