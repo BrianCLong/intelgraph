@@ -14,8 +14,10 @@ class RSSIngestor(Ingestor):
                 yield entry
 
     def normalize(self, item: Dict[str, Any]) -> Dict[str, Any]:
+        external_id = item.get("id", item.get("link"))
         return {
-            "id": item.get("id", item.get("link")),
+            "id": external_id,
+            "external_id": external_id,
             "platform": "rss",
             "timestamp": item.get("published_parsed"),
             "text": item.get("title", ""),

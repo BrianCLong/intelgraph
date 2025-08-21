@@ -11,8 +11,10 @@ class PastebinIngestor(Ingestor):
             yield paste
 
     def normalize(self, item: Dict[str, Any]) -> Dict[str, Any]:
+        external_id = item.get("key")
         return {
-            "id": item.get("key"),
+            "id": external_id,
+            "external_id": external_id,
             "platform": "pastebin",
             "timestamp": item.get("date"),
             "text": item.get("content", ""),

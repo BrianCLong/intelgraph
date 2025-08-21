@@ -12,8 +12,10 @@ class TwitterIngestor(Ingestor):
             yield tweet
 
     def normalize(self, item: Dict[str, Any]) -> Dict[str, Any]:
+        external_id = item.get("id_str")
         return {
-            "id": item.get("id_str"),
+            "id": external_id,
+            "external_id": external_id,
             "platform": "twitter",
             "timestamp": item.get("created_at"),
             "text": item.get("text", ""),
