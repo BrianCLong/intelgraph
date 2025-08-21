@@ -6,8 +6,11 @@ on:
 jobs:
   stale:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
     steps:
-      - uses: actions/stale@v9
+      - uses: actions/stale@a4a55723a6625699a65c3ac8915a36a555890600 # v9.0.0
         with:
           stale-issue-message: 'This issue is stale because it has been open 30 days with no activity.'
           days-before-stale: 30

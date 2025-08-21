@@ -71,6 +71,7 @@ services:
   server:
     build: ./server
     container_name: server
+    command: node --require ts-node/register src/index.ts
     depends_on:
       neo4j:
         condition: service_healthy

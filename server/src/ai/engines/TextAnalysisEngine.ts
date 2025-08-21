@@ -1,9 +1,9 @@
 import { spawn } from 'child_process';
 import path from 'path';
-import pino from 'pino';
+import logger from '../../config/logger';
 import { ExtractionEngineConfig } from '../ExtractionEngine.js';
 
-const logger = pino({ name: 'TextAnalysisEngine' });
+const logger = logger.child({ name: 'TextAnalysisEngine' });
 
 export interface NamedEntity {
   text: string;

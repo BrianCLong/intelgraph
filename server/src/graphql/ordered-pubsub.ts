@@ -1,5 +1,5 @@
 import { PubSub } from 'graphql-subscriptions';
-import pino from 'pino';
+import logger from '../../config/logger';
 
 interface EventEnvelope<T> {
   seq: number;
@@ -7,7 +7,7 @@ interface EventEnvelope<T> {
   payload: T;
 }
 
-const logger = pino();
+const logger = logger.child({ name: 'ordered-pubsub' });
 
 /**
  * OrderedPubSub wraps the standard PubSub implementation to provide

@@ -1,8 +1,8 @@
 import { v4 as uuid } from "uuid";
-import pino from "pino";
+import logger from '../config/logger';
 import { ZodError } from "zod";
 
-const logger = pino({ name: "ErrorMapper" });
+const logger = logger.child({ name: "ErrorMapper" });
 
 export class UserFacingError extends Error {
   statusCode: number;

@@ -1,7 +1,7 @@
 import http from "http";
 import { useServer } from "graphql-ws/lib/use/ws";
 import { WebSocketServer } from "ws";
-import pino from "pino";
+import logger from './config/logger';
 import { getContext } from "./lib/auth.js";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -14,7 +14,7 @@ import { DataRetentionService } from './services/DataRetentionService.js';
 import { getNeo4jDriver } from './db/neo4j.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const logger: pino.Logger = pino();
+const logger = logger.child({ name: 'index' });
 
 const startServer = async () => {
   // Optional Kafka consumer import - only when AI services enabled

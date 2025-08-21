@@ -9,17 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [1.0.0] - 2025-08-18
+
 ### Added
+
+- GA release with signed artifacts and SOC2 Type I readiness.
+- Nightly CVE scan and post-GA patch workflows.
+- Link to detailed notes: [RELEASE_NOTES_1.0.0.md](docs/releases/RELEASE_NOTES_1.0.0.md).
 
 ### Changed
 
+- Integrated outstanding branches for the 1.0.0 cut.
+
 ### Deprecated
 
-### Removed
+- Legacy 0.x installers.
 
 ### Fixed
 
+- Corrected residency misconfiguration in GA values file.
+
 ### Security
+
+- Images are signed and attested with SLSA provenance and CycloneDX SBOM.
 
 ---
 

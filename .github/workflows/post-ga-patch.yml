@@ -1,0 +1,10 @@
+name: post-ga-patch
+on:
+  push:
+    tags: ["v1.*"]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cosign verify ghcr.io/intelgraph/platform:${GITHUB_REF_NAME}

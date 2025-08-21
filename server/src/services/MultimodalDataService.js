@@ -4,8 +4,8 @@
  * Manages entities and relationships from text, image, audio, and video sources
  */
 
-const { v4: uuidv4 } = require("uuid");
-const crypto = require("crypto");
+import { v4 as uuidv4 } from "uuid";
+import crypto from "crypto";
 
 class MultimodalDataService {
   constructor(neo4jDriver, authService, storageService) {
@@ -888,4 +888,4 @@ class MultimodalDataService {
   }
 }
 
-module.exports = MultimodalDataService;
+export default MultimodalDataService;

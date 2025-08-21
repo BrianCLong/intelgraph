@@ -3,12 +3,16 @@ on: [pull_request]
 jobs:
   actionlint:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: reviewdog/action-actionlint@v1
+      - uses: actions/checkout@a5ac7e51b4109f5124f9564e9f05e504dfbe8c05 # v4.1.7
+      - uses: reviewdog/action-actionlint@256e554de0010a009397c9abc77855f634cf7353 # v1.4.0
   tflint:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: terraform-linters/setup-tflint@v4
+      - uses: actions/checkout@a5ac7e51b4109f5124f9564e9f05e504dfbe8c05 # v4.1.7
+      - uses: terraform-linters/setup-tflint@a57c73fb1ac33457567a8426e2f6347a04079433 # v4.0.0
       - run: tflint --recursive

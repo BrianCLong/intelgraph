@@ -7,9 +7,9 @@
 
 import { AuthenticationError, ForbiddenError } from 'apollo-server-express';
 import { z } from 'zod';
-import pino from 'pino';
+import logger from '../config/logger';
 
-const logger: pino.Logger = pino({ name: 'authPolicy' });
+const logger = logger.child({ name: 'authPolicy' });
 
 // Types for authentication and authorization
 interface User {

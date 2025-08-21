@@ -4,9 +4,9 @@
  */
 
 import { GraphQLError } from 'graphql';
-import pino from 'pino';
+import logger from '../config/logger';
 
-const logger = pino({ name: 'tenantValidator' });
+const logger = logger.child({ name: 'tenantValidator' });
 
 export interface TenantContext {
   tenantId: string;

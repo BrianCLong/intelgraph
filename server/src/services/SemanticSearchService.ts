@@ -1,5 +1,5 @@
 import EmbeddingService from "./EmbeddingService.js";
-import pino from "pino";
+import logger from '../config/logger';
 
 export interface IndexDocumentInput {
   id: string;
@@ -28,7 +28,7 @@ export default class SemanticSearchService {
   private client: any;
   private embeddingService: EmbeddingService;
   private indexName: string;
-  private logger = pino({ name: "SemanticSearchService" });
+  private logger = logger.child({ name: "SemanticSearchService" });
 
   constructor(client?: any, embeddingService?: EmbeddingService) {
     this.client = client || null;

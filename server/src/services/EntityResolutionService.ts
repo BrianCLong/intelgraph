@@ -1,5 +1,5 @@
 import { Session } from "neo4j-driver";
-import pino from "pino";
+import logger from '../config/logger';
 import { getPostgresPool } from "../config/database";
 import {
   BehavioralFingerprintService,
@@ -7,7 +7,7 @@ import {
   BehavioralFingerprint,
 } from "./BehavioralFingerprintService.js";
 
-const log = pino({ name: "EntityResolutionService" });
+const log = logger.child({ name: "EntityResolutionService" });
 
 interface NormalizedProperties {
   name?: string;

@@ -1,14 +1,1 @@
-# Lines starting with '#' are comments.
-# Each line is a file pattern followed by one or more owners.
-
-# These owners will be suggested for any code changes in the .github/workflows directory
-/.github/workflows/ @intelgraph-devops-team
-
-# These owners will be suggested for any code changes in the client directory
-/client/ @intelgraph-frontend-team
-
-# These owners will be suggested for any code changes in the server directory
-/server/ @intelgraph-backend-team
-
-# You can also specify individuals
-# /docs/ @your-username
+# MVP-1++ Codeowners

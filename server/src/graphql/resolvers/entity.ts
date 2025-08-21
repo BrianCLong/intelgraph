@@ -1,6 +1,6 @@
 import { getNeo4jDriver, isNeo4jMockMode } from "../../db/neo4j.js";
 import { v4 as uuidv4 } from "uuid";
-import pino from "pino";
+import logger from '../../config/logger';
 import {
   pubsub,
   ENTITY_CREATED,
@@ -12,7 +12,7 @@ import { requireTenant } from "../../middleware/withTenant.js";
 import { getPostgresPool } from "../../db/postgres.js";
 import axios from "axios"; // For calling ML service
 
-const logger = pino();
+const logger = logger.child({ name: 'entityResolvers' });
 const driver = getNeo4jDriver();
 
 const entityResolvers = {

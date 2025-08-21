@@ -6,10 +6,10 @@
 import { Driver, Session, Transaction } from 'neo4j-driver';
 import { Pool } from 'pg';
 import Redis from 'ioredis';
-import pino from 'pino';
+import logger from '../config/logger';
 import { TenantContext, TenantValidator } from '../middleware/tenantValidator.js';
 
-const logger = pino({ name: 'tenantDatabase' });
+const logger = logger.child({ name: 'tenantDatabase' });
 
 export interface DatabaseConfig {
   neo4j?: Driver;

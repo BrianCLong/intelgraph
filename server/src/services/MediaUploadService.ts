@@ -7,9 +7,9 @@ import sharp from 'sharp';
 import ffprobe from 'ffprobe-static';
 import ffmpeg from 'fluent-ffmpeg';
 import { Upload } from 'graphql-upload-ts';
-import pino from 'pino';
+import logger from '../config/logger';
 
-const logger = pino({ name: 'MediaUploadService' });
+const logger = logger.child({ name: 'MediaUploadService' });
 
 // Configure FFmpeg binary paths
 ffmpeg.setFfmpegPath(require('ffmpeg-static'));
