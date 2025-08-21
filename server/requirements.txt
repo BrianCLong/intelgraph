@@ -79,7 +79,7 @@ hdbscan==0.8.33
 plotly==5.17.0
 
 # Data Processing
-numpy==1.24.3
+numpy==2.0.2
 pandas==2.0.3
 matplotlib==3.7.2
 seaborn==0.12.2
