@@ -1,6 +1,6 @@
 import { getNeo4jDriver } from "../../db/neo4j.js";
 import { v4 as uuidv4 } from "uuid";
-import pino from "pino";
+import logger from '../../config/logger';
 import {
   pubsub,
   RELATIONSHIP_CREATED,
@@ -10,7 +10,7 @@ import {
 } from "../subscriptions.js";
 import { requireTenant } from "../../middleware/withTenant.js";
 
-const logger = pino();
+const logger = logger.child({ name: 'relationshipResolvers' });
 const driver = getNeo4jDriver();
 
 const relationshipResolvers = {

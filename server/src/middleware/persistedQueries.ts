@@ -9,9 +9,9 @@ import { Request, Response, NextFunction } from 'express';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { createHash } from 'crypto';
-import pino from 'pino';
+import logger from '../config/logger';
 
-const logger: pino.Logger = pino({ name: 'persistedQueries' });
+const logger = logger.child({ name: 'persistedQueries' });
 
 interface PersistedQueriesConfig {
   manifestDirectory?: string;

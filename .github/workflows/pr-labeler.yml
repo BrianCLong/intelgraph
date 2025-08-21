@@ -5,6 +5,10 @@ on:
 jobs:
   label:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
-      - uses: actions/labeler@v5
-        with: { repo-token: ${{ secrets.GITHUB_TOKEN }} }
+      - uses: actions/labeler@cf330b26a52b65a1b3b2c1b0cea41a014a019e4d # v5.0.0
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}

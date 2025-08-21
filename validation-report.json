@@ -1,81 +1,26 @@
 {
-  "timestamp": "2025-08-18T16:03:09.222Z",
+  "timestamp": "2025-08-21T00:23:21.344Z",
   "summary": {
-    "total": 42,
-    "passed": 36,
-    "failed": 6,
-    "successRate": 86
+    "total": 31,
+    "passed": 18,
+    "failed": 13,
+    "successRate": 58
   },
   "details": [
     {
-      "name": "PostgreSQL Connection",
-      "status": "PASS",
-      "details": "Connected successfully"
-    },
-    {
-      "name": "Table: users",
-      "status": "PASS",
-      "details": "Schema exists"
-    },
-    {
-      "name": "Table: investigations",
-      "status": "FAIL",
-      "details": "Missing from schema"
-    },
-    {
-      "name": "Table: entities",
-      "status": "PASS",
-      "details": "Schema exists"
-    },
-    {
-      "name": "Table: relationships",
-      "status": "PASS",
-      "details": "Schema exists"
-    },
-    {
-      "name": "Table: copilot_runs",
-      "status": "PASS",
-      "details": "Schema exists"
-    },
-    {
       "name": "PostgreSQL Database",
       "status": "FAIL",
-      "details": "relation \"investigations\" does not exist"
+      "details": ""
     },
     {
-      "name": "Neo4j Connection",
-      "status": "PASS",
-      "details": "Neo4j Connected"
+      "name": "Neo4j Database",
+      "status": "FAIL",
+      "details": "Failed to connect to server. Please ensure that your database is listening on the correct host and port and that you have compatible encryption settings both on Neo4j server and driver. Note that the default encryption setting has changed in Neo4j 4.0."
     },
     {
-      "name": "Neo4j Constraints",
-      "status": "PASS",
-      "details": "Entity uniqueness constraint verified"
-    },
-    {
-      "name": "Neo4j Write Test",
-      "status": "PASS",
-      "details": "Node created: test-1755532988669"
-    },
-    {
-      "name": "Neo4j Cleanup",
-      "status": "PASS",
-      "details": "Test nodes removed"
-    },
-    {
-      "name": "Redis Connection",
-      "status": "PASS",
-      "details": "Connected successfully"
-    },
-    {
-      "name": "Redis Read/Write",
-      "status": "PASS",
-      "details": "Set/Get operations working"
-    },
-    {
-      "name": "Redis Session Storage",
-      "status": "PASS",
-      "details": "Session data: {\"userId\":\"test-user\",\"timestamp\":\"1755532989200\",\"role\":\"analyst\"}"
+      "name": "Redis Cache",
+      "status": "FAIL",
+      "details": ""
     },
     {
       "name": "GraphQL Schema File",
@@ -119,28 +64,28 @@
     },
     {
       "name": "Security: JWT_SECRET",
-      "status": "PASS",
-      "details": "Environment variable configured"
+      "status": "FAIL",
+      "details": "Environment variable missing"
     },
     {
       "name": "Security: JWT_REFRESH_SECRET",
-      "status": "PASS",
-      "details": "Environment variable configured"
+      "status": "FAIL",
+      "details": "Environment variable missing"
     },
     {
       "name": "Security: ALLOWED_ORIGINS",
-      "status": "PASS",
-      "details": "Environment variable configured"
+      "status": "FAIL",
+      "details": "Environment variable missing"
     },
     {
       "name": "Security: RATE_LIMIT_MAX",
-      "status": "PASS",
-      "details": "Environment variable configured"
+      "status": "FAIL",
+      "details": "Environment variable missing"
     },
     {
       "name": "JWT Secret Strength",
-      "status": "PASS",
-      "details": "Secret meets minimum length requirements"
+      "status": "FAIL",
+      "details": "JWT secret too short (< 32 chars)"
     },
     {
       "name": "Security Configuration File",
@@ -148,9 +93,9 @@
       "details": "Production security config found"
     },
     {
-      "name": "Database Performance",
-      "status": "PASS",
-      "details": "10 concurrent queries in 18ms"
+      "name": "Performance Test",
+      "status": "FAIL",
+      "details": ""
     },
     {
       "name": "Docker Compose File",

@@ -13,9 +13,9 @@ import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { trace, context, SpanStatusCode, SpanKind } from '@opentelemetry/api';
-import pino from 'pino';
+import logger from '../config/logger';
 
-const logger: pino.Logger = pino({ name: 'opentelemetry' });
+const logger = logger.child({ name: 'opentelemetry' });
 
 interface TracingConfig {
   serviceName: string;

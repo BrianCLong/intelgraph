@@ -123,3 +123,5 @@ conflicts/
 __pycache__/
 *.pyc
 
+.aider*
+.env

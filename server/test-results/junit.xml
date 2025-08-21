@@ -1,41 +1,76 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="jest tests" tests="12" failures="1" errors="0" time="8.323">
-  <testsuite name="feature placeholders" errors="0" failures="0" skipped="0" timestamp="2025-08-17T03:29:01" time="2.89" tests="1">
-    <testcase classname="feature placeholders" name="returns placeholder outputs" time="0.002">
+<testsuites name="jest tests" tests="18" failures="0" errors="0" time="12.079">
+  <testsuite name="undefined" errors="0" failures="0" skipped="1" timestamp="2025-08-21T00:22:25" time="6.039" tests="1">
+    <testcase classname="" name="similarEntities by text" time="0">
+      <skipped/>
     </testcase>
   </testsuite>
-  <testsuite name="undefined" errors="0" failures="1" skipped="0" timestamp="2025-08-17T03:29:01" time="2.918" tests="1">
-    <testcase classname="" name="similarEntities by text" time="0.015">
-      <failure>Error: read ECONNRESET
-    at TCP.onStreamRead (node:internal/stream_base_commons:216:20)</failure>
+  <testsuite name="PathRankingService" errors="0" failures="0" skipped="1" timestamp="2025-08-21T00:22:25" time="7.037" tests="1">
+    <testcase classname="PathRankingService" name="v2 ranking improves top1 path alignment" time="0">
+      <skipped/>
     </testcase>
   </testsuite>
-  <testsuite name="Neo4j Causal Cluster Routing Tests" errors="0" failures="0" skipped="0" timestamp="2025-08-17T03:29:03" time="0.03" tests="3">
-    <testcase classname="Neo4j Causal Cluster Routing Tests" name="should route writes to the leader" time="0.001">
+  <testsuite name="StripeWebhook" errors="0" failures="0" skipped="2" timestamp="2025-08-21T00:22:25" time="7.165" tests="2">
+    <testcase classname="StripeWebhook" name="verifies signature" time="0">
+      <skipped/>
+    </testcase>
+    <testcase classname="StripeWebhook" name="handles idempotent payment and refund" time="0">
+      <skipped/>
+    </testcase>
+  </testsuite>
+  <testsuite name="BehavioralDnaNetwork" errors="0" failures="0" skipped="2" timestamp="2025-08-21T00:22:31" time="1.875" tests="2">
+    <testcase classname="BehavioralDnaNetwork" name="updates embeddings and detects anomalies" time="0">
+      <skipped/>
+    </testcase>
+    <testcase classname="BehavioralDnaNetwork" name="predicts next behavior based on trend" time="0">
+      <skipped/>
+    </testcase>
+  </testsuite>
+  <testsuite name="GossipAuditor" errors="0" failures="0" skipped="0" timestamp="2025-08-21T00:22:32" time="0.967" tests="1">
+    <testcase classname="GossipAuditor" name="alerts on fork" time="0.004">
+    </testcase>
+  </testsuite>
+  <testsuite name="KmsSigner" errors="0" failures="0" skipped="1" timestamp="2025-08-21T00:22:32" time="1.077" tests="1">
+    <testcase classname="KmsSigner" name="signs and verifies using client" time="0">
+      <skipped/>
+    </testcase>
+  </testsuite>
+  <testsuite name="Neo4j Causal Cluster Failover Tests" errors="0" failures="0" skipped="2" timestamp="2025-08-21T00:22:33" time="0.311" tests="2">
+    <testcase classname="Neo4j Causal Cluster Failover Tests" name="should re-elect a leader within 10 seconds after leader failure" time="0">
+      <skipped/>
+    </testcase>
+    <testcase classname="Neo4j Causal Cluster Failover Tests" name="should maintain data consistency during network partition" time="0">
+      <skipped/>
+    </testcase>
+  </testsuite>
+  <testsuite name="deepfake triage" errors="0" failures="0" skipped="1" timestamp="2025-08-21T00:22:33" time="0.346" tests="1">
+    <testcase classname="deepfake triage" name="returns score, facets, and latency" time="0">
+      <skipped/>
+    </testcase>
+  </testsuite>
+  <testsuite name="GraphQL Depth Limit Validation" errors="0" failures="0" skipped="4" timestamp="2025-08-21T00:22:33" time="0.369" tests="4">
+    <testcase classname="GraphQL Depth Limit Validation" name="should allow queries within depth limit" time="0">
+      <skipped/>
+    </testcase>
+    <testcase classname="GraphQL Depth Limit Validation" name="should reject queries exceeding depth limit" time="0">
+      <skipped/>
+    </testcase>
+    <testcase classname="GraphQL Depth Limit Validation" name="should include operation name in error message" time="0">
+      <skipped/>
+    </testcase>
+    <testcase classname="GraphQL Depth Limit Validation" name="should handle custom depth limits" time="0">
+      <skipped/>
+    </testcase>
+  </testsuite>
+  <testsuite name="Neo4j Causal Cluster Routing Tests" errors="0" failures="0" skipped="3" timestamp="2025-08-21T00:22:33" time="0.335" tests="3">
+    <testcase classname="Neo4j Causal Cluster Routing Tests" name="should route writes to the leader" time="0">
+      <skipped/>
     </testcase>
     <testcase classname="Neo4j Causal Cluster Routing Tests" name="should route reads to followers" time="0">
+      <skipped/>
     </testcase>
     <testcase classname="Neo4j Causal Cluster Routing Tests" name="should ensure data consistency (Tx id monotonicity)" time="0">
-    </testcase>
-  </testsuite>
-  <testsuite name="Entities route audit logging" errors="0" failures="0" skipped="0" timestamp="2025-08-17T03:29:01" time="2.999" tests="1">
-    <testcase classname="Entities route audit logging" name="logs view audit with null details" time="0.062">
-    </testcase>
-  </testsuite>
-  <testsuite name="GraphQL Depth Limit Validation" errors="0" failures="0" skipped="0" timestamp="2025-08-17T03:29:03" time="0.135" tests="4">
-    <testcase classname="GraphQL Depth Limit Validation" name="should allow queries within depth limit" time="0.004">
-    </testcase>
-    <testcase classname="GraphQL Depth Limit Validation" name="should reject queries exceeding depth limit" time="0.003">
-    </testcase>
-    <testcase classname="GraphQL Depth Limit Validation" name="should include operation name in error message" time="0.001">
-    </testcase>
-    <testcase classname="GraphQL Depth Limit Validation" name="should handle custom depth limits" time="0.001">
-    </testcase>
-  </testsuite>
-  <testsuite name="Neo4j Causal Cluster Failover Tests" errors="0" failures="0" skipped="0" timestamp="2025-08-17T03:29:01" time="7.894" tests="2">
-    <testcase classname="Neo4j Causal Cluster Failover Tests" name="should re-elect a leader within 10 seconds after leader failure" time="5.006">
-    </testcase>
-    <testcase classname="Neo4j Causal Cluster Failover Tests" name="should maintain data consistency during network partition" time="0.001">
+      <skipped/>
     </testcase>
   </testsuite>
 </testsuites>

@@ -39,6 +39,7 @@ const config = {
       usePathForSuiteName: true
     }]
   ],
+  coverageReporters: ['text', 'lcov', 'cobertura'],
   testPathIgnorePatterns: [
     '<rootDir>/src/tests/',
     '<rootDir>/src/__tests__/ServiceHealthCard.test.jsx',
