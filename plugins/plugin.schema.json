@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "IntelGraph Plugin Manifest",
+  "type": "object",
+  "required": ["id", "name", "version", "entrypoints"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique plugin identifier"
+    },
+    "name": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "permissions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Requested permission scopes"
+    },
+    "entrypoints": {
+      "type": "object",
+      "properties": {
+        "job": {
+          "type": "string",
+          "description": "Path to job entry module"
+        },
+        "ui": {
+          "type": "string",
+          "description": "Path to UI entry module"
+        }
+      },
+      "additionalProperties": false
+    },
+    "panels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "component"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "component": { "type": "string" }
+        }
+      }
+    },
+    "settings": {
+      "type": "object",
+      "description": "Plugin-specific configuration schema"
+    }
+  },
+  "additionalProperties": false
+}

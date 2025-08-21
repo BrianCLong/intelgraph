@@ -1,0 +1,19 @@
+{
+  "$schema": "../plugin.schema.json",
+  "id": "sample-plugin",
+  "name": "Sample Plugin",
+  "version": "0.1.0",
+  "permissions": ["graph:read"],
+  "entrypoints": {
+    "job": "job.js",
+    "ui": "panel.js"
+  },
+  "panels": [
+    {
+      "id": "sample-panel",
+      "name": "Sample Panel",
+      "component": "SamplePanel"
+    }
+  ],
+  "settings": {}
+}
