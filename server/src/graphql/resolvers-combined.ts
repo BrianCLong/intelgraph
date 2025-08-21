@@ -4,6 +4,7 @@ const copilotResolvers = require('./resolvers.copilot.js');
 const graphResolvers = require('./resolvers.graphops.js');
 const aiResolvers = require('./resolvers.ai.js');
 const annotationsResolvers = require('./resolvers.annotations.js');
+const { qualityResolvers } = require('./schema.quality');
 import { v4 as uuidv4 } from 'uuid';
 
 interface User {
@@ -58,6 +59,7 @@ export const resolvers = {
     ...(copilotResolvers.Query || {}),
     ...(aiResolvers.Query || {}),
     ...(annotationsResolvers.Query || {}),
+    ...(qualityResolvers.Query || {}),
     me: async (_: any, __: any, { user }: Context): Promise<User> => {
       if (!user) throw new Error('Not authenticated');
       return user;
@@ -74,6 +76,7 @@ export const resolvers = {
     ...(graphResolvers.Mutation || {}),
     ...(aiResolvers.Mutation || {}),
     ...(annotationsResolvers.Mutation || {}),
+    ...(qualityResolvers.Mutation || {}),
     login: async (_: any, { input }: { input: LoginInput }, { req }: Context) => {
       const { email, password } = input;
       const ipAddress = req?.ip;

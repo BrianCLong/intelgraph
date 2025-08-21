@@ -1,0 +1,10 @@
+rules:
+  - field: id
+    required: true
+    unique: true
+  - field: email
+    required: true
+    pattern: "^.+@.+\\..+$"
+  - field: age
+    min: 18
+    max: 99
