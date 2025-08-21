@@ -154,7 +154,7 @@
     "jest-extended": "^4.0.2",
     "neo4j-driver": "^5.28.1",
     "pg": "^8.16.3",
-    "redis": "^5.8.1",
+    "redis": "^5.8.2",
     "ws": "^8.18.3"
   },
   "private": true,
