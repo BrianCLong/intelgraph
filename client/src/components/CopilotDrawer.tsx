@@ -1,85 +1,124 @@
-/* eslint-disable indent */
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Button,
   Drawer,
   IconButton,
+  TextField,
+  Typography,
+  Chip,
   List,
   ListItem,
   ListItemText,
-  TextField,
-  Typography,
-} from "@mui/material";
-import ChatIcon from "@mui/icons-material/Chat";
-import { io, Socket } from "socket.io-client";
+} from '@mui/material';
+import ChatIcon from '@mui/icons-material/Chat';
+import $ from 'jquery';
 
-interface Message {
-  from: "user" | "ai";
-  text: string;
+interface CopilotAnswer {
+  preview: string;
+  cypher?: string | null;
+  citations: { nodeId: string; source: string; confidence: number }[];
+  redactions: string[];
+  policy: { allowed: boolean; reason: string; deniedRules: string[] };
+  metrics: Record<string, any>;
 }
 
-/**
- * CopilotDrawer provides a lightweight chat interface that
- * streams messages from an AI endpoint via Socket.IO.
- */
 const CopilotDrawer: React.FC = () => {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const socketRef = useRef<Socket | null>(null);
+  const [question, setQuestion] = useState('');
+  const [answer, setAnswer] = useState<CopilotAnswer | null>(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    socketRef.current = io("/copilot");
-    socketRef.current.on("copilot:response", (text: string) => {
-      setMessages((m) => [...m, { from: "ai", text }]);
-    });
-    return () => socketRef.current?.disconnect();
+    $('#copilot-open-btn').on('click', () => setOpen(true));
+    return () => {
+      $('#copilot-open-btn').off('click');
+    };
   }, []);
 
-  const send = () => {
-    if (!input.trim()) return;
-    setMessages((m) => [...m, { from: "user", text: input }]);
-    socketRef.current?.emit("copilot:question", input);
-    setInput("");
+  const ask = async (preview = true) => {
+    setError('');
+    try {
+      const res = await fetch('/graphql', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query:
+            'query($q:String!,$case:ID!,$p:Boolean!){copilotQuery(question:$q,caseId:$case,preview:$p){preview cypher citations{nodeId source confidence} redactions policy{allowed reason deniedRules} metrics}}',
+          variables: { q: question, case: 'case1', p: preview },
+        }),
+      });
+      const json = await res.json();
+      if (json.errors) {
+        throw new Error(json.errors[0].message);
+      }
+      setAnswer(json.data.copilotQuery);
+    } catch (e: any) {
+      setError(e.message);
+    }
   };
 
   return (
     <>
       <IconButton
+        id="copilot-open-btn"
         aria-label="open copilot"
-        onClick={() => setOpen(true)}
-        sx={{ position: "fixed", bottom: 16, right: 16 }}
+        sx={{ position: 'fixed', bottom: 16, right: 16 }}
       >
         <ChatIcon />
       </IconButton>
       <Drawer anchor="right" open={open} onClose={() => setOpen(false)}>
-        <Box sx={{ width: 320, p: 2 }}>
+        <Box sx={{ width: 360, p: 2 }}>
           <Typography variant="h6" gutterBottom>
             Copilot
           </Typography>
-          <List sx={{ height: 360, overflowY: "auto" }}>
-            {messages.map((m, idx) => (
-              <ListItem key={idx}>
-                <ListItemText
-                  primary={m.text}
-                  secondary={m.from === "ai" ? "AI" : "You"}
-                />
-              </ListItem>
-            ))}
-          </List>
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <TextField
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              fullWidth
-              size="small"
-              placeholder="Ask a question"
-            />
-            <Button onClick={send} variant="contained">
-              Send
+          <TextField
+            fullWidth
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            placeholder="Ask a question"
+            size="small"
+          />
+          <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+            <Button variant="contained" onClick={() => ask(true)}>
+              Preview
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => ask(false)}
+              disabled={!answer?.policy.allowed}
+            >
+              Run with guardrails
             </Button>
           </Box>
+          {error && (
+            <Typography color="error" sx={{ mt: 2 }}>
+              {error}
+            </Typography>
+          )}
+          {answer && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle2">Cypher:</Typography>
+              <Typography sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                {answer.cypher || answer.preview}
+              </Typography>
+              <Chip
+                label={answer.policy.allowed ? 'Allowed' : 'Denied'}
+                color={answer.policy.allowed ? 'success' : 'error'}
+                size="small"
+                sx={{ mt: 1 }}
+              />
+              {answer.citations.length > 0 && (
+                <List dense>
+                  {answer.citations.map((c) => (
+                    <ListItem key={c.nodeId}>
+                      <ListItemText primary={c.source} secondary={`confidence: ${c.confidence}`} />
+                    </ListItem>
+                  ))}
+                </List>
+              )}
+            </Box>
+          )}
         </Box>
       </Drawer>
     </>
