@@ -1,0 +1,31 @@
+.ig-dim-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.16s ease-out;
+  backdrop-filter: blur(2px);
+}
+.ig-dim-overlay.on {
+  opacity: 0.35;
+}
+.ig-dim-overlay.off {
+  opacity: 0;
+}
+.ig-dim-hidden {
+  opacity: 0;
+}
+.ig-no-blur {
+  backdrop-filter: none;
+}
+.ig-fast {
+  transition-duration: 0.08s;
+}
+
+/* Example pane containers must be position:relative to host overlays */
+#pane-graph,
+#pane-map,
+#pane-timeline,
+#pane-codex {
+  position: relative;
+}
