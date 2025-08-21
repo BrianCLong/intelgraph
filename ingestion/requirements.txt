@@ -4,3 +4,5 @@ redis
 sentence-transformers
 hdbscan
 prometheus-client
+stix2
+taxii2-client
