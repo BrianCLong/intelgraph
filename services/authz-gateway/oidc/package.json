@@ -1,0 +1,13 @@
+{
+  "name": "@intelgraph/authz-gateway-oidc",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "jose": "^5.2.0"
+  }
+}
