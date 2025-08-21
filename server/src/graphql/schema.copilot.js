@@ -65,6 +65,23 @@ const copilotTypeDefs = gql`
     avgDurationSeconds: Float
   }
 
+  type CopilotCitation {
+    nodeId: ID!
+  }
+
+  type CopilotAnswerChunk {
+    jobId: ID!
+    text: String
+    done: Boolean!
+    citations: [CopilotCitation!]
+  }
+
+  input CopilotQuestionInput {
+    question: String!
+    investigationId: ID!
+    jobId: ID
+  }
+
   input StartCopilotRunInput {
     goalId: ID
     goalText: String
@@ -106,11 +123,17 @@ const copilotTypeDefs = gql`
     # Control run execution
     pauseCopilotRun(runId: ID!): CopilotRun!
     resumeCopilotRun(runId: ID!): CopilotRun!
+
+    # Ask GraphRAG Copilot a question and stream the answer
+    askCopilot(input: CopilotQuestionInput!): ID!
   }
 
   extend type Subscription {
     # Real-time events for a specific run
     copilotEvents(runId: ID!): CopilotEvent!
+
+    # Streamed answer chunks for a question
+    copilotAnswer(jobId: ID!): CopilotAnswerChunk!
   }
 
   # JSON scalar for complex data

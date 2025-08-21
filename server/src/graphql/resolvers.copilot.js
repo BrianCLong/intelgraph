@@ -1,4 +1,6 @@
 const { getGoalById } = require('../services/goalService'); // stub or in-memory from previous ticket
+const { requireTenant } = require('../middleware/withTenant.js');
+const { graphRAGCopilotService } = require('../services/GraphRAGCopilotService.js');
 
 const copilotResolvers = {
   Query: {
@@ -59,8 +61,22 @@ const copilotResolvers = {
       const { copilotOrchestrator } = dataSources;
       const run = await copilotOrchestrator.store.getRun(runId);
       if (!run) throw new Error('Run not found');
-      
+
       return copilotOrchestrator.resumeRun(run);
+    },
+
+    askCopilot: async (_, { input }, context) => {
+      const tenantId = requireTenant(context);
+      const { pubsub } = context;
+      const { question, investigationId, jobId } = input;
+      const result = await graphRAGCopilotService.ask({
+        question,
+        investigationId,
+        jobId,
+        tenantId,
+        pubsub,
+      });
+      return result.jobId;
     }
   },
 
@@ -76,6 +92,14 @@ const copilotResolvers = {
         return pubsub.asyncIterator(`COPILOT_EVENT_${runId}`);
       },
       resolve: (event) => event.payload
+    },
+    copilotAnswer: {
+      subscribe: (_, { jobId }, context) => {
+        requireTenant(context);
+        const { pubsub } = context;
+        return pubsub.asyncIterator(`COPILOT_ANSWER_${jobId}`);
+        },
+      resolve: (event) => event.payload,
     }
   },
 
