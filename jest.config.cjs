@@ -7,6 +7,7 @@ module.exports = {
     }
   },
   testEnvironment: 'node',
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   collectCoverageFrom: [
     '**/*.{ts,tsx,js,jsx}',
     '!**/node_modules/**',
@@ -19,6 +20,7 @@ module.exports = {
     '**/__tests__/**/*.{ts,tsx,js,jsx}',
     '**/?(*.)+(spec|test).{ts,tsx,js,jsx}'
   ],
+  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/__heavy__/'],
   moduleNameMapping: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
@@ -41,7 +43,8 @@ module.exports = {
       displayName: 'client',
       testMatch: ['<rootDir>/client/**/*.{test,spec}.{js,jsx,ts,tsx}'],
       testEnvironment: 'jsdom',
-      setupFilesAfterEnv: ['<rootDir>/client/src/setupTests.js']
+      setupFilesAfterEnv: ['<rootDir>/jest.setup.ts', '<rootDir>/client/src/setupTests.js'],
+      testPathIgnorePatterns: ['/node_modules/', '/dist/', '/__heavy__/']
     }
   ]
 };

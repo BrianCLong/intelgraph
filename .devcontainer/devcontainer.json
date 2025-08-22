@@ -1,0 +1,18 @@
+{
+  "name": "IntelGraph",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "20.13.1" },
+    "ghcr.io/devcontainers/features/python:1": { "version": "3.11" }
+  },
+  "postCreateCommand": "corepack enable && npm ci",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-vscode.vscode-typescript-next",
+        "esbenp.prettier-vscode",
+        "ms-vscode.vscode-json"
+      ]
+    }
+  }
+}

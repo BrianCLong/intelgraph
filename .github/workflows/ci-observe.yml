@@ -1,0 +1,57 @@
+name: ci:observe
+on:
+  schedule: [{ cron: '*/60 * * * *' }]
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write
+jobs:
+  kpis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compute KPIs
+        run: |
+          echo "### CI KPIs (last 24h)" > body.md
+          echo "" >> body.md
+          echo "Updated: $(date -u)" >> body.md
+          echo "" >> body.md
+
+          # PR CI p50 duration
+          DURATION=$(gh run list --limit 50 --json durationMs -q '[.[].durationMs] | map(select(. != null)) | sort | .[length/2|floor]' 2>/dev/null || echo "0")
+          echo "- PR CI p50 duration: ${DURATION}ms (~$((DURATION/60000))min)" >> body.md
+
+          # PRs merged in last 24h
+          MERGED=$(gh pr list --search 'is:merged merged:>24h' --json number 2>/dev/null | jq 'length' || echo "0")
+          echo "- PRs merged (24h): $MERGED" >> body.md
+
+          # Failure rate
+          FAILURES=$(gh run list --limit 100 --json conclusion 2>/dev/null | jq '[.[].conclusion] | [.[] | select(. == "failure")] | length' || echo "0")
+          echo "- Failure rate: $FAILURES/100 runs" >> body.md
+
+          # ci:smoke specific stats
+          SMOKE_SUCCESS=$(gh run list --workflow=ci-smoke.yml --limit 20 --json conclusion 2>/dev/null | jq '[.[].conclusion] | [.[] | select(. == "success")] | length' || echo "0")
+          echo "- ci:smoke success rate: $SMOKE_SUCCESS/20 recent runs" >> body.md
+
+          echo "" >> body.md
+          echo "### Recent Activity" >> body.md
+          echo "" >> body.md
+
+          # Recent merges
+          gh pr list --search 'is:merged' --limit 5 --json number,title,mergedAt 2>/dev/null | \
+            jq -r '.[] | "- [#\(.number)]() \(.title) (merged \(.mergedAt | fromdateiso8601 | strftime("%m/%d %H:%M")))"' >> body.md || echo "- No recent merges found" >> body.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upsert pinned issue
+        run: |
+          NUM=$(gh issue list --search "CI KPIs Dashboard" --json number -q '.[0].number' 2>/dev/null || echo "")
+          if [ -z "$NUM" ]; then
+            echo "Creating new CI KPIs Dashboard issue..."
+            gh issue create --title "CI KPIs Dashboard" --body-file body.md --label ci --pin
+          else
+            echo "Updating existing CI KPIs Dashboard issue #$NUM..."
+            gh issue edit "$NUM" --body-file body.md
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
