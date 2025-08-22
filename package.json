@@ -111,9 +111,6 @@
       "ruff --fix",
       "black"
     ],
-    "*.graphql": [
-      "graphql-schema-linter"
-    ],
     "*.{md,css,scss,json,yml,yaml}": [
       "prettier -w"
     ]
