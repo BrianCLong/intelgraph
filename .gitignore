@@ -125,3 +125,6 @@ __pycache__/
 
 .aider*
 .env
+
+# Ignore nested package-locks
+client/package-lock.json
