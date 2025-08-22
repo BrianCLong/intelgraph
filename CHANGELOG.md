@@ -1,8 +1,58 @@
-# Changelog
+# IntelGraph Platform Changelog
 
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+
+## [1.0.1] - 2025-08-21
+
+### Release Engineering Summary
+
+**Release Type**: Minor version bump with major architectural consolidation
+**Semantic Version**: 1.0.0 → 1.0.1 (additive changes, no breaking API changes)
+**Deployment Status**: ⚠️ CONDITIONAL GO - Critical blockers identified
+
+### Added
+
+#### 🚀 GA Release Infrastructure
+
+- **GA Release Service**: Complete deployment readiness validation system
+  - Automated SBOM generation with CycloneDX
+  - Preflight validation for deployment environments
+  - Release status tracking and dashboard integration
+  - Installation verification script with comprehensive health checks
+
+#### 🤖 Copilot NL→Cypher System
+
+- **Natural Language to Cypher Translation**: Preview implementation with safety guardrails
+  - Read-only query execution for security
+  - Real-time streaming via Socket.IO
+  - Confidence scoring and explainability
+  - Preview mode with clear limitations messaging
+
+#### 🔍 Entity Resolution Enhancements
+
+- **Explainable Entity Resolution**: Comprehensive audit trail and decision transparency
+  - Feature-level scoring breakdown (name similarity, email exact match, geo proximity)
+  - Human override tracking with reasoning
+  - Algorithm versioning (deterministic, probabilistic, hybrid)
+  - Confidence thresholds and model explainability
+
+### Critical Issues & Blockers
+
+#### 🚨 Production Deployment Blockers
+
+1. **TypeScript Compilation Failures**: Widespread logger configuration issues
+2. **Database Connectivity**: PostgreSQL, Neo4j, Redis configuration missing
+3. **Security Configuration**: JWT secrets and authentication variables missing
+
+#### ✅ Validated Systems
+
+1. **Ethics & Guardrails**: Active manipulation prevention in all AI services
+2. **Provenance Integrity**: Citation and audit logging preserved (29 occurrences)
+3. **Schema Compatibility**: No breaking GraphQL changes detected
+
+**Overall Recommendation**: **CONDITIONAL GO** - Release architecture is sound, but critical infrastructure configuration required before production deployment.
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---

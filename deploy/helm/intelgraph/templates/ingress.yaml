@@ -1,0 +1,105 @@
+{{- if .Values.global.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "intelgraph.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "intelgraph.labels" . | nindent 4 }}
+  annotations:
+    {{- toYaml .Values.global.ingress.annotations | nindent 4 }}
+spec:
+  {{- if .Values.global.ingress.className }}
+  ingressClassName: {{ .Values.global.ingress.className }}
+  {{- end }}
+  {{- if .Values.global.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ .Values.global.ingress.host }}
+      secretName: {{ .Values.global.ingress.tls.secretName }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.global.ingress.host }}
+      http:
+        paths:
+          # Main application (mobile interface)
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.services.mobile.name }}
+                port:
+                  number: {{ .Values.services.mobile.service.port | default 80 }}
+          # API Gateway
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.services.apiGateway.name }}
+                port:
+                  number: {{ .Values.services.apiGateway.service.port }}
+          # GraphQL endpoint
+          - path: /graphql
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.services.apiGateway.name }}
+                port:
+                  number: {{ .Values.services.apiGateway.service.port }}
+          # WebSocket endpoint
+          - path: /socket.io
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.services.apiGateway.name }}
+                port:
+                  number: {{ .Values.services.apiGateway.service.port }}
+          # Analytics service
+          - path: /analytics
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.services.analytics.name }}
+                port:
+                  number: {{ .Values.services.analytics.service.port | default 80 }}
+          # Search engine
+          - path: /search
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.services.searchEngine.name }}
+                port:
+                  number: {{ .Values.services.searchEngine.service.port | default 80 }}
+          # Graph analytics
+          - path: /graph-analytics
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.services.graphAnalytics.name }}
+                port:
+                  number: {{ .Values.services.graphAnalytics.service.port | default 80 }}
+          # ML engine
+          - path: /ml
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.services.mlEngine.name }}
+                port:
+                  number: {{ .Values.services.mlEngine.service.port | default 80 }}
+          # Feed processor
+          - path: /feeds
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.services.feedProcessor.name }}
+                port:
+                  number: {{ .Values.services.feedProcessor.service.port | default 80 }}
+          # Workflow engine
+          - path: /workflows
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.services.workflowEngine.name }}
+                port:
+                  number: {{ .Values.services.workflowEngine.service.port | default 80 }}
+{{- end }}

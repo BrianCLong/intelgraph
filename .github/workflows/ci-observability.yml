@@ -1,0 +1,25 @@
+name: Observability SLOs
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check-slos:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000
+
+      - name: Setup Node.js
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
+        with:
+          node-version: '20.x'
+
+      - name: Install dependencies
+        run: npm install axios
+        working-directory: ./tests/observability
+
+      - name: Check SLOs
+        run: node tests/observability/check-slos.js
+        env:
+          PROMETHEUS_URL: ${{ secrets.PROMETHEUS_URL }}

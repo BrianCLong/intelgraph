@@ -1,0 +1,41 @@
+name: release-signoff
+on:
+  push:
+    tags: ['v*.*.*']
+jobs:
+  verify-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
+      - name: Verify Release Checklist Issue exists
+        run: |
+          ISSUE_NUMBER="$(gh issue list --search "is:issue is:open label:release v${GITHUB_REF_NAME#v}" --json number --jq '.[0].number')"
+          if [ -z "$ISSUE_NUMBER" ]; then
+            echo "No open Release Checklist issue found"; exit 1;
+          fi
+          BODY="$(gh issue view "$ISSUE_NUMBER" --json body --jq .body)"
+          if echo "$BODY" | grep -q '- \[ ]'; then
+            echo "Unchecked checklist items remain in issue #$ISSUE_NUMBER"; exit 1;
+          fi
+          echo "All checklist items are checked."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fetch latest run artifacts (security/ci)
+        uses: actions/download-artifact@0b7f8f6 # v4
+        with:
+          name: sbom
+          path: artifacts
+        continue-on-error: true
+
+      - name: Ensure SBOM artifact present
+        run: |
+          test -n "$(ls -1 artifacts 2>/dev/null || true)" || { echo "SBOM artifact missing"; exit 1; }
+
+      - name: Verify SLOs.md present and non-empty
+        run: test -s docs/SLOs.md
+
+      - name: Verify no .env tracked
+        run: |
+          if git ls-files -ci --exclude-standard | grep -E '(^|/).env($|.|-)'; then
+            echo "Tracked .env detected"; exit 1; fi

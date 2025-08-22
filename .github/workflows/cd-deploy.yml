@@ -3,26 +3,20 @@ name: CD Deploy
 on:
   workflow_run:
     workflows: ["CI Image"]
-    types: 
+    types:
       - completed
+  workflow_dispatch: # Allows manual triggering
 
 jobs:
   deploy-dev:
     if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main'
     runs-on: ubuntu-latest
-    environment: 
+    environment:
       name: dev
       url: https://dev.intelgraph.com # Placeholder
     steps:
       - name: Checkout code
         uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000
-
-      - name: Login to GHCR
-        uses: docker/login-action@184bdaa
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy to Dev
         uses: appleboy/ssh-action@029f5b4
@@ -31,74 +25,75 @@ jobs:
           username: ${{ secrets.DEV_SSH_USER }}
           key: ${{ secrets.DEV_SSH_KEY }}
           script: |
-            set -euo pipefail
-            echo "Logging into registry..."
-            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            echo "Pulling services..."
-            docker compose -f /opt/intelgraph/docker-compose.yml pull server client # Assuming server and client are the services
-            echo "Recreating services..."
-            docker compose -f /opt/intelgraph/docker-compose.yml up -d server client
-            echo "Pruning unused images..."
-            docker image prune -f
+            bash .github/scripts/deploy.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY: ghcr.io
+          IMAGE_NAME_SERVER: server
+          IMAGE_NAME_CLIENT: client
+          DOCKER_COMPOSE_PATH: /opt/intelgraph/docker-compose.yml
+          DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD }}
+          DB_HOST: ${{ secrets.DEV_DB_HOST }}
+          DB_USER: ${{ secrets.DEV_DB_USER }}
+          DB_NAME: ${{ secrets.DEV_DB_NAME }}
+          MIGRATION_SCRIPT_PATH: /opt/intelgraph/server/scripts/db_migrate.js
 
-            # Pre-migration backup (PostgreSQL)
-            PG_BACKUP_FILE="/tmp/pg_backup_$(date +%Y%m%d%H%M%S).sql"
-            PGPASSWORD="${{ secrets.DEV_DB_PASSWORD }}" pg_dump -h ${{ secrets.DEV_DB_HOST }} -U ${{ secrets.DEV_DB_USER }} ${{ secrets.DEV_DB_NAME }} > $PG_BACKUP_FILE || true
-            echo "PostgreSQL backup created at $PG_BACKUP_FILE"
+  deploy-staging:
+    if: github.event_name == 'workflow_dispatch' # Manual trigger for staging
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://staging.intelgraph.com # Placeholder
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000
 
-            # Pre-migration backup (Neo4j - Placeholder)
-            echo "Neo4j backup placeholder: Perform neo4j-admin dump or APOC backup here"
+      - name: Deploy to Staging
+        uses: appleboy/ssh-action@029f5b4
+        with:
+          host: ${{ secrets.STAGING_SSH_HOST }}
+          username: ${{ secrets.STAGING_SSH_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          script: |
+            bash .github/scripts/deploy.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY: ghcr.io
+          IMAGE_NAME_SERVER: server
+          IMAGE_NAME_CLIENT: client
+          DOCKER_COMPOSE_PATH: /opt/intelgraph/docker-compose.yml
+          DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
+          DB_HOST: ${{ secrets.STAGING_DB_HOST }}
+          DB_USER: ${{ secrets.STAGING_DB_USER }}
+          DB_NAME: ${{ secrets.STAGING_DB_NAME }}
+          MIGRATION_SCRIPT_PATH: /opt/intelgraph/server/scripts/db_migrate.js
 
-            # Run database migrations
-            echo "Running database migrations..."
-            # This assumes db_migrate.js is accessible on the host. If it's inside the container, adjust accordingly.
-            node /opt/intelgraph/server/scripts/db_migrate.js # Adjust path as needed
-            echo "Database migrations completed."
+  deploy-prod:
+    if: github.event_name == 'workflow_dispatch' # Manual trigger for production
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://intelgraph.com # Placeholder
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000
 
-  script: |
-            set -euo pipefail
-            echo "Logging into registry..."
-            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            echo "Pulling services..."
-            docker compose -f /opt/intelgraph/docker-compose.yml pull server client
-            echo "Recreating services..."
-            docker compose -f /opt/intelgraph/docker-compose.yml up -d server client
-            echo "Pruning unused images..."
-            docker image prune -f
-
-            # Pre-migration backup (PostgreSQL)
-            PG_BACKUP_FILE="/tmp/pg_backup_$(date +%Y%m%d%H%M%S).sql"
-            PGPASSWORD="${{ secrets.STAGING_DB_PASSWORD }}" pg_dump -h ${{ secrets.STAGING_DB_HOST }} -U ${{ secrets.STAGING_DB_USER }} ${{ secrets.STAGING_DB_NAME }} > $PG_BACKUP_FILE || true
-            echo "PostgreSQL backup created at $PG_BACKUP_FILE"
-
-            # Pre-migration backup (Neo4j - Placeholder)
-            echo "Neo4j backup placeholder: Perform neo4j-admin dump or APOC backup here"
-
-            # Run database migrations
-            echo "Running database migrations..."
-            node /opt/intelgraph/server/scripts/db_migrate.js # Adjust path as needed
-            echo "Database migrations completed."
-
-  script: |
-            set -euo pipefail
-            echo "Logging into registry..."
-            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            echo "Pulling services..."
-            docker compose -f /opt/intelgraph/docker-compose.yml pull server client
-            echo "Recreating services..."
-            docker compose -f /opt/intelgraph/docker-compose.yml up -d server client
-            echo "Pruning unused images..."
-            docker image prune -f
-
-            # Pre-migration backup (PostgreSQL)
-            PG_BACKUP_FILE="/tmp/pg_backup_$(date +%Y%m%d%H%M%S).sql"
-            PGPASSWORD="${{ secrets.PROD_DB_PASSWORD }}" pg_dump -h ${{ secrets.PROD_DB_HOST }} -U ${{ secrets.PROD_DB_USER }} ${{ secrets.PROD_DB_NAME }} > $PG_BACKUP_FILE || true
-            echo "PostgreSQL backup created at $PG_BACKUP_FILE"
-
-            # Pre-migration backup (Neo4j - Placeholder)
-            echo "Neo4j backup placeholder: Perform neo4j-admin dump or APOC backup here"
-
-            # Run database migrations
-            echo "Running database migrations..."
-            node /opt/intelgraph/server/scripts/db_migrate.js # Adjust path as needed
-            echo "Database migrations completed."
+      - name: Deploy to Production
+        uses: appleboy/ssh-action@029f5b4
+        with:
+          host: ${{ secrets.PROD_SSH_HOST }}
+          username: ${{ secrets.PROD_SSH_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            bash .github/scripts/deploy.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY: ghcr.io
+          IMAGE_NAME_SERVER: server
+          IMAGE_NAME_CLIENT: client
+          DOCKER_COMPOSE_PATH: /opt/intelgraph/docker-compose.yml
+          DB_PASSWORD: ${{ secrets.PROD_DB_PASSWORD }}
+          DB_HOST: ${{ secrets.PROD_DB_HOST }}
+          DB_USER: ${{ secrets.PROD_DB_USER }}
+          DB_NAME: ${{ secrets.PROD_DB_NAME }}
+          MIGRATION_SCRIPT_PATH: /opt/intelgraph/server/scripts/db_migrate.js

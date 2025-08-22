@@ -68,9 +68,9 @@ services:
       - POSTGRES_URL=postgres://intelgraph:password@postgres:5432/intelgraph
     command: ["node", "scripts/db_migrate.cjs"]
 
-  server:
-    build: ./server
-    container_name: server
+  active-measures:
+    build: ./active-measures-module
+    container_name: active-measures
     command: node --require ts-node/register src/index.ts
     depends_on:
       neo4j:
@@ -259,7 +259,161 @@ services:
       retries: 30
     profiles: ["ai"]
 
+  # Elasticsearch for Search Engine
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    profiles: ["search", "mlfp"]
+
+  # Search Engine Service
+  search-engine:
+    build: ./apps/search-engine
+    container_name: search-engine
+    ports:
+      - "4006:4006"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=development
+      - PORT=4006
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=intelgraph
+      - POSTGRES_USER=intelgraph
+      - POSTGRES_PASSWORD=password
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=your-jwt-secret-key
+      - LOG_LEVEL=info
+      - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:4000
+    volumes:
+      - ./apps/search-engine/logs:/app/logs
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:4006/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    profiles: ["search", "mlfp"]
+
+  # Graph Analytics Service
+  graph-analytics:
+    build: ./apps/graph-analytics
+    container_name: graph-analytics
+    ports:
+      - "4005:4005"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=development
+      - PORT=4005
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=intelgraph
+      - POSTGRES_USER=intelgraph
+      - POSTGRES_PASSWORD=password
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USERNAME=neo4j
+      - NEO4J_PASSWORD=password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=your-jwt-secret-key
+      - LOG_LEVEL=info
+      - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:4000
+    volumes:
+      - ./apps/graph-analytics/logs:/app/logs
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:4005/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    profiles: ["analytics", "mlfp"]
+
+  # Feed Processor Service
+  feed-processor:
+    build: ./apps/feed-processor
+    container_name: feed-processor
+    ports:
+      - "4007:4007"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=development
+      - PORT=4007
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=intelgraph
+      - POSTGRES_USER=intelgraph
+      - POSTGRES_PASSWORD=password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=your-jwt-secret-key
+      - LOG_LEVEL=info
+      - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:4000
+      - TEXTRAZOR_API_KEY=your-textrazor-api-key
+      - VIRUSTOTAL_API_KEY=your-virustotal-api-key
+      - ABUSEIPDB_API_KEY=your-abuseipdb-api-key
+    volumes:
+      - ./apps/feed-processor/logs:/app/logs
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:4007/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    profiles: ["feeds", "mlfp"]
+
+  # Mobile Interface
+  mobile-interface:
+    build: ./apps/mobile-interface
+    container_name: mobile-interface
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - API_BASE_URL=http://localhost:4000
+      - NEXT_PUBLIC_API_URL=http://localhost:4000
+      - NEXT_PUBLIC_WS_URL=ws://localhost:4000
+      - NEXT_PUBLIC_MAPBOX_TOKEN=your-mapbox-token
+    volumes:
+      - ./apps/mobile-interface/.next:/app/.next
+      - ./apps/mobile-interface/public:/app/public
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3001/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    profiles: ["mobile", "mlfp"]
+
 volumes:
   neo4j_data:
   postgres_data:
   redis_data:
+  elasticsearch_data:

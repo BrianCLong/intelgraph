@@ -21,7 +21,7 @@ settings = Settings()
 
 
 def log_config() -> None:
-    safe = settings.dict()
+    safe = settings.model_dump()
     if safe.get("API_KEYS"):
         safe["API_KEYS"] = "***"
     if safe.get("JWT_PUBLIC_KEY_PEM"):

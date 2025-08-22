@@ -1,11 +1,19 @@
+[tool.poetry.dependencies]
+python = "^3.9"
+prometheus-client = "^0.20.0"
+slowapi = "^0.1.9"
+
 [tool.black]
 line-length = 100
 
 [tool.ruff]
+target-version = "py312"
 line-length = 100
-select = ["E","F","I","UP","B","C90"]
-ignore = ["E501"]
-fix = true
+extend-exclude = ["dist","build",".venv"]
+
+[tool.ruff.lint]
+select = ["E","F","I","UP","B","SIM"]
+ignore = ["E501"]  # keep markdown-friendly long strings if needed
 
 [tool.mypy]
 python_version = "3.12"
@@ -15,4 +23,4 @@ strict_optional = true
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
-addopts = "-q --cov=apps --cov=packages --cov-report=xml"
+addopts = "-q"

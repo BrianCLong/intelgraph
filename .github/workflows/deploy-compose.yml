@@ -35,14 +35,14 @@ jobs:
           if [[ "$H" == *"@"* ]]; then echo "host=$H" >> $GITHUB_OUTPUT; else echo "host=${U:+$U@}$H" >> $GITHUB_OUTPUT; fi
 
       - name: Login to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c # v3
         with:
           registry: ${{ github.event.inputs.registry }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy over SSH
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@5622b0683c338ba79484499e87b255370afb58d1 # v1.0.3
         with:
           host: ${{ steps.target.outputs.host }}
           username: ${{ github.event.inputs.user || '' }}
@@ -57,4 +57,3 @@ jobs:
             docker compose -f ${{ github.event.inputs.compose_file }} up -d ${{ github.event.inputs.services }}
             echo "Pruning unused images..."
             docker image prune -f
-

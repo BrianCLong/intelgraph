@@ -1,7 +1,0 @@
-{
-  "title": "GA SLO",
-  "panels": [
-    { "type": "graph", "title": "p95 Latency" },
-    { "type": "stat", "title": "RTO" }
-  ]
-}

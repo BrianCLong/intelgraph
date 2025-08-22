@@ -1,0 +1,254 @@
+# GA Core: Hypothesis Workbench Schema
+# Minimal but real implementation for hypothesis rigor in briefs
+
+type Hypothesis {
+  id: ID!
+  title: String!
+  description: String!
+  investigationId: ID!
+  createdBy: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  status: HypothesisStatus!
+  confidence: Float!  # 0.0 to 1.0
+  priority: HypothesisPriority!
+  
+  # Evidence supporting or refuting this hypothesis
+  evidence: [Evidence!]!
+  
+  # Competing hypotheses in the same set
+  competingHypotheses: [Hypothesis!]!
+  
+  # Weight in the hypothesis set (should sum to 1.0 across all competing)
+  weight: Float!
+  
+  # Residual unknowns - what we still need to investigate
+  residualUnknowns: [String!]!
+  
+  # Tags for categorization
+  tags: [String!]!
+}
+
+type Evidence {
+  id: ID!
+  hypothesisId: ID!
+  title: String!
+  description: String!
+  sourceType: EvidenceSourceType!
+  sourceId: String  # Reference to entity, relationship, document, etc.
+  reliability: EvidenceReliability!
+  
+  # How much this evidence supports (+) or refutes (-) the hypothesis
+  supportWeight: Float!  # -1.0 to +1.0
+  
+  # Confidence in this evidence itself
+  confidence: Float!  # 0.0 to 1.0
+  
+  createdBy: ID!
+  createdAt: DateTime!
+  
+  # Link to actual data
+  entityIds: [ID!]!
+  relationshipIds: [ID!]!
+  documentIds: [ID!]!
+}
+
+type CompetingHypothesisSet {
+  id: ID!
+  investigationId: ID!
+  name: String!
+  description: String
+  hypotheses: [Hypothesis!]!
+  
+  # Validation that weights sum to 1.0
+  totalWeight: Float!
+  
+  # Overall confidence in the hypothesis set
+  setConfidence: Float!
+  
+  # What remains unknown after all hypotheses considered
+  globalResidualUnknowns: [String!]!
+  
+  createdBy: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+enum HypothesisStatus {
+  DRAFT
+  ACTIVE
+  SUPPORTED
+  REFUTED
+  NEEDS_MORE_EVIDENCE
+  ARCHIVED
+}
+
+enum HypothesisPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum EvidenceSourceType {
+  ENTITY
+  RELATIONSHIP
+  DOCUMENT
+  OSINT
+  HUMAN_INTELLIGENCE
+  SIGNALS_INTELLIGENCE
+  FINANCIAL_RECORD
+  COMMUNICATION_RECORD
+  OBSERVATION
+  EXPERT_ANALYSIS
+}
+
+enum EvidenceReliability {
+  A_RELIABLE           # Completely reliable
+  B_USUALLY_RELIABLE   # Usually reliable  
+  C_FAIRLY_RELIABLE    # Fairly reliable
+  D_NOT_USUALLY_RELIABLE # Not usually reliable
+  E_UNRELIABLE         # Unreliable
+  F_RELIABILITY_UNKNOWN # Cannot be judged
+}
+
+# Inputs
+input CreateHypothesisInput {
+  title: String!
+  description: String!
+  investigationId: ID!
+  confidence: Float = 0.5
+  priority: HypothesisPriority = MEDIUM
+  competingHypothesisSetId: ID
+  weight: Float = 1.0
+  residualUnknowns: [String!] = []
+  tags: [String!] = []
+}
+
+input UpdateHypothesisInput {
+  title: String
+  description: String
+  status: HypothesisStatus
+  confidence: Float
+  priority: HypothesisPriority
+  weight: Float
+  residualUnknowns: [String!]
+  tags: [String!]
+}
+
+input AddEvidenceInput {
+  hypothesisId: ID!
+  title: String!
+  description: String!
+  sourceType: EvidenceSourceType!
+  sourceId: String
+  reliability: EvidenceReliability!
+  supportWeight: Float!  # -1.0 to +1.0
+  confidence: Float!     # 0.0 to 1.0
+  entityIds: [ID!] = []
+  relationshipIds: [ID!] = []
+  documentIds: [ID!] = []
+}
+
+input CreateCompetingHypothesisSetInput {
+  investigationId: ID!
+  name: String!
+  description: String
+  initialHypotheses: [CreateHypothesisInput!]!
+}
+
+# Queries
+extend type Query {
+  hypothesis(id: ID!): Hypothesis
+  
+  hypothesesByInvestigation(
+    investigationId: ID!
+    status: HypothesisStatus
+    priority: HypothesisPriority
+    limit: Int = 50
+  ): [Hypothesis!]!
+  
+  competingHypothesisSet(id: ID!): CompetingHypothesisSet
+  
+  competingHypothesisSetsByInvestigation(
+    investigationId: ID!
+    limit: Int = 10
+  ): [CompetingHypothesisSet!]!
+  
+  # For brief generation - get hypothesis summary
+  hypothesisSummaryForBrief(investigationId: ID!): HypothesisBriefSummary!
+}
+
+# Mutations  
+extend type Mutation {
+  createHypothesis(input: CreateHypothesisInput!): Hypothesis!
+  updateHypothesis(id: ID!, input: UpdateHypothesisInput!): Hypothesis!
+  deleteHypothesis(id: ID!): Boolean!
+  
+  addEvidence(input: AddEvidenceInput!): Evidence!
+  updateEvidence(id: ID!, input: UpdateEvidenceInput!): Evidence!
+  removeEvidence(id: ID!): Boolean!
+  
+  createCompetingHypothesisSet(input: CreateCompetingHypothesisSetInput!): CompetingHypothesisSet!
+  
+  # Rebalance weights in a competing hypothesis set
+  rebalanceHypothesisWeights(
+    setId: ID!
+    newWeights: [HypothesisWeightInput!]!
+  ): CompetingHypothesisSet!
+  
+  # Generate hypothesis from AI analysis
+  generateHypothesisFromEvidence(
+    investigationId: ID!
+    entityIds: [ID!]
+    relationshipIds: [ID!]
+    prompt: String
+  ): [Hypothesis!]!
+}
+
+input UpdateEvidenceInput {
+  title: String
+  description: String
+  reliability: EvidenceReliability
+  supportWeight: Float
+  confidence: Float
+  entityIds: [ID!]
+  relationshipIds: [ID!]
+  documentIds: [ID!]
+}
+
+input HypothesisWeightInput {
+  hypothesisId: ID!
+  weight: Float!
+}
+
+# For brief generation
+type HypothesisBriefSummary {
+  investigationId: ID!
+  
+  # All competing hypothesis sets
+  competingHypothesisSets: [CompetingHypothesisSet!]!
+  
+  # Summary statistics
+  totalHypotheses: Int!
+  totalEvidence: Int!
+  averageConfidence: Float!
+  
+  # Key findings for brief
+  topHypotheses: [Hypothesis!]!        # Highest weighted hypotheses
+  strongestEvidence: [Evidence!]!      # Highest confidence evidence
+  criticalUnknowns: [String!]!         # Most frequently mentioned unknowns
+  
+  # Rigor metrics for GA acceptance criteria
+  hasCompetingHypotheses: Boolean!     # Multiple hypotheses considered?
+  hasWeightedAnalysis: Boolean!        # Weights properly assigned?
+  hasResidualUnknowns: Boolean!        # Unknowns documented?
+  rigorScore: Float!                   # Overall rigor score 0-1
+}
+
+# Subscriptions for real-time collaboration
+extend type Subscription {
+  hypothesisUpdated(investigationId: ID!): Hypothesis!
+  evidenceAdded(hypothesisId: ID!): Evidence!
+  competingHypothesisSetUpdated(investigationId: ID!): CompetingHypothesisSet!
+}

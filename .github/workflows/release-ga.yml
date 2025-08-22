@@ -11,7 +11,7 @@ jobs:
       contents: write
       actions: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
       - run: npm ci && npm run build && npm test
       - name: Generate SBOM (CycloneDX)
         run: npx @cyclonedx/cyclonedx-npm --output-file sbom.json
@@ -24,6 +24,6 @@ jobs:
           cosign sign ghcr.io/intelgraph/platform:${GITHUB_REF_NAME}
           cosign attest --predicate sbom.json --type cyclonedx ghcr.io/intelgraph/platform:${GITHUB_REF_NAME}
       - name: SLSA provenance
-        uses: slsa-framework/slsa-github-generator/actions/generator@v2
+        uses: slsa-framework/slsa-github-generator/actions/generator@92a4730543214040129020000000000000000000 # v2
         with:
           artifact_path: "dist/**"

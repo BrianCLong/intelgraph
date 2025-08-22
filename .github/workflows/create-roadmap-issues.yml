@@ -32,10 +32,10 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@824a62378795d7a63864050674956c050c8c0868 # v5
         with:
           python-version: '3.x'
 

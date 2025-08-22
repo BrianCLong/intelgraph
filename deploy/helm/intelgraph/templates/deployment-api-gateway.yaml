@@ -1,0 +1,81 @@
+{{- $service := .Values.services.apiGateway -}}
+{{- if $service.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $service.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "intelgraph.serviceLabels" (dict "serviceName" $service.name "root" .) | nindent 4 }}
+spec:
+  replicas: {{ $service.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      {{- include "intelgraph.serviceSelectorLabels" (dict "serviceName" $service.name "root" .) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "intelgraph.serviceSelectorLabels" (dict "serviceName" $service.name "root" .) | nindent 8 }}
+        {{- include "intelgraph.podLabels" (dict "service" $service "root" .) | nindent 8 }}
+      annotations:
+        {{- include "intelgraph.configChecksum" . | nindent 8 }}
+        {{- include "intelgraph.podAnnotations" (dict "service" $service "root" .) | nindent 8 }}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        {{- include "intelgraph.podSecurityContext" . | nindent 8 }}
+      containers:
+        - name: {{ $service.name }}
+          image: {{ include "intelgraph.image" (dict "service" $service "root" .) }}
+          imagePullPolicy: {{ .Values.global.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ $service.port }}
+              protocol: TCP
+            - name: metrics
+              containerPort: {{ .Values.global.prometheus.port }}
+              protocol: TCP
+          env:
+            {{- include "intelgraph.commonEnv" . | nindent 12 }}
+            {{- include "intelgraph.serviceEnv" (dict "service" $service "root" .) | nindent 12 }}
+          livenessProbe:
+            {{- include "intelgraph.livenessProbe" (dict "service" $service "root" .) | nindent 12 }}
+          readinessProbe:
+            {{- include "intelgraph.readinessProbe" (dict "service" $service "root" .) | nindent 12 }}
+          resources:
+            {{- include "intelgraph.resources" (dict "service" $service "root" .) | nindent 12 }}
+          securityContext:
+            {{- include "intelgraph.securityContext" . | nindent 12 }}
+          volumeMounts:
+            {{- include "intelgraph.volumeMounts" . | nindent 12 }}
+      volumes:
+        {{- include "intelgraph.volumes" . | nindent 8 }}
+      {{- with .Values.global.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - {{ $service.name }}
+              topologyKey: kubernetes.io/hostname
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              {{- include "intelgraph.serviceSelectorLabels" (dict "serviceName" $service.name "root" .) | nindent 14 }}
+{{- end }}

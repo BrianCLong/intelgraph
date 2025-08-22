@@ -28,7 +28,7 @@ jobs:
 
       - name: Docker metadata
         id: meta
-        uses: docker/metadata-action@902fa8e
+        uses: docker/metadata-action@573961664f784b8d022460d516eda0a0959374ac # v5
         with:
           images: |
             ghcr.io/${{ github.repository }}-server
@@ -39,11 +39,11 @@ jobs:
             type=raw,value=${{ github.ref_name }}
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3 # No specific SHA found
+        uses: docker/setup-qemu-action@94ab11c4e8a0292eaf4d3e5b44313865b0473544 # v3
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3 # No specific SHA found
+        uses: docker/setup-buildx-action@94ab11c4e8a0292eaf4d3e5b44313865b0473544 # v3
       - name: Login to GHCR
-        uses: docker/login-action@184bdaa
+        uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -51,7 +51,7 @@ jobs:
 
       - name: Build and push server image
         if: steps.changes.outputs.server == 'true' || steps.changes.outputs.dockerfile == 'true'
-        uses: docker/build-push-action@v6 # No specific SHA found
+        uses: docker/build-push-action@f2bb5616315339d32956063c787cf28d72655690 # v6
         with:
           context: ./server
           file: ./server/Dockerfile.prod # Assuming a production Dockerfile exists
@@ -60,7 +60,7 @@ jobs:
 
       - name: Build and push client image
         if: steps.changes.outputs.client == 'true' || steps.changes.outputs.dockerfile == 'true'
-        uses: docker/build-push-action@v6 # No specific SHA found
+        uses: docker/build-push-action@f2bb5616315339d32956063c787cf28d72655690 # v6
         with:
           context: ./client
           file: ./client/Dockerfile.prod # Assuming a production Dockerfile exists
@@ -69,7 +69,7 @@ jobs:
 
       - name: Run hadolint
         if: steps.changes.outputs.dockerfile == 'true'
-        uses: reviewdog/action-hadolint@fc7ee4a
+        uses: reviewdog/action-hadolint@fc7ee4a # v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-review
@@ -77,7 +77,7 @@ jobs:
 
       - name: Generate SBOM
         if: steps.changes.outputs.server == 'true' || steps.changes.outputs.client == 'true' || steps.changes.outputs.dockerfile == 'true'
-        uses: anchore/sbom-action@v0 # Using v0 as specific SHA not found for v0.1.0
+        uses: anchore/sbom-action@v0 # v0
         with:
           image: ghcr.io/${{ github.repository }}-server:${{ github.sha }}
           format: spdx-json
@@ -85,14 +85,14 @@ jobs:
 
       - name: Upload SBOM artifact
         if: steps.changes.outputs.server == 'true' || steps.changes.outputs.client == 'true' || steps.changes.outputs.dockerfile == 'true'
-        uses: actions/upload-artifact@0b7f8f6
+        uses: actions/upload-artifact@0b7f8f6 # v4
         with:
           name: server-sbom
           path: server-sbom.spdx.json
 
       - name: Sign images (Cosign keyless)
         if: steps.changes.outputs.server == 'true' || steps.changes.outputs.client == 'true' || steps.changes.outputs.dockerfile == 'true'
-        uses: sigstore/cosign-installer@v1.4.1 # No specific SHA found
+        uses: sigstore/cosign-installer@59acb9246e08875a948653d9030005078208a75e # v1.4.1
       - run: |
           cosign sign ghcr.io/${{ github.repository }}-server:${{ github.sha }} --yes
           cosign sign ghcr.io/${{ github.repository }}-client:${{ github.sha }} --yes
