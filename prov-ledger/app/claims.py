@@ -3,6 +3,7 @@ from typing import Dict
 import uuid
 
 from .nlp.embedder import embed
+from .events import emit
 
 STOPWORDS = {"the", "a", "an", "of", "and", "to"}
 
@@ -27,6 +28,7 @@ def create_claim(text: str) -> dict:
         "evidence": [],
     }
     _claims[cid] = claim
+    emit("prov.claim.registered", {"id": cid})
     return claim
 
 
