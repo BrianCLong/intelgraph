@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: "Target environment"
+        description: 'Target environment'
         required: true
-        default: "staging"
+        default: 'staging'
       ref:
-        description: "Git ref to deploy"
+        description: 'Git ref to deploy'
         required: false
-        default: "main"
+        default: 'main'
 
 jobs:
   deploy:
@@ -82,4 +82,3 @@ jobs:
         run: |
           echo "Deployment images pushed to GHCR with tags:"
           echo "${{ steps.meta.outputs.tags }}"
-

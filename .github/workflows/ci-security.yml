@@ -1,109 +1,50 @@
-name: CI Security
+name: ci-security
 
 on:
   pull_request:
-  push:
-    branches: [ main ]
+    branches: [main, develop]
+  workflow_dispatch:
   schedule:
-    - cron: '0 2 * * 1' # Weekly scan
+    - cron: '17 3 * * *'
+
+permissions:
+  contents: read
+  security-events: write
 
 jobs:
-  gitleaks:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000
-        with:
-          fetch-depth: 0
-      - name: Check for changes
-        id: changes
-        uses: dorny/paths-filter@4512585
-        with:
-          filters: |
-            client: 
-              - 'client/**'
-            server: 
-              - 'server/**'
-            python: 
-              - 'python/**'
-            dockerfile: 
-              - '**/Dockerfile*'
-
-      - name: Run Gitleaks
-        if: steps.changes.outputs.client == 'true' || steps.changes.outputs.server == 'true' || steps.changes.outputs.python == 'true'
-        uses: zricethezav/gitleaks-action@v2 # No specific SHA found
-        continue-on-error: false
-
   codeql:
+    name: CodeQL
     runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      contents: read
     strategy:
-      fail-fast: true
       matrix:
-        language: [ 'javascript', 'python' ] # Limiting to JS/TS and Python as per brief
+        language: [javascript, typescript, python]
     steps:
-      - uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000
-      - uses: github/codeql-action/init@v3 # No specific SHA found
-        with: { languages: ${{ matrix.language }} }
-      - uses: github/codeql-action/analyze@v3 # No specific SHA found
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+      - uses: github/codeql-action/analyze@v3
+
+  gitleaks:
+    name: Gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: gitleaks/gitleaks-action@v2
+        with:
+          config-path: .gitleaks.toml
+          redact: 'true'
 
   trivy-fs:
+    name: Trivy FS
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000
-      - name: Run Trivy filesystem scan
-        if: steps.changes.outputs.client == 'true' || steps.changes.outputs.server == 'true' || steps.changes.outputs.python == 'true'
-        uses: aquasecurity/trivy-action@77137e9
+      - uses: actions/checkout@v4
+      - uses: aquasecurity/trivy-action@0.28.0
         with:
-          scan-type: 'fs'
-          severity: 'HIGH,CRITICAL'
-          format: 'github'
-          output: 'trivy-results.sarif'
-
-      - name: Upload Trivy scan results to GitHub Security tab
-        if: steps.changes.outputs.client == 'true' || steps.changes.outputs.server == 'true' || steps.changes.outputs.python == 'true'
-        uses: github/codeql-action/upload-sarif@v3 # No specific SHA found
-        with:
-          sarif_file: 'trivy-results.sarif'
-
-  trivy-image:
-    runs-on: ubuntu-latest
-    needs: [trivy-fs] # Depends on image being built and pushed
-    steps:
-      - name: Login to GHCR
-        uses: docker/login-action@184bdaa
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Run Trivy image scan (server)
-        if: steps.changes.outputs.server == 'true' || steps.changes.outputs.dockerfile == 'true'
-        uses: aquasecurity/trivy-action@77137e9
-        with:
-          image-ref: ghcr.io/${{ github.repository }}-server:${{ github.sha }}
-          format: 'github'
-          output: 'trivy-server-image-results.sarif'
-          severity: 'HIGH,CRITICAL'
-
-      - name: Upload Trivy server image scan results to GitHub Security tab
-        if: steps.changes.outputs.server == 'true' || steps.changes.outputs.dockerfile == 'true'
-        uses: github/codeql-action/upload-sarif@v3 # No specific SHA found
-        with:
-          sarif_file: 'trivy-server-image-results.sarif'
-
-      - name: Run Trivy image scan (client)
-        if: steps.changes.outputs.client == 'true' || steps.changes.outputs.dockerfile == 'true'
-        uses: aquasecurity/trivy-action@77137e9
-        with:
-          image-ref: ghcr.io/${{ github.repository }}-client:${{ github.sha }}
-          format: 'github'
-          output: 'trivy-client-image-results.sarif'
-          severity: 'HIGH,CRITICAL'
-
-      - name: Upload Trivy client image scan results to GitHub Security tab
-        if: steps.changes.outputs.client == 'true' || steps.changes.outputs.dockerfile == 'true'
-        uses: github/codeql-action/upload-sarif@v3 # No specific SHA found
-        with:
-          sarif_file: 'trivy-client-image-results.sarif'
+          scan-type: fs
+          hide-progress: true
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true

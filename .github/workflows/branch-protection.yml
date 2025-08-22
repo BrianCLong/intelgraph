@@ -4,21 +4,21 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: "Branch to protect"
+        description: 'Branch to protect'
         required: true
-        default: "main"
+        default: 'main'
       enforce_admins:
-        description: "Enforce admins"
+        description: 'Enforce admins'
         required: false
-        default: "true"
+        default: 'true'
       require_linear_history:
-        description: "Require linear history"
+        description: 'Require linear history'
         required: false
-        default: "true"
+        default: 'true'
       required_approving_review_count:
-        description: "Required PR reviews"
+        description: 'Required PR reviews'
         required: false
-        default: "1"
+        default: '1'
 
 jobs:
   protect:

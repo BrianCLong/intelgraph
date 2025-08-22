@@ -89,7 +89,7 @@ jobs:
       fail-fast: false
       matrix:
         layout: [cose-bilkent, dagre]
-        sprite: ["0", "1"]
+        sprite: ['0', '1']
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -140,7 +140,7 @@ jobs:
         run: npx playwright install --with-deps
       - name: Launch backend stack (Redis+server)
         env:
-          DISABLE_SOCKET_AUTH: "1"
+          DISABLE_SOCKET_AUTH: '1'
         run: |
           docker compose -f docker-compose.yml up -d --build redis postgres neo4j
           # launch server with auth bypass for analytics namespace

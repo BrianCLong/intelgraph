@@ -1,213 +1,98 @@
-name: CI Test
+name: ci-test
 
 on:
   pull_request:
-  push:
-    branches: [ main ]
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-  unit-integration-e2e:
+  scope:
+    name: Determine changed areas
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node: ['18.x', '20.x']
-    services:
-      postgres:
-        image: postgres:13
-        env:
-          POSTGRES_DB: intelgraph_test
-          POSTGRES_USER: test_user
-          POSTGRES_PASSWORD: test_password
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-          
-      neo4j:
-        image: neo4j:4.4-enterprise
-        env:
-          NEO4J_AUTH: neo4j/test_password
-          NEO4J_ACCEPT_LICENSE_AGREEMENT: 'yes'
-          NEO4J_apoc_export_file_enabled: true
-          NEO4J_apoc_import_file_enabled: true
-          NEO4J_dbms_security_procedures_unrestricted: apoc.*
-        options: >-
-          --health-cmd "cypher-shell -u neo4j -p test_password 'RETURN 1'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-        ports:
-          - 7474:7474
-          - 7687:7687
-          
-      redis:
-        image: redis:7-alpine
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
-
+    outputs:
+      client: ${{ steps.filter.outputs.client }}
+      server: ${{ steps.filter.outputs.server }}
+      python: ${{ steps.filter.outputs.python }}
     steps:
-    - name: Checkout code
-      uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            client:
+              - "client/**"
+              - "web/**"
+              - "src/**"
+            server:
+              - "server/**"
+              - "graphql/**"
+              - "api/**"
+            python:
+              - "python/**"
+              - "**/*.py"
 
-    - name: Check for changes
-      id: changes
-      uses: dorny/paths-filter@4512585
-      with:
-        filters: |
-          client: 
-            - 'client/**'
-          server: 
-            - 'server/**'
-          python: 
-            - 'python/**'
+  client-tests:
+    name: Client tests
+    needs: scope
+    if: needs.scope.outputs.client == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.13.1'
+          cache: 'pnpm'
+      - run: corepack enable && corepack prepare pnpm@9.6.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm -r build -- --no-sourcemap
+      - name: Unit tests
+        run: pnpm test -- --ci --reporters=default --reporters=github
 
-    - name: Setup Node.js
-      uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
-      with:
-        node-version: ${{ matrix.node }}
-        cache: 'npm'
-        cache-dependency-path: |
-          package-lock.json
-          server/package-lock.json
+  server-tests:
+    name: Server tests
+    needs: scope
+    if: needs.scope.outputs.server == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.13.1'
+          cache: 'pnpm'
+      - run: corepack enable && corepack prepare pnpm@9.6.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm -r lint
+      - name: Typecheck
+        run: pnpm -r typecheck
+      - name: Unit tests
+        run: pnpm -r test -- --ci --reporters=default --reporters=github
 
-    - name: Install root dependencies
-      run: npm ci
-
-    - name: Install server dependencies
-      if: steps.changes.outputs.server == 'true'
-      working-directory: ./server
-      run: npm ci
-
-    - name: Install client dependencies
-      if: steps.changes.outputs.client == 'true'
-      working-directory: ./client
-      run: npm ci
-
-    - name: Wait for services
-      run: |
-        sleep 30
-        # Verify PostgreSQL
-        pg_isready -h localhost -p 5432 -U test_user -d intelgraph_test
-        # Verify Neo4j
-        timeout 60s bash -c 'until echo > /dev/tcp/localhost/7687; do sleep 1; done'
-        # Verify Redis
-        redis-cli -h localhost -p 6379 ping
-
-    - name: Setup test database
-      if: steps.changes.outputs.server == 'true'
-      run: |
-        PGPASSWORD=test_password psql -h localhost -U test_user -d intelgraph_test -f server/src/database/init.sql || true
-        
-    - name: Setup test Neo4j constraints
-      if: steps.changes.outputs.server == 'true'
-      run: |
-        cypher-shell -a bolt://localhost:7687 -u neo4j -p test_password -f server/src/database/multimodalConstraints.cypher || true
-
-    - name: Verify metrics endpoint
-      if: steps.changes.outputs.server == 'true'
-      run: |
-        npx ts-node --esm server/src/index.ts &
-        SERVER_PID=$!
-        sleep 15
-        curl -s http://localhost:4000/metrics | grep neo4j_query_total
-        kill $SERVER_PID
-      env:
-        DATABASE_URL: postgresql://test_user:test_password@localhost:5432/intelgraph_test
-        NEO4J_URI: bolt://localhost:7687
-        NEO4J_USERNAME: neo4j
-        NEO4J_PASSWORD: test_password
-        REDIS_URL: redis://localhost:6379
-        JWT_SECRET: test_jwt_secret
-
-    - name: Run unit and integration tests
-      if: steps.changes.outputs.server == 'true'
-      working-directory: ./server
-      run: npm test -- --coverage
-      env:
-        NODE_ENV: test
-        DATABASE_URL: postgresql://test_user:test_password@localhost:5432/intelgraph_test
-        NEO4J_URI: bolt://localhost:7687
-        NEO4J_USERNAME: neo4j
-        NEO4J_PASSWORD: test_password
-        REDIS_URL: redis://localhost:6379
-        JWT_SECRET: test_jwt_secret
-        TEST_MODE: unit
-
-    - name: Run client tests
-      if: steps.changes.outputs.client == 'true'
-      working-directory: ./client
-      run: npm test
-
-    - name: Run Python ML tests
-      if: steps.changes.outputs.python == 'true'
-      uses: actions/setup-python@824a62378795d7a63864050674956c050c8c0868
-      with: 
-        python-version: '3.12'
+  python-ml-tests:
+    name: Python ML tests
+    needs: scope
+    if: needs.scope.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Install Poetry
         run: pip install poetry
-      - name: Install ML dependencies
+      - name: Install deps
         run: |
-          if [ -f python/pyproject.toml ]; then poetry install --no-interaction --no-ansi; fi
+          if [ -f python/pyproject.toml ]; then
+            cd python
+            poetry install --no-interaction --no-ansi
+          fi
       - name: Run ML tests
         run: |
-          if [ -f python/pyproject.toml ]; then poetry run pytest -q; fi
-
-    - name: Install Playwright browsers
-      if: steps.changes.outputs.client == 'true'
-      working-directory: ./client
-      run: npx playwright install --with-deps
-
-    - name: Run E2E tests
-      if: steps.changes.outputs.client == 'true'
-      working-directory: ./client
-      run: npm run test:e2e
-
-    - name: Upload server coverage reports
-      if: steps.changes.outputs.server == 'true'
-      uses: codecov/codecov-action@94d76d3bc1
-      with:
-        directory: ./server/coverage
-        flags: unittests
-        name: Server-Coverage
-
-    - name: Upload client coverage reports
-      if: steps.changes.outputs.client == 'true'
-      uses: codecov/codecov-action@94d76d3bc1
-      with:
-        directory: ./client/coverage
-        flags: client-unittests
-        name: Client-Coverage
-
-    - name: Upload server JUnit report
-      if: steps.changes.outputs.server == 'true'
-      uses: actions/upload-artifact@0b7f8f6
-      with:
-        name: server-junit-report
-        path: server/junit.xml
-
-    - name: Upload client JUnit report
-      if: steps.changes.outputs.client == 'true'
-      uses: actions/upload-artifact@0b7f8f6
-      with:
-        name: client-junit-report
-        path: client/junit.xml
-
-    - name: Publish Test Report
-      uses: dorny/test-reporter@31a54ee
-      if: always()
-      with:
-        name: Test Results
-        path: 'server/junit.xml,client/junit.xml'
-        reporter: jest-junit
-        fail-on-error: true
-        list-suites: true
-        list-tests: true
-        max-annotations: 10
+          if [ -f python/pyproject.toml ]; then
+            cd python
+            poetry run pytest -q
+          fi

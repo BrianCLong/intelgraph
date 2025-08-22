@@ -72,3 +72,4 @@ jobs:
           files: ./server/coverage/lcov.info # Path to LCOV coverage report
           flags: server # Optional: add flags to distinguish reports
           name: server-coverage # Optional: a name for the upload
+

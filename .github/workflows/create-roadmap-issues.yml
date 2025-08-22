@@ -6,16 +6,16 @@ on:
       prefix:
         description: "Title prefix (e.g., 'Roadmap: ')"
         required: false
-        default: "Roadmap: "
+        default: 'Roadmap: '
       labels:
-        description: "Comma-separated labels (e.g., Roadmap,Phase-1)"
+        description: 'Comma-separated labels (e.g., Roadmap,Phase-1)'
         required: false
-        default: "Roadmap"
+        default: 'Roadmap'
       assignees:
-        description: "Comma-separated assignees"
+        description: 'Comma-separated assignees'
         required: false
       milestone:
-        description: "Milestone number"
+        description: 'Milestone number'
         required: false
   push:
     paths:

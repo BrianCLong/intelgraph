@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: "Target environment (dev, staging, prod)"
+        description: 'Target environment (dev, staging, prod)'
         required: true
       image_tag:
-        description: "Image tag to rollback to (e.g., git-sha or semver)"
+        description: 'Image tag to rollback to (e.g., git-sha or semver)'
         required: true
 
 jobs:
