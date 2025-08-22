@@ -1,7 +1,7 @@
 name: post-ga-patch
 on:
   push:
-    tags: ["v1.*"]
+    tags: ['v1.*']
 jobs:
   verify:
     runs-on: ubuntu-latest

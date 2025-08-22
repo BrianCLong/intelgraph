@@ -2,7 +2,7 @@ name: release-ga
 on:
   workflow_dispatch:
   push:
-    tags: ["v*"]
+    tags: ['v*']
 jobs:
   build_sign_provenance:
     runs-on: ubuntu-latest
@@ -19,11 +19,11 @@ jobs:
         run: docker build -t ghcr.io/intelgraph/platform:${GITHUB_REF_NAME} .
       - name: Cosign sign & attest
         env:
-          COSIGN_EXPERIMENTAL: "1"
+          COSIGN_EXPERIMENTAL: '1'
         run: |
           cosign sign ghcr.io/intelgraph/platform:${GITHUB_REF_NAME}
           cosign attest --predicate sbom.json --type cyclonedx ghcr.io/intelgraph/platform:${GITHUB_REF_NAME}
       - name: SLSA provenance
         uses: slsa-framework/slsa-github-generator/actions/generator@v2
         with:
-          artifact_path: "dist/**"
+          artifact_path: 'dist/**'

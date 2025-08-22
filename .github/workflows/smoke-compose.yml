@@ -3,7 +3,7 @@ name: Full Deployment Smoke (Compose)
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
 
 jobs:
@@ -35,4 +35,3 @@ jobs:
       - name: Cleanup
         if: always()
         run: docker compose -f docker-compose.yml down -v
-
