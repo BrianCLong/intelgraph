@@ -27,7 +27,7 @@
     "deploy:staging": "scripts/deploy.sh staging",
     "deploy:prod": "scripts/deploy.sh prod",
     "backup": "scripts/backup.sh",
-    "lint": "eslint . && ruff .",
+    "lint": "eslint . && ruff check .",
     "lint:server": "cd server && npm run lint",
     "lint:client": "cd client && npm run lint",
     "typecheck": "tsc -b --pretty false",
@@ -96,20 +96,13 @@
     "ts-jest": "^29.2.6",
     "typescript": "^5.7.3"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "npx gitleaks protect --staged --verbose && lint-staged",
-      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
-    }
-  },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
       "eslint --fix",
       "prettier -w"
     ],
     "*.py": [
-      "ruff --fix",
-      "black"
+      "pre-commit run -a --hook-stage pre-commit"
     ],
     "*.graphql": [
       "graphql-schema-linter"

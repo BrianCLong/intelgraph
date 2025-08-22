@@ -1,1 +1,9 @@
-npx --no lint-staged
+#!/usr/bin/env sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "▶ JS/TS lint-staged"
+npx lint-staged --quiet
+
+echo "▶ Python pre-commit (ruff/black/…)"
+pre-commit run -a
+
