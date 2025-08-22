@@ -1,17 +1,27 @@
 /**
- * OPA (Open Policy Agent) Middleware for IntelGraph
+ * GA Core Enhanced OPA Middleware - Policy-by-Default with Appeal Path
  * 
  * Features:
  * - RBAC enforcement at GraphQL resolver level
- * - Tenant isolation for multi-tenancy
+ * - Tenant isolation for multi-tenancy 
  * - Field-level permissions
- * - Audit logging for denied operations
+ * - GA Core: Structured denials with appeal path
+ * - Policy simulation for what-if analysis
+ * - Comprehensive audit logging
  * - Policy caching for performance
+ * 
+ * MIT License
+ * Copyright (c) 2025 IntelGraph
  */
 
 import axios from 'axios';
 import { Request, Response, NextFunction } from 'express';
 import { writeAudit } from '../utils/audit.js';
+import { v4 as uuidv4 } from 'uuid';
+import { postgresPool } from '../db/postgres.js';
+import logger from '../config/logger.js';
+
+const POLICY_APPEAL_BASE_URL = process.env.POLICY_APPEAL_URL || '/policies/appeal';
 
 interface User {
   id?: string;
@@ -42,7 +52,43 @@ interface PolicyInput {
   };
 }
 
-interface PolicyDecision {
+// GA Core: Enhanced policy decision types
+export interface PolicyDenial {
+  allowed: false;
+  policy: string;
+  reason: string;
+  appeal: {
+    path: string;
+    requiredRole?: string;
+    slaHours?: number;
+    appealId: string;
+  };
+  context: {
+    resource: string;
+    action: string;
+    user: string;
+    timestamp: string;
+    requestId: string;
+  };
+}
+
+export interface PolicyAllow {
+  allowed: true;
+  policy: string;
+  conditions?: Record<string, any>;
+  auditRequired?: boolean;
+  context: {
+    resource: string;
+    action: string;
+    user: string;
+    timestamp: string;
+    requestId: string;
+  };
+}
+
+export type PolicyDecision = PolicyAllow | PolicyDenial;
+
+interface LegacyPolicyDecision {
   allow: boolean;
   reason?: string;
   error?: string;
@@ -126,7 +172,7 @@ export class OPAMiddleware {
   }
 
   /**
-   * Check policy with OPA
+   * GA Core: Enhanced policy check with structured responses
    */
   async checkPolicy(input: PolicyInput): Promise<PolicyDecision> {
     this.stats.totalRequests++;
@@ -134,7 +180,18 @@ export class OPAMiddleware {
     // If OPA is disabled, allow all (development mode)
     if (!this.options.enabled) {
       this.stats.allowedRequests++;
-      return { allow: true, reason: 'OPA disabled' };
+      const requestId = uuidv4();
+      return {
+        allowed: true,
+        policy: 'system.disabled',
+        context: {
+          resource: input.resource.type || 'unknown',
+          action: input.action,
+          user: input.user?.id || 'anonymous',
+          timestamp: new Date().toISOString(),
+          requestId
+        }
+      } as PolicyAllow;
     }
 
     // Check cache first
@@ -392,6 +449,353 @@ export function applyOPAToResolvers(resolvers: Record<string, Record<string, any
   }
 
   return protectedResolvers;
+}
+
+// ========================================
+// GA CORE: Policy-by-Default with Appeals
+// ========================================
+
+/**
+ * GA Core: Enhanced policy middleware with structured denials
+ */
+export function gaCorePolicyMiddleware(
+  resource: string,
+  action: string
+) {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const requestId = uuidv4();
+    const timestamp = new Date().toISOString();
+    
+    try {
+      // Extract user info from auth middleware
+      const user = (req as any).user;
+      if (!user) {
+        res.status(401).json({
+          error: 'Authentication required for policy evaluation',
+          code: 'AUTH_REQUIRED'
+        });
+        return;
+      }
+
+      // Build policy input
+      const input = {
+        resource,
+        action,
+        user: {
+          id: user.id,
+          role: user.role,
+          permissions: user.permissions || [],
+          tenantId: user.tenantId
+        },
+        context: {
+          ip: req.ip || 'unknown',
+          userAgent: req.get('User-Agent') || 'unknown',
+          timestamp,
+          requestId
+        }
+      };
+
+      // Query OPA for decision
+      const decision = await queryOPAWithAppealInfo(input);
+
+      // Store decision for audit
+      await auditGAPolicyDecision(decision);
+
+      if (decision.allowed) {
+        // Allow with conditions
+        (req as any).policyDecision = decision;
+        
+        logger.info({
+          message: 'GA Core policy authorization granted',
+          resource,
+          action,
+          userId: user.id,
+          policy: decision.policy,
+          requestId
+        });
+        
+        next();
+      } else {
+        // Deny with structured response
+        const denial = decision as PolicyDenial;
+        
+        logger.warn({
+          message: 'GA Core policy authorization denied',
+          resource,
+          action,
+          userId: user.id,
+          policy: denial.policy,
+          reason: denial.reason,
+          appealId: denial.appeal.appealId,
+          requestId
+        });
+
+        // GA Core requirement: structured denial with appeal path
+        res.status(403).json({
+          error: 'Access denied by policy',
+          code: 'POLICY_DENIED',
+          details: {
+            policy: denial.policy,
+            reason: denial.reason,
+            appeal: denial.appeal,
+            context: denial.context
+          }
+        });
+      }
+
+    } catch (error) {
+      logger.error({
+        message: 'GA Core policy middleware error',
+        error: error instanceof Error ? error.message : String(error),
+        resource,
+        action,
+        requestId
+      });
+
+      // Fail secure - deny by default
+      const emergencyAppealId = uuidv4();
+      res.status(403).json({
+        error: 'Policy evaluation failed - access denied by default',
+        code: 'POLICY_EVAL_ERROR',
+        details: {
+          policy: 'system.fail_secure',
+          reason: 'Policy engine unavailable or error occurred',
+          appeal: {
+            path: `${POLICY_APPEAL_BASE_URL}?case=${emergencyAppealId}`,
+            requiredRole: 'PolicyAdmin',
+            slaHours: 2, // Emergency escalation
+            appealId: emergencyAppealId
+          },
+          context: {
+            resource,
+            action,
+            user: (req as any).user?.id || 'unknown',
+            timestamp,
+            requestId
+          }
+        }
+      });
+    }
+  };
+}
+
+/**
+ * Query OPA with appeal information
+ */
+async function queryOPAWithAppealInfo(input: any): Promise<PolicyDecision> {
+  const opaUrl = process.env.OPA_URL || 'http://localhost:8181';
+  
+  try {
+    const response = await axios.post(
+      `${opaUrl}/v1/data/intelgraph/authorize`,
+      { input },
+      {
+        timeout: 5000,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+
+    const result = response.data.result;
+    const baseContext = {
+      resource: input.resource,
+      action: input.action,
+      user: input.user.id,
+      timestamp: input.context.timestamp,
+      requestId: input.context.requestId
+    };
+
+    if (result.allow) {
+      return {
+        allowed: true,
+        policy: result.policy || 'default.allow',
+        conditions: result.conditions,
+        auditRequired: result.audit_required || false,
+        context: baseContext
+      } as PolicyAllow;
+    } else {
+      // Generate appeal case
+      const appealId = uuidv4();
+      const requiredRole = result.required_role_for_appeal || 'DataSteward';
+      const slaHours = result.sla_hours || 24;
+
+      return {
+        allowed: false,
+        policy: result.policy || 'default.deny',
+        reason: result.reason || 'Access denied by policy',
+        appeal: {
+          path: `${POLICY_APPEAL_BASE_URL}?case=${appealId}`,
+          requiredRole,
+          slaHours,
+          appealId
+        },
+        context: baseContext
+      } as PolicyDenial;
+    }
+
+  } catch (error) {
+    logger.error({
+      message: 'OPA query failed',
+      error: error instanceof Error ? error.message : String(error)
+    });
+    throw error;
+  }
+}
+
+/**
+ * Audit GA policy decision for compliance
+ */
+async function auditGAPolicyDecision(decision: PolicyDecision): Promise<void> {
+  try {
+    const auditEntry = {
+      id: uuidv4(),
+      event_type: 'ga_policy_decision',
+      resource_type: 'policy',
+      resource_id: decision.policy,
+      user_id: decision.context.user,
+      action: decision.context.action,
+      result: decision.allowed ? 'allowed' : 'denied',
+      details: {
+        policy: decision.policy,
+        resource: decision.context.resource,
+        ...(decision.allowed 
+          ? { conditions: (decision as PolicyAllow).conditions }
+          : { 
+              reason: (decision as PolicyDenial).reason,
+              appealId: (decision as PolicyDenial).appeal.appealId
+            }
+        )
+      },
+      timestamp: new Date(decision.context.timestamp),
+      request_id: decision.context.requestId
+    };
+
+    await postgresPool.query(
+      `INSERT INTO audit_logs (
+        id, event_type, resource_type, resource_id, user_id, 
+        action, result, details, timestamp, request_id
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      [
+        auditEntry.id,
+        auditEntry.event_type,
+        auditEntry.resource_type,
+        auditEntry.resource_id,
+        auditEntry.user_id,
+        auditEntry.action,
+        auditEntry.result,
+        JSON.stringify(auditEntry.details),
+        auditEntry.timestamp,
+        auditEntry.request_id
+      ]
+    );
+
+  } catch (error) {
+    logger.error({
+      message: 'Failed to audit GA policy decision',
+      error: error instanceof Error ? error.message : String(error)
+    });
+    // Don't fail the request due to audit errors
+  }
+}
+
+/**
+ * GA Core: Policy appeals handler
+ */
+export async function handleGAPolicyAppeal(req: Request, res: Response): Promise<void> {
+  try {
+    const { case: appealId } = req.query;
+    const user = (req as any).user;
+    
+    if (!appealId || !user) {
+      res.status(400).json({
+        error: 'Appeal case ID and authentication required',
+        code: 'INVALID_APPEAL_REQUEST'
+      });
+      return;
+    }
+
+    // Look up the original policy decision
+    const auditQuery = `
+      SELECT * FROM audit_logs 
+      WHERE event_type = 'ga_policy_decision' 
+        AND result = 'denied'
+        AND details->>'appealId' = $1
+      ORDER BY timestamp DESC 
+      LIMIT 1
+    `;
+    
+    const auditResult = await postgresPool.query(auditQuery, [appealId]);
+    
+    if (auditResult.rows.length === 0) {
+      res.status(404).json({
+        error: 'Appeal case not found',
+        code: 'APPEAL_NOT_FOUND'
+      });
+      return;
+    }
+
+    const originalDecision = auditResult.rows[0];
+    
+    // Create appeal record
+    const appealRecord = {
+      id: uuidv4(),
+      appeal_id: appealId as string,
+      original_user_id: originalDecision.user_id,
+      appellant_user_id: user.id,
+      policy: originalDecision.details.policy,
+      resource: originalDecision.details.resource,
+      action: originalDecision.action,
+      reason: originalDecision.details.reason,
+      status: 'submitted',
+      created_at: new Date()
+    };
+
+    await postgresPool.query(
+      `INSERT INTO policy_appeals (
+        id, appeal_id, original_user_id, appellant_user_id, policy,
+        resource, action, reason, status, created_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      [
+        appealRecord.id,
+        appealRecord.appeal_id,
+        appealRecord.original_user_id,
+        appealRecord.appellant_user_id,
+        appealRecord.policy,
+        appealRecord.resource,
+        appealRecord.action,
+        appealRecord.reason,
+        appealRecord.status,
+        appealRecord.created_at
+      ]
+    );
+
+    logger.info({
+      message: 'GA Core policy appeal submitted',
+      appealId,
+      originalUserId: originalDecision.user_id,
+      appellantUserId: user.id,
+      policy: originalDecision.details.policy
+    });
+
+    res.json({
+      message: 'Appeal submitted successfully',
+      appealId,
+      status: 'submitted',
+      policy: originalDecision.details.policy,
+      resource: originalDecision.details.resource,
+      reason: originalDecision.details.reason
+    });
+
+  } catch (error) {
+    logger.error({
+      message: 'GA Core policy appeal handling failed',
+      error: error instanceof Error ? error.message : String(error)
+    });
+
+    res.status(500).json({
+      error: 'Failed to process appeal',
+      code: 'APPEAL_PROCESSING_ERROR'
+    });
+  }
 }
 
 

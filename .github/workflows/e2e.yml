@@ -11,10 +11,10 @@ jobs:
     outputs:
       server: ${{ steps.filter.outputs.server }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
       - name: Paths filter
         id: filter
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@4512585 # v3
         with:
           filters: |
             server:
@@ -29,9 +29,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
       - name: Set up Node 18
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4
         with:
           node-version: 18
           cache: npm
@@ -53,14 +53,22 @@ jobs:
 
       - name: Start services for testing
         run: |
-          cd server && npm run build &
-          cd server && npm run seed:demo &
+          cd server && npm run build & 
+          cd server && npm run seed:demo & 
           wait
           docker-compose -f docker-compose.yml up -d neo4j postgres redis
-          sleep 10
-          cd server && npm start &
-          cd client && npm run dev &
-          sleep 15
+          # wait for services to be healthy
+          for i in {1..60}; do
+            curl -fsS http://localhost:4000/health && break
+            sleep 2
+          done
+          cd server && npm start & 
+          cd client && npm run dev & 
+          # wait for client and server
+          for i in {1..60}; do
+            curl -fsS http://localhost:3000 && break
+            sleep 2
+          done
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
@@ -73,7 +81,7 @@ jobs:
           NODE_ENV: test
 
       - name: Upload test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@0b7f8f6 # v4
         if: always()
         with:
           name: golden-path-results
@@ -92,9 +100,9 @@ jobs:
         sprite: ["0", "1"]
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
       - name: Set up Node 18
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4
         with:
           node-version: 18
       - name: Install Playwright Browsers
@@ -102,11 +110,17 @@ jobs:
       - name: Launch stack (server+client+deps)
         run: |
           docker compose -f docker-compose.yml up -d --build postgres neo4j redis
-          sleep 8
+          # wait for services to be healthy
+          for i in {1..60}; do
+            curl -fsS http://localhost:4000/health && break
+            sleep 2
+          done
           docker compose -f docker-compose.yml up -d --build server client
           # wait for client and server
-          for i in {1..60}; do curl -fsS http://localhost:4000/health && break || sleep 2; done
-          for i in {1..60}; do curl -fsS http://localhost:3000 || sleep 2; done
+          for i in {1..60}; do
+            curl -fsS http://localhost:3000 && break
+            sleep 2
+          done
       - name: Install client deps
         run: cd client && npm ci
       - name: Run E2E tests (layout=${{ matrix.layout }}, sprite=${{ matrix.sprite }})
@@ -131,9 +145,9 @@ jobs:
         (contains(toJson(github.event.pull_request.labels), 'server') || needs.changes.outputs.server == 'true'))
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
       - name: Set up Node 18
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4
         with:
           node-version: 18
       - name: Install Playwright Browsers
@@ -146,7 +160,10 @@ jobs:
           # launch server with auth bypass for analytics namespace
           docker compose -f docker-compose.yml up -d --build server
           # wait for server
-          for i in {1..60}; do curl -fsS http://localhost:4000/health && break || sleep 2; done
+          for i in {1..60}; do
+            curl -fsS http://localhost:4000/health && break
+            sleep 2
+          done
       - name: Install client deps
         run: cd client && npm ci
       - name: Run analytics bridge E2E (with trace)
@@ -156,7 +173,7 @@ jobs:
         run: cd client && npm run test:e2e -- tests/e2e/analytics-bridge.spec.ts -- --trace on
       - name: Upload Playwright traces (on failure)
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@0b7f8f6 # v4
         with:
           name: playwright-traces-analytics-bridge
           path: |
@@ -177,7 +194,12 @@ jobs:
           echo "### View trace in Playwright Trace Viewer" >> $GITHUB_STEP_SUMMARY
           echo "1. Download the artifact" >> $GITHUB_STEP_SUMMARY
           echo "2. Locate a trace file under 'client/test-results/**/trace.zip'" >> $GITHUB_STEP_SUMMARY
-          echo "3. Run:\n\n\`\`\`bash\n# install if needed\nnpx playwright show-trace client/test-results/**/trace.zip\n\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "3. Run:
+
+````bash
+# install if needed
+npx playwright show-trace client/test-results/**/trace.zip
+````" >> $GITHUB_STEP_SUMMARY
       - name: Dump server logs (on failure)
         if: failure()
         run: docker compose -f docker-compose.yml logs --no-color server | tail -n 400

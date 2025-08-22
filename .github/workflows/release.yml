@@ -24,9 +24,20 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Install Git-Cliff
+        run: |
+          curl -Ls https://github.com/orhun/git-cliff/releases/download/v1.4.0/git-cliff-v1.4.0-x86_64-unknown-linux-gnu.tar.gz | tar -xz -C /usr/local/bin
+          git-cliff --version
+
+      - name: Generate CHANGELOG
+        id: changelog
+        run: |
+          git-cliff --output CHANGELOG.md --latest
+          echo "changelog_body=$(cat CHANGELOG.md)" >> $GITHUB_OUTPUT
+
       - name: Create Release Pull Request or Publish to npm
         id: changesets
-        uses: changesets/action@v1
+        uses: changesets/action@e2a34033a383ac8b19e0a82a189ad0c0e41b679a # v1
         with:
           publish: npm run release
         env:
@@ -39,8 +50,17 @@ jobs:
         with:
           output: 'bom.xml'
 
-      - name: Upload SBOM to Release
+      - name: Package Helm Charts
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          mkdir -p charts
+          helm package ./deploy/helm/intelgraph -d charts
+
+      - name: Upload SBOM and Helm Charts to Release
         if: steps.changesets.outputs.published == 'true'
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
         with:
-          files: bom.xml
+          files: |
+            bom.xml
+            charts/*.tgz
+          body: ${{ steps.changelog.outputs.changelog_body }}

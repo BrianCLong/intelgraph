@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict
 import uuid
 from io import BytesIO
@@ -24,7 +24,7 @@ def register_evidence(kind: str, url: str | None = None, content: bytes | None =
         "url": url,
         "hash": h,
         "mime": None,
-        "created_at": datetime.utcnow().isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
         "signed": signed,
         "signer_fp": signer_fp,
     }

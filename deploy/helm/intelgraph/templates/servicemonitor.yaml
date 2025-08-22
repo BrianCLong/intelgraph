@@ -1,0 +1,136 @@
+{{- if .Values.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "intelgraph.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "intelgraph.labels" . | nindent 4 }}
+spec:
+  jobLabel: app.kubernetes.io/name
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: intelgraph
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  endpoints:
+    - port: metrics
+      path: {{ .Values.global.prometheus.path }}
+      interval: {{ .Values.serviceMonitor.interval }}
+      scrapeTimeout: {{ .Values.serviceMonitor.scrapeTimeout }}
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_service_name]
+          targetLabel: service
+        - sourceLabels: [__meta_kubernetes_namespace]
+          targetLabel: namespace
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          targetLabel: pod
+        - sourceLabels: [__meta_kubernetes_pod_label_app_kubernetes_io_component]
+          targetLabel: component
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: 'go_.*'
+          action: drop
+        - sourceLabels: [__name__]
+          regex: 'promhttp_.*'
+          action: drop
+---
+# PrometheusRule for IntelGraph alerts
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "intelgraph.fullname" . }}-alerts
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "intelgraph.labels" . | nindent 4 }}
+spec:
+  groups:
+    - name: intelgraph.rules
+      interval: 30s
+      rules:
+        # High error rate
+        - alert: IntelGraphHighErrorRate
+          expr: |
+            (
+              sum(rate(http_requests_total{job=~".*intelgraph.*", code=~"5.."}[5m])) /
+              sum(rate(http_requests_total{job=~".*intelgraph.*"}[5m]))
+            ) > 0.05
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "IntelGraph service has high error rate"
+            description: "Error rate is {{ $value | humanizePercentage }} for {{ $labels.service }}"
+        
+        # High response time
+        - alert: IntelGraphHighLatency
+          expr: |
+            histogram_quantile(0.95, 
+              sum(rate(http_request_duration_seconds_bucket{job=~".*intelgraph.*"}[5m])) by (le, service)
+            ) > 2
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "IntelGraph service has high latency"
+            description: "95th percentile latency is {{ $value }}s for {{ $labels.service }}"
+        
+        # Pod crash loop
+        - alert: IntelGraphPodCrashLooping
+          expr: |
+            rate(kube_pod_container_status_restarts_total{namespace="{{ .Release.Namespace }}"}[5m]) > 0.1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "IntelGraph pod is crash looping"
+            description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is restarting frequently"
+        
+        # Low replica count
+        - alert: IntelGraphLowReplicas
+          expr: |
+            kube_deployment_status_replicas_available{namespace="{{ .Release.Namespace }}"} < 2
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "IntelGraph service has low replica count"
+            description: "Service {{ $labels.deployment }} has only {{ $value }} replicas available"
+        
+        # Database connection issues
+        - alert: IntelGraphDatabaseConnectionFails
+          expr: |
+            sum(rate(database_connection_errors_total{job=~".*intelgraph.*"}[5m])) > 0.1
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "IntelGraph database connection failures"
+            description: "Database connection errors detected for {{ $labels.service }}"
+        
+        # Memory usage high
+        - alert: IntelGraphHighMemoryUsage
+          expr: |
+            (
+              container_memory_working_set_bytes{namespace="{{ .Release.Namespace }}", container!="POD", container!=""} /
+              container_spec_memory_limit_bytes{namespace="{{ .Release.Namespace }}", container!="POD", container!=""}
+            ) > 0.9
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "IntelGraph container high memory usage"
+            description: "Container {{ $labels.container }} in pod {{ $labels.pod }} is using {{ $value | humanizePercentage }} of memory"
+        
+        # CPU throttling
+        - alert: IntelGraphCPUThrottling
+          expr: |
+            rate(container_cpu_cfs_throttled_seconds_total{namespace="{{ .Release.Namespace }}", container!="POD"}[5m]) > 0.1
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "IntelGraph container CPU throttling"
+            description: "Container {{ $labels.container }} in pod {{ $labels.pod }} is being CPU throttled"
+{{- end }}

@@ -1,7 +1,0 @@
-image:
-  repository: ghcr.io/intelgraph/platform
-  tag: "v1.0.0"
-security:
-  mtls: true
-  jwksRotationHours: 24
-  requireSignedImages: true

@@ -11,20 +11,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
       - name: Set up Docker Compose
-        run: docker version && docker compose version || true
+        run: docker version && docker compose version
       - name: Launch services (full stack)
         run: |
           docker compose -f docker-compose.yml up -d --build postgres neo4j redis
-          # warm up DBs
-          sleep 10
           docker compose -f docker-compose.yml up -d --build server client
       - name: Wait for health
         run: |
           for i in {1..60}; do
-            curl -fsS http://localhost:4000/health && curl -fsS http://localhost:3000 && exit 0 || true
-            sleep 5
+            curl -fsS http://localhost:4000/health && curl -fsS http://localhost:3000 && exit 0
+            sleep 2
           done
           echo "Services failed to become healthy" >&2
           docker compose -f docker-compose.yml logs server client
@@ -35,4 +33,3 @@ jobs:
       - name: Cleanup
         if: always()
         run: docker compose -f docker-compose.yml down -v
-

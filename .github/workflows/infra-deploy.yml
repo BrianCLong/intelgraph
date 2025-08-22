@@ -13,10 +13,10 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
 
       - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@a1504552220b791f00d586271cd3e94439127f44 # v2
         with:
           terraform_version: 1.6.0
 
@@ -34,7 +34,7 @@ jobs:
         run: terraform apply -auto-approve -var-file=staging.tfvars
 
       - name: Install Helm
-        uses: azure/setup-helm@v3
+        uses: azure/setup-helm@fe362624587c032501648691abc1165b615b2e6f # v3
 
       - name: Decrypt secrets
         env:

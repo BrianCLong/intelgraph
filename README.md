@@ -43,6 +43,7 @@ Historical plans and reports are kept in [docs/archive](docs/archive/README.md).
 
 ---
 
+[![CI Status](https://github.com/BrianCLong/intelgraph/actions/workflows/ci.yml/badge.svg)](https://github.com/BrianCLong/intelgraph/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com)
 [![Node.js](https://img.shields.io/badge/Node.js-20+-brightgreen.svg)](https://nodejs.org)
@@ -85,6 +86,13 @@ cd intelgraph
 5. **View Results**: Explore generated insights and recommendations
 
 ## 📋 Table of Contents
+
+- [Onboarding](docs/ONBOARDING.md)
+- [Golden Path](docs/GOLDEN_PATH.md)
+- [Environment Variables](docs/ENV_VARS.md)
+- [Runbooks](docs/RUNBOOKS.md)
+- [GA Criteria](docs/GA_CRITERIA.md)
+- [Troubleshooting](docs/TROUBLESHOOTING.md)
 
 - [Features](#-features)
 - [Architecture](#-architecture)

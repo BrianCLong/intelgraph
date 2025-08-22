@@ -1,0 +1,89 @@
+name: Performance Tests
+
+on:
+  pull_request:
+    paths:
+      - 'tests/performance/**'
+
+jobs:
+  performance-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_DB: intelgraph_test
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      neo4j:
+        image: neo4j:4.4-enterprise
+        env:
+          NEO4J_AUTH: neo4j/test_password
+          NEO4J_ACCEPT_LICENSE_AGREEMENT: 'yes'
+          NEO4J_apoc_export_file_enabled: true
+          NEO4J_apoc_import_file_enabled: true
+          NEO4J_dbms_security_procedures_unrestricted: apoc.*
+        options: >-
+          --health-cmd "cypher-shell -u neo4j -p test_password 'RETURN 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+        ports:
+          - 7474:7474
+          - 7687:7687
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        cache-dependency-path: |
+          package-lock.json
+          server/package-lock.json
+
+    - name: Install root dependencies
+      run: npm ci
+
+    - name: Install server dependencies
+      working-directory: ./server
+      run: npm ci
+
+    - name: Wait for services
+      run: |
+        pg_isready -h localhost -p 5432 -U test_user -d intelgraph_test
+        timeout 60s bash -c 'until echo > /dev/tcp/localhost/7687; do sleep 1; done'
+        redis-cli -h localhost -p 6379 ping
+
+    - name: Run performance tests
+      working-directory: ./tests/performance
+      run: npm test
+      env:
+        NODE_ENV: test
+        DATABASE_URL: postgresql://test_user:test_password@localhost:5432/intelgraph_test
+        NEO4J_URI: bolt://localhost:7687
+        NEO4J_USERNAME: neo4j
+        NEO4J_PASSWORD: test_password
+        REDIS_URL: redis://localhost:6379
+        JWT_SECRET: test_jwt_secret
