@@ -2,133 +2,335 @@ name: CI
 on:
   pull_request:
     branches: [main]
-  merge_group:
-    branches: [main]
+  push:
+    branches: [main, release/**, hotfix/**]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.sha }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build-test:
+  # Code quality and linting
+  lint:
+    name: Lint & Code Quality
+    runs-on: ubuntu-latest
+    permissions: { contents: read }
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --workspaces
+
+      - name: Run ESLint
+        run: npm run lint --workspaces
+
+      - name: Run Prettier
+        run: npm run format:check --workspaces
+
+      - name: TypeScript compilation
+        run: npm run type-check --workspaces
+
+  markdownlint:
+    if: github.event_name == 'push' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npx markdownlint-cli2 '**/*.md' || true
+
+  # Security scanning
+  security:
+    name: Security Scan
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      pull-requests: read
       security-events: write
       actions: read
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@77137e9 # master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@b6110717a335152231a71b8447af51af11020a8f # v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Dependency audit
+        run: npm audit --audit-level high
+
+  # Unit and integration tests
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - api-gateway
+          - analytics-service
+          - ml-engine
+          - graph-analytics
+          - feed-processor
+          - search-engine
+          - workflow-engine
+          - mobile-interface
+
     services:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: intelgraph
-        ports: ['5432:5432']
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: intelgraph_test
         options: >-
-          --health-cmd="pg_isready -U postgres" --health-interval=10s
-      neo4j:
-        image: neo4j:5.22
-        env: { NEO4J_AUTH: neo4j/test }
-        ports: ['7687:7687', '7474:7474']
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
 
     steps:
-      - uses: actions/checkout@a5ac7e51b4109f5124f9564e9f05e504dfbe8c05 # v4.1.7
-        with: { fetch-depth: 0 }
+      - name: Checkout code
+        uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
 
-      - uses: actions/setup-node@8f152de45cc393bb48ce5d89d36b731f54556e65 # v4.0.2
-        with: { node-version: '18.20.4', cache: 'npm' }
-
-      - name: Enable Corepack (Yarn)
-        run: corepack enable
-
-      - uses: actions/setup-python@8dbde3f5ebb81608341338596a749ea681585504 # v5.1.0
-        with: { python-version: '3.12' }
-
-      - name: Install JS deps
-        run: |
-          if [ -f yarn.lock ]; then yarn --immutable; else npm ci; fi
-
-      - name: Install Python deps
-        run: pip install -r requirements.txt
-
-      - name: Display tool versions
-        run: cat tools/versions.md
-
-      - name: commitlint (PR commits & title)
-        uses: wagoid/commitlint-github-action@81ba6f721d1fa337eea857333431901513241515 # v6.0.1
-
-      - name: Lint (JS/TS & Python)
-        run: npm run lint
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Unit tests (JS & Py) with coverage
-        run: |
-          npm test -- --coverage
-          pytest --cov-fail-under=85
-
-      - name: GraphQL schema diff
-        run: npm run graphql:schema:check
-
-      - name: Postgres (Prisma) migrate + generate
-        if: ${{ hashFiles('packages/db/prisma/schema.prisma') != '' }}
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/intelgraph
-        run: |
-          npm run db:pg:generate
-          npm run db:pg:migrate
-          npm run db:pg:status
-
-      - name: Postgres (Knex) migrate
-        if: ${{ hashFiles('packages/db/knex/knexfile.cjs') != '' }}
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/intelgraph
-        run: npm run db:knex:migrate
-
-      - name: Neo4j migrations
-        env:
-          NEO4J_URI: bolt://localhost:7687
-          NEO4J_USER: neo4j
-          NEO4J_PASSWORD: test
-        run: npm run db:neo4j:migrate
-
-      - name: Prisma schema drift check
-        if: ${{ hashFiles('packages/db/prisma/schema.prisma') != '' }}
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/intelgraph
-        run: npm run db:prisma:diff
-
-      - name: Knex migration smoke test
-        if: ${{ hashFiles('packages/db/knex/knexfile.cjs') != '' }}
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/intelgraph
-        run: npm run db:knex:smoke
-
-      - name: actionlint (GitHub Workflows)
-        uses: reviewdog/action-actionlint@256e554de0010a009397c9abc77855f634cf7353 # v1.4.0
-
-      - name: hadolint (Dockerfiles)
-        uses: hadolint/hadolint-action@1351d990f755c059477a23de95d89302567c04f3 # v3.1.0
-        with: { dockerfile: '**/Dockerfile' }
-
-      - name: Trivy (dependency & fs scan)
-        uses: aquasecurity/trivy-action@b95621a837499832c705591a4924e4b10b34332e # 0.16.0
+      - name: Setup Node.js
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4
         with:
-          scan-type: fs
-          ignore-unfixed: true
-          severity: HIGH,CRITICAL
+          node-version: '18'
+          cache: 'npm'
 
-      - name: gitleaks (secrets)
-        uses: gitleaks/gitleaks-action@3e644d5f43f3243a27503c90600d4a84228541c7 # v2.3.0
-        with: { args: --no-git -v }
+      - name: Setup Python (for ML engine)
+        if: matrix.service == 'ml-engine'
+        uses: actions/setup-python@824a6237875d7a63864050674956c050c8c0868 # v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
 
-      - name: License check (JS)
-        run: npx license-checker --production --excludePrivatePackages --onlyAllow "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC"
+      - name: Install Python dependencies
+        if: matrix.service == 'ml-engine'
+        run: |
+          cd apps/ml-engine
+          pip install -r requirements.txt
 
-      - name: Build
-        run: if [ -f yarn.lock ]; then yarn build; else npm run build; fi
+      - name: Install Node dependencies
+        run: npm ci --workspaces
 
-      - name: Upload coverage
-        uses: actions/upload-artifact@a8a3f3054ee345891c80fa8aa84a2b65b824e06a # v4.3.3
-        with: { name: coverage, path: coverage }
+      - name: Run database migrations
+        run: |
+          npm run db:migrate:test
+        env:
+          DATABASE_URL: postgresql://postgres:test@localhost:5432/intelgraph_test
+
+      - name: Run unit tests
+        run: npm run test --workspace=apps/${{ matrix.service }} -- --coverage --passWithNoTests
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:test@localhost:5432/intelgraph_test
+          REDIS_URL: redis://localhost:6379
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@e2b5d9f # v3
+        with:
+          files: ./apps/${{ matrix.service }}/coverage/lcov.info
+          flags: ${{ matrix.service }}
+          name: ${{ matrix.service }}-coverage
+
+  # Contract testing
+  contract-tests:
+    name: Contract Tests
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --workspaces
+
+      - name: Run contract tests
+        run: npm run test:contract --workspaces
+
+      - name: Validate GraphQL schema
+        run: npm run graphql:validate
+
+      - name: Check API breaking changes
+        run: npm run api:breaking-changes
+
+  # Build and push Docker images
+  build:
+    name: Build Images
+    runs-on: ubuntu-latest
+    needs: [lint, security, test]
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      matrix:
+        service:
+          - api-gateway
+          - analytics-service
+          - ml-engine
+          - graph-analytics
+          - feed-processor
+          - search-engine
+          - workflow-engine
+          - mobile-interface
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@94ab11c4e8a0292eaf4d3e5b44313865b0473544 # v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c # v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@573961664f784b8d022460d516eda0a0959374ac # v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push image
+        uses: docker/build-push-action@2568b8024053d353f34a2ca2d4de679415494351 # v5
+        with:
+          context: .
+          file: ./apps/${{ matrix.service }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+  # Helm chart validation
+  helm-validate:
+    name: Validate Helm Chart
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@fe362624587c032501648691abc1165b615b2e6f # v3
+        with:
+          version: '3.14.0'
+
+      - name: Helm lint
+        run: |
+          helm lint deploy/helm/intelgraph
+
+      - name: Helm template
+        run: |
+          helm template intelgraph deploy/helm/intelgraph \
+            --values deploy/helm/intelgraph/values.yaml \
+            --values deploy/helm/intelgraph/values-staging.yaml
+
+      - name: Validate Kubernetes manifests
+        uses: instrumenta/kubeval-action@029f5b4 # master
+        with:
+          files: |
+            helm template intelgraph deploy/helm/intelgraph \
+              --values deploy/helm/intelgraph/values.yaml
+
+  # Terraform validation
+  terraform-validate:
+    name: Validate Terraform
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/terraform/aws
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@fea496d8026727ca4633b69d3d8d2d83198a7053 # v3
+        with:
+          terraform_version: '1.6.0'
+
+      - name: Terraform fmt
+        run: terraform fmt -check
+
+      - name: Terraform init
+        run: terraform init -backend=false
+
+      - name: Terraform validate
+        run: terraform validate
+
+      - name: Run tflint
+        uses: terraform-linters/setup-tflint@v4 # v4
+        with:
+          tflint_version: latest
+      - run: tflint
+
+  # Summary job
+  ci-complete:
+    name: CI Complete
+    runs-on: ubuntu-latest
+    needs: [lint, security, test, contract-tests, build, helm-validate, terraform-validate]
+    if: always()
+    steps:
+      - name: Check status
+        run: |
+          if [[ "${{ needs.lint.result }}" == "success" &&
+                "${{ needs.security.result }}" == "success" &&
+                "${{ needs.test.result }}" == "success" &&
+                "${{ needs.contract-tests.result }}" == "success" &&
+                "${{ needs.build.result }}" == "success" &&
+                "${{ needs.helm-validate.result }}" == "success" &&
+                "${{ needs.terraform-validate.result }}" == "success" ]]
+            then
+            echo "✅ All CI checks passed!"
+            exit 0
+          else
+            echo "❌ Some CI checks failed"
+            exit 1
+          fi

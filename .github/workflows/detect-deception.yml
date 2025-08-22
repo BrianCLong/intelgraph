@@ -11,18 +11,18 @@ jobs:
   retrain:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v3
+      - uses: actions/setup-python@824a62378795d7a63864050674956c050c8c0868 # v4
         with:
           python-version: "3.12"
       - name: Install deps
         run: |
-          pip install -r ml/requirements.txt || true
+          pip install -r ml/requirements.txt
       - name: Retrain deception model
         run: |
           python ml/app/training/retrain_deception.py
       - name: Upload model
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@0b7f8f6 # v3
         with:
           name: deception-model
           path: models/deception/

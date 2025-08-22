@@ -25,7 +25,7 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-          
+
       neo4j:
         image: neo4j:4.4-enterprise
         env:
@@ -42,7 +42,7 @@ jobs:
         ports:
           - 7474:7474
           - 7687:7687
-          
+
       redis:
         image: redis:7-alpine
         options: >-
@@ -55,22 +55,22 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000
+      uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
 
     - name: Check for changes
       id: changes
-      uses: dorny/paths-filter@4512585
+      uses: dorny/paths-filter@4512585 # v3
       with:
         filters: |
-          client: 
+          client:
             - 'client/**'
-          server: 
+          server:
             - 'server/**'
-          python: 
+          python:
             - 'python/**'
 
     - name: Setup Node.js
-      uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
+      uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4
       with:
         node-version: ${{ matrix.node }}
         cache: 'npm'
@@ -93,31 +93,29 @@ jobs:
 
     - name: Wait for services
       run: |
-        sleep 30
-        # Verify PostgreSQL
+        echo "Waiting for services to be healthy..."
         pg_isready -h localhost -p 5432 -U test_user -d intelgraph_test
-        # Verify Neo4j
         timeout 60s bash -c 'until echo > /dev/tcp/localhost/7687; do sleep 1; done'
-        # Verify Redis
         redis-cli -h localhost -p 6379 ping
 
     - name: Setup test database
       if: steps.changes.outputs.server == 'true'
       run: |
-        PGPASSWORD=test_password psql -h localhost -U test_user -d intelgraph_test -f server/src/database/init.sql || true
-        
+        PGPASSWORD=test_password psql -h localhost -U test_user -d intelgraph_test -f server/src/database/init.sql
+
     - name: Setup test Neo4j constraints
       if: steps.changes.outputs.server == 'true'
       run: |
-        cypher-shell -a bolt://localhost:7687 -u neo4j -p test_password -f server/src/database/multimodalConstraints.cypher || true
+        cypher-shell -a bolt://localhost:7687 -u neo4j -p test_password -f server/src/database/multimodalConstraints.cypher
 
     - name: Verify metrics endpoint
       if: steps.changes.outputs.server == 'true'
       run: |
         npx ts-node --esm server/src/index.ts &
         SERVER_PID=$!
-        sleep 15
-        curl -s http://localhost:4000/metrics | grep neo4j_query_total
+        timeout 30s bash -c \
+          'while ! curl -s http://localhost:4000/metrics | grep -q neo4j_query_total; \
+          do echo "Waiting for server..."; sleep 1; done'
         kill $SERVER_PID
       env:
         DATABASE_URL: postgresql://test_user:test_password@localhost:5432/intelgraph_test
@@ -148,17 +146,20 @@ jobs:
 
     - name: Run Python ML tests
       if: steps.changes.outputs.python == 'true'
-      uses: actions/setup-python@824a62378795d7a63864050674956c050c8c0868
-      with: 
+      uses: actions/setup-python@824a62378795d7a63864050674956c050c8c0868 # v4
+      with:
         python-version: '3.12'
-      - name: Install Poetry
-        run: pip install poetry
-      - name: Install ML dependencies
-        run: |
-          if [ -f python/pyproject.toml ]; then poetry install --no-interaction --no-ansi; fi
-      - name: Run ML tests
-        run: |
-          if [ -f python/pyproject.toml ]; then poetry run pytest -q; fi
+    - name: Install Poetry
+      if: steps.changes.outputs.python == 'true'
+      run: pip install poetry
+    - name: Install ML dependencies
+      if: steps.changes.outputs.python == 'true'
+      run: poetry install --no-interaction --no-ansi
+      working-directory: ./python
+    - name: Run ML tests
+      if: steps.changes.outputs.python == 'true'
+      run: poetry run pytest -q
+      working-directory: ./python
 
     - name: Install Playwright browsers
       if: steps.changes.outputs.client == 'true'
@@ -172,7 +173,7 @@ jobs:
 
     - name: Upload server coverage reports
       if: steps.changes.outputs.server == 'true'
-      uses: codecov/codecov-action@94d76d3bc1
+      uses: codecov/codecov-action@e2b5d9f # v4
       with:
         directory: ./server/coverage
         flags: unittests
@@ -180,7 +181,7 @@ jobs:
 
     - name: Upload client coverage reports
       if: steps.changes.outputs.client == 'true'
-      uses: codecov/codecov-action@94d76d3bc1
+      uses: codecov/codecov-action@e2b5d9f # v4
       with:
         directory: ./client/coverage
         flags: client-unittests
@@ -188,20 +189,20 @@ jobs:
 
     - name: Upload server JUnit report
       if: steps.changes.outputs.server == 'true'
-      uses: actions/upload-artifact@0b7f8f6
+      uses: actions/upload-artifact@0b7f8f6 # v4
       with:
         name: server-junit-report
         path: server/junit.xml
 
     - name: Upload client JUnit report
       if: steps.changes.outputs.client == 'true'
-      uses: actions/upload-artifact@0b7f8f6
+      uses: actions/upload-artifact@0b7f8f6 # v4
       with:
         name: client-junit-report
         path: client/junit.xml
 
     - name: Publish Test Report
-      uses: dorny/test-reporter@31a54ee
+      uses: dorny/test-reporter@31a54ee # v1
       if: always()
       with:
         name: Test Results

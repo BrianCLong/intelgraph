@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@fea496d8026727ca4633b69d3d8d2d83198a7053 # v3
         with:
           terraform_version: 1.x.x # Specify your Terraform version
 
@@ -24,21 +24,21 @@ jobs:
         run: terraform validate
 
       - name: Run tfsec
-        uses: aquasecurity/tfsec-action@v1.0.0 # Use a specific version
+        uses: aquasecurity/tfsec-action@1.0.0 # v1.0.0
         with:
-          soft_fail: true # Allow tfsec to fail without failing CI
+          soft_fail: false # Fail CI if vulnerabilities are found
 
       - name: Run Checkov
-        uses: bridgecrewio/checkov-action@v12 # Use a specific version
+        uses: bridgecrewio/checkov-action@b92aaaf90225837053f939c126e97339242dc08a # v12
         with:
           directory: terraform/environments/ # Scan all Terraform environments
-          soft_fail: true # Allow Checkov to fail without failing CI
+          soft_fail: false # Fail CI if vulnerabilities are found
 
       - name: Run OPA (conftest) for Terraform policies (Placeholder)
         run: echo "OPA conftest for Terraform policies would run here"
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e0715726ac04ae4 # v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -49,21 +49,18 @@ jobs:
         run: |
           terraform init
           terraform plan -detailed-exitcode
-        continue-on-error: true # Allow other environments to be checked
 
       - name: Run Terraform Drift Detection for Staging
         working-directory: terraform/environments/staging
         run: |
           terraform init
           terraform plan -detailed-exitcode
-        continue-on-error: true
 
       - name: Run Terraform Drift Detection for Prod
         working-directory: terraform/environments/prod
         run: |
           terraform init
           terraform plan -detailed-exitcode
-        continue-on-error: true
 
       - name: Generate Terraform Plan Preview
         working-directory: terraform/environments/prod # Or a specific environment

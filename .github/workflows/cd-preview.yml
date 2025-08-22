@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000
 
       - name: Login to GHCR
-        uses: docker/login-action@184bdaa
+        uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -40,7 +40,7 @@ jobs:
           SERVER_URL="http://localhost:4000"
           for i in {1..60}; do
             curl -fsS $SERVER_URL/health && break
-            sleep 5
+            sleep 2
           done
 
           # Seed database (assuming seed script exists and can be run against the container)
@@ -73,5 +73,5 @@ jobs:
           COMPOSE_PROJECT_NAME="$ENV_NAME"
 
           # Go to the temporary directory where the compose file was created
-          cd /tmp/$ENV_NAME || true # Use || true to prevent failure if dir doesn't exist
+          cd /tmp/$ENV_NAME
           docker compose -f docker-compose.yml down -v

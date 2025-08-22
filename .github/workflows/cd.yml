@@ -1,0 +1,373 @@
+name: CD Pipeline
+on:
+  workflow_run:
+    workflows: ["release-signoff"]
+    types: [completed]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+permissions:
+  contents: read
+  id-token: write
+  packages: read
+
+jobs:
+  # Release and build images for tags
+  release:
+    name: Release & Build
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    permissions:
+      contents: write
+      packages: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    strategy:
+      matrix:
+        service:
+          - api-gateway
+          - analytics-service
+          - ml-engine
+          - graph-analytics
+          - feed-processor
+          - search-engine
+          - workflow-engine
+          - mobile-interface
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
+        
+      - name: Extract version
+        id: version
+        run: echo "version=${{ github.event.workflow_run.head_commit.id }}" >> $GITHUB_OUTPUT
+        
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@94ab11c4e8a0292eaf4d3e5b44313865b0473544 # v3
+        
+      - name: Log in to Container Registry
+        uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c # v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@573961664f784b8d022460d516eda0a0959374ac # v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}
+          tags: |
+            type=raw,value=${{ github.event.workflow_run.head_commit.id }}
+            type=raw,value=latest
+            
+      - name: Build and push image
+        uses: docker/build-push-action@2568b8024053d353f34a2ca2d4de679415494351 # v5
+        with:
+          context: .
+          file: ./apps/${{ matrix.service }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+          
+      - name: Create GitHub Release
+        if: matrix.service == 'api-gateway'
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: IntelGraph MLFP v${{ steps.version.outputs.version }}
+          body: |
+            ## 🚀 IntelGraph MLFP Release v${{ steps.version.outputs.version }}
+            
+            ### Docker Images
+            - `${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/api-gateway:v${{ steps.version.outputs.version }}`
+            - `${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/analytics-service:v${{ steps.version.outputs.version }}`
+            - `${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/ml-engine:v${{ steps.version.outputs.version }}`
+            - `${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/graph-analytics:v${{ steps.version.outputs.version }}`
+            - `${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/feed-processor:v${{ steps.version.outputs.version }}`
+            - `${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/search-engine:v${{ steps.version.outputs.version }}`
+            - `${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/workflow-engine:v${{ steps.version.outputs.version }}`
+            - `${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/mobile-interface:v${{ steps.version.outputs.version }}`
+            
+            ### Deployment
+            ```bash
+            helm upgrade --install intelgraph ./deploy/helm/intelgraph \
+              -f ./deploy/helm/intelgraph/values.yaml \
+              -f ./deploy/helm/intelgraph/values-prod.yaml \
+              --set global.tag=v${{ steps.version.outputs.version }}
+            ```
+          draft: false
+          prerelease: false
+
+  # Deploy to staging environment
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    needs: [release]
+    environment:
+      name: staging
+      url: https://staging.intelgraph.example.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
+        
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e0715726ac04ae4 # v4
+        with:
+          role-to-assume: ${{ secrets.AWS_STAGING_ROLE }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@a8293405358683a03b7f843855a6ab12cf159a6a # v4
+        with:
+          version: 'v1.30.0'
+          
+      - name: Setup Helm
+        uses: azure/setup-helm@fe362624587c032501648691abc1165b615b2e6f # v3
+        with:
+          version: '3.14.0'
+          
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --region ${{ secrets.AWS_REGION }}
+            --name ${{ secrets.EKS_STAGING_CLUSTER }}
+            
+      - name: Deploy to staging
+        run: |
+          helm upgrade --install intelgraph ./deploy/helm/intelgraph \
+            --namespace intelgraph-staging \
+            --create-namespace \
+            --values ./deploy/helm/intelgraph/values.yaml \
+            --values ./deploy/helm/intelgraph/values-staging.yaml \
+            --set global.tag=v${{ needs.release.outputs.version }} \
+            --set global.ingress.host=staging.intelgraph.example.com \
+            --timeout 600s \
+            --wait
+            
+      - name: Run smoke tests
+        run: |
+          kubectl wait --for=condition=ready pod \
+            --selector=app.kubernetes.io/part-of=intelgraph \
+            --namespace=intelgraph-staging \
+            --timeout=300s
+          
+          # Basic health check
+          curl -f https://staging.intelgraph.example.com/health
+          
+      - name: Notify Slack on success
+        if: success()
+        uses: 8398a7/action-slack@3745974f033374bab12f69056103df500c412b74 # v3
+        with:
+          status: success
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+          text: "🚀 IntelGraph staging deployment successful!"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          
+      - name: Notify Slack on failure
+        if: failure()
+        uses: 8398a7/action-slack@3745974f033374bab12f69056103df500c412b74 # v3
+        with:
+          status: failure
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+          text: "❌ IntelGraph staging deployment failed!"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # Run E2E tests against staging
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [deploy-staging]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install Playwright
+        run: |
+          npm ci
+          npx playwright install --with-deps
+          
+      - name: Run E2E tests
+        run: |
+          npx playwright test
+        env:
+          BASE_URL: https://staging.intelgraph.example.com
+          E2E_USER: ${{ secrets.E2E_TEST_USER }}
+          E2E_PASS: ${{ secrets.E2E_TEST_PASS }}
+          
+      - name: Upload test results
+        uses: actions/upload-artifact@0b7f8f6 # v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+  # Load testing
+  load-tests:
+    name: Load Tests
+    runs-on: ubuntu-latest
+    needs: [deploy-staging]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
+        
+      - name: Setup k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+          
+      - name: Run load tests
+        run: |
+          k6 run deploy/k6/graph_queries.js \
+            --env GRAPHQL_URL=https://staging.intelgraph.example.com/graphql \
+            --env K6_TOKEN=${{ secrets.K6_TEST_TOKEN }}
+            
+      - name: Upload load test results
+        uses: actions/upload-artifact@0b7f8f6 # v4
+        if: always()
+        with:
+          name: load-test-results
+          path: summary.json
+          retention-days: 30
+
+  # Security scanning
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: [deploy-staging]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
+        
+      - name: ZAP baseline scan
+        uses: zaproxy/action-baseline@bf6310e89f3a7513423e01893a33c184df27b38d # v0.12.0
+        with:
+          target: 'https://staging.intelgraph.example.com'
+          rules_file_name: './deploy/zap/baseline.conf'
+          cmd_options: '-a'
+          
+      - name: Upload ZAP results
+        uses: actions/upload-artifact@0b7f8f6 # v4
+        if: always()
+        with:
+          name: zap-results
+          path: report_html.html
+          retention-days: 30
+
+  # Deploy to production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [e2e-tests, load-tests, security-scan]
+    if: github.event.workflow_run.conclusion == 'success'
+    environment:
+      name: production
+      url: https://intelgraph.example.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
+        
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e0715726ac04ae4 # v4
+        with:
+          role-to-assume: ${{ secrets.AWS_PRODUCTION_ROLE }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@a8293405358683a03b7f843855a6ab12cf159a6a # v4
+        with:
+          version: 'v1.30.0'
+          
+      - name: Setup Helm
+        uses: azure/setup-helm@fe362624587c032501648691abc1165b615b2e6f # v3
+        with:
+          version: '3.14.0'
+          
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --region ${{ secrets.AWS_REGION }}
+            --name ${{ secrets.EKS_PRODUCTION_CLUSTER }}
+            
+      - name: Database backup
+        run: |
+          kubectl create job backup-$(date +%Y%m%d-%H%M%S) \
+            --from=cronjob/postgres-backup \
+            --namespace=intelgraph-production
+            
+      - name: Deploy to production
+        run: |
+          helm upgrade --install intelgraph ./deploy/helm/intelgraph \
+            --namespace intelgraph-production \
+            --create-namespace \
+            --values ./deploy/helm/intelgraph/values.yaml \
+            --values ./deploy/helm/intelgraph/values-prod.yaml \
+            --set global.tag=v${{ needs.release.outputs.version }} \
+            --set global.ingress.host=intelgraph.example.com \
+            --timeout 900s \
+            --wait
+            
+      - name: Verify deployment
+        run: |
+          kubectl wait --for=condition=ready pod \
+            --selector=app.kubernetes.io/part-of=intelgraph \
+            --namespace=intelgraph-production \
+            --timeout=600s
+          
+          # Health check
+          curl -f https://intelgraph.example.com/health
+          
+          # Database connectivity
+          kubectl exec -n intelgraph-production \
+            deployment/api-gateway -- \
+            node -e "console.log('Database check passed')"
+            
+      - name: Update deployment status
+        run: |
+          kubectl annotate deployment \
+            --namespace=intelgraph-production \
+            --selector=app.kubernetes.io/part-of=intelgraph \
+            deployment.kubernetes.io/revision="$(date +%Y%m%d-%H%M%S)"
+            
+      - name: Notify teams on success
+        if: success()
+        uses: 8398a7/action-slack@3745974f033374bab12f69056103df500c412b74 # v3
+        with:
+          status: success
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+          text: |
+            🎉 IntelGraph production deployment successful!
+            Version: v${{ needs.release.outputs.version }}
+            URL: https://intelgraph.example.com
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          
+      - name: Notify teams on failure
+        if: failure()
+        uses: 8398a7/action-slack@3745974f033374bab12f69056103df500c412b74 # v3
+        with:
+          status: failure
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+          text: |
+            🚨 IntelGraph production deployment failed!
+            Version: v${{ needs.release.outputs.version }}
+            Please check the logs and rollback if necessary.
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

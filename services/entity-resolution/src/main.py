@@ -28,6 +28,7 @@ import hashlib
 import json
 import os
 from contextlib import asynccontextmanager
+<<<<<<< HEAD
 from sklearn.metrics import precision_score, recall_score, f1_score
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.cluster import HDBSCAN
@@ -36,6 +37,8 @@ from phonenumbers import parse as parse_phone, format_number, PhoneNumberFormat
 from phonenumbers.phonenumberutil import NumberParseException
 import geocoder
 from geopy.distance import geodesic
+=======
+>>>>>>> main
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -154,8 +157,11 @@ class ResolutionRequest(BaseModel):
     threshold: float = Field(default=0.8, ge=0, le=1)
     tenant_id: str
     include_explanations: bool = True
+<<<<<<< HEAD
     use_blocking: bool = True
     entity_type_specific_thresholds: bool = True
+=======
+>>>>>>> main
 
 class ResolutionResponse(BaseModel):
     matches: List[EntityResolutionScore]
@@ -199,6 +205,7 @@ async def get_redis():
         raise HTTPException(status_code=503, detail="Cache not available")
     return redis_client
 
+<<<<<<< HEAD
 # Enhanced normalization and blocking functions
 def normalize_name(name: str) -> str:
     """Normalize name for better matching"""
@@ -294,6 +301,8 @@ def generate_blocking_keys(entity: Entity) -> List[str]:
     
     return keys
 
+=======
+>>>>>>> main
 # Feature extraction functions
 def extract_name_features(name1: str, name2: str) -> Dict[str, float]:
     """Extract name-based similarity features"""

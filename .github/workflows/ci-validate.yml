@@ -12,18 +12,18 @@ jobs:
       matrix:
         node: ['18.x', '20.x']
     steps:
-      - uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000
+      - uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
       - name: Setup Node.js
-        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4
         with:
           node-version: ${{ matrix.node }}
           cache: 'npm'
       - name: Install root dependencies
-        run: npm ci || npm install
+        run: npm ci
       - name: Install client dependencies
-        run: if [ -f client/package.json ]; then (cd client && npm ci || npm install); fi
+        run: if [ -f client/package.json ]; then (cd client && npm ci); fi
       - name: Install server dependencies
-        run: if [ -f server/package.json ]; then (cd server && npm ci || npm install); fi
+        run: if [ -f server/package.json ]; then (cd server && npm ci); fi
       - name: Install Python dependencies
         run: |
           if [ -f python/pyproject.toml ]; then 

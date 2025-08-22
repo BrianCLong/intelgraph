@@ -6,8 +6,8 @@ jobs:
   scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
         with:
           fetch-depth: 0
       - name: gitleaks
-        uses: zricethezav/gitleaks-action@v2
+        uses: zricethezav/gitleaks-action@475ab2f0c4472b3e243c95a4c34e53d255f234e5 # v2

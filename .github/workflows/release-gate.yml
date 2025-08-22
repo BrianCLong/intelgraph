@@ -1,0 +1,37 @@
+name: Release Gate
+
+on:
+  pull_request:
+    branches:
+      - 'release/**'
+
+jobs:
+  release-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000
+
+      - name: Run smoke tests
+        run: npm run test:smoke
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+      - name: Run security scans
+        run: |
+          npm run lint
+          npm run typecheck
+
+      - name: Check for persisted queries
+        run: |
+          # This is a placeholder for checking for persisted queries.
+          # A real implementation would check for the existence of a persisted query file
+          # and ensure that it has been updated.
+          echo "Checking for persisted queries..."
+          if [ -f server/src/graphql/plugins/persistedQueries.js ]; then
+            echo "Persisted queries file found."
+          else
+            echo "Error: Persisted queries file not found."
+            exit 1
+          fi

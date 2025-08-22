@@ -14,7 +14,7 @@ jobs:
       image: node:18
       options: --network=none
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
       - run: npm ci
       - run: npm run lint --if-present
       - run: npm test --if-present

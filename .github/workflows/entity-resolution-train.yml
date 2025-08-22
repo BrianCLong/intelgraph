@@ -25,13 +25,13 @@ jobs:
       precision_org: ${{ steps.metrics.outputs.precision_org }}
       model_version: ${{ steps.metrics.outputs.model_version }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v3
+      - uses: actions/setup-python@824a62378795d7a63864050674956c050c8c0868 # v4
         with:
           python-version: '3.12'
       
       - name: Cache Python dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@472344d9f2b813a837232a7c024785b999549191 # v3
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -148,7 +148,7 @@ jobs:
               'person_precision': person_precision,
               'org_precision': org_precision,
               'model_version': model_version,
-              'timestamp': '$(date -u +\"%Y-%m-%dT%H:%M:%SZ\")'
+              'timestamp': '$(date -u +"%Y-%m-%dT%H:%M:%SZ")'
           }
           
           with open('metrics.json', 'w') as f:
@@ -163,7 +163,7 @@ jobs:
           EOF
       
       - name: Upload model artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@0b7f8f6 # v3
         with:
           name: er-model-${{ steps.metrics.outputs.model_version }}
           path: |
@@ -207,7 +207,7 @@ jobs:
       
       - name: Comment PR with results
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v6
+        uses: actions/github-script@60a0d83 # v6
         with:
           script: |
             const personPrecision = '${{ steps.metrics.outputs.precision_person }}';
@@ -223,7 +223,8 @@ jobs:
             ${status} - GA Core Precision Check
             
             ### Model Performance
-            - **Model Version**: \`${modelVersion}\`
+            - **Model Version**: 
+            ${modelVersion}
             - **Person Precision**: ${personPrecision} ${personGate ? '✅' : '❌'} (Required: ≥0.900)
             - **Organization Precision**: ${orgPrecision} ${orgGate ? '✅' : '❌'} (Required: ≥0.880)
             
