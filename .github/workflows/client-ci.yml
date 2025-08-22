@@ -81,3 +81,4 @@ jobs:
           files: ./client/coverage/lcov.info # Path to LCOV coverage report
           flags: client # Optional: add flags to distinguish reports
           name: client-coverage # Optional: a name for the upload
+

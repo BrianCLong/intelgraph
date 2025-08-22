@@ -16,4 +16,3 @@ jobs:
           project-url: ${{ vars.PROJECT_URL }}
           github-token: ${{ secrets.PROJECT_TOKEN || github.token }}
         continue-on-error: true
-

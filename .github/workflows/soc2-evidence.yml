@@ -1,7 +1,7 @@
 name: SOC2 Evidence Bundle
 on:
   workflow_run:
-    workflows: ["CI", "CI Security", "CI Performance (k6)", "CodeQL", "SBOM"]
+    workflows: ['CI', 'CI Security', 'CI Performance (k6)', 'CodeQL', 'SBOM']
     types: [completed]
   workflow_dispatch:
 
