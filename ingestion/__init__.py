@@ -4,5 +4,12 @@ from .ingestors import (
     TwitterIngestor,
     PastebinIngestor,
 )
+from .streaming_worker import StreamingWorker
 
-__all__ = ['Ingestor', 'RSSIngestor', 'TwitterIngestor', 'PastebinIngestor']
+__all__ = [
+    "Ingestor",
+    "RSSIngestor",
+    "TwitterIngestor",
+    "PastebinIngestor",
+    "StreamingWorker",
+]
