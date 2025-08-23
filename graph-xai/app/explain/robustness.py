@@ -15,11 +15,12 @@ def assess(g: nx.Graph, output: ModelOutput) -> Robustness:
         return Robustness(stability=1.0, details={})
     stable = 0
     samples = settings.robustness_samples
+    rng = random.Random(settings.random_seed)
     unstable_edges: set[str] = set()
     for _ in range(samples):
         h = g.copy()
         if h.edges:
-            e = random.choice(list(h.edges))
+            e = rng.choice(list(h.edges))
             h.remove_edge(*e)
         if nx.has_path(h, src, dst):
             stable += 1

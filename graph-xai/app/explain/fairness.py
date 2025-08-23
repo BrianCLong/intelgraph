@@ -18,7 +18,8 @@ def check(g: nx.Graph, output: ModelOutput) -> Fairness:
             groups.setdefault(group, []).append(n)
     if len(groups) < 2:
         return Fairness(enabled=True, parity=None, notes=["insufficient_groups"])
-    scores = {g: len(nodes) for g, nodes in groups.items()}
-    avg = statistics.mean(scores.values())
-    parity = {g: v - avg for g, v in scores.items()}
+    total = sum(len(nodes) for nodes in groups.values())
+    rates = {g: len(nodes) / total for g, nodes in groups.items()}
+    avg = statistics.mean(rates.values())
+    parity = {g: v - avg for g, v in rates.items()}
     return Fairness(enabled=True, parity=parity, notes=[])

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from typing import Dict, List, Optional
 
@@ -83,7 +83,7 @@ class Robustness(BaseModel):
 class Fairness(BaseModel):
     enabled: bool
     parity: Optional[Dict[str, float]] = None
-    notes: List[str] = []
+    notes: List[str] = Field(default_factory=list)
 
 
 class VizPayload(BaseModel):
@@ -99,4 +99,24 @@ class ExplainResponse(BaseModel):
     robustness: Robustness
     fairness: Fairness
     viz: VizPayload
+    audit_id: str
+
+
+class PathResponse(BaseModel):
+    paths: List[PathExplanation]
+    audit_id: str
+
+
+class CounterfactualResponse(BaseModel):
+    counterfactuals: List[Counterfactual]
+    audit_id: str
+
+
+class FairnessReport(BaseModel):
+    fairness: Fairness
+    audit_id: str
+
+
+class RobustnessReport(BaseModel):
+    robustness: Robustness
     audit_id: str
