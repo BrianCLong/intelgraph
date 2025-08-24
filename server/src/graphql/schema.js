@@ -4,6 +4,7 @@ const { graphTypeDefs } = require('./schema.graphops.js');
 const { aiTypeDefs } = require('./schema.ai.js');
 const { annotationsTypeDefs } = require('./schema.annotations.js');
 const graphragTypes = require('./types/graphragTypes.js');
+const erTypes = require('./types/erTypes.ts');
 import { coreTypeDefs } from './schema.core.js';
 
 const base = gql`
@@ -15,4 +16,4 @@ const base = gql`
   type Subscription { _empty: String }
 `;
 
-export const typeDefs = [base, coreTypeDefs, copilotTypeDefs, graphTypeDefs, graphragTypes, aiTypeDefs, annotationsTypeDefs];
+export const typeDefs = [base, coreTypeDefs, copilotTypeDefs, graphTypeDefs, graphragTypes, erTypes, aiTypeDefs, annotationsTypeDefs];

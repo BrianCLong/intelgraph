@@ -3,6 +3,7 @@ const { copilotTypeDefs } = require('./schema.copilot.js');
 const { graphTypeDefs } = require('./schema.graphops.js');
 const { aiTypeDefs } = require('./schema.ai.js');
 const graphragTypes = require('./types/graphragTypes.js');
+const erTypes = require('./types/erTypes.ts');
 const coreTypeDefs = require('./schema/core.js');
 
 const base = gql`
@@ -13,5 +14,5 @@ const base = gql`
   type Subscription { _empty: String }
 `;
 
-export const typeDefs = [base, coreTypeDefs, copilotTypeDefs, graphTypeDefs, graphragTypes, aiTypeDefs];
+export const typeDefs = [base, coreTypeDefs, copilotTypeDefs, graphTypeDefs, graphragTypes, erTypes, aiTypeDefs];
 
