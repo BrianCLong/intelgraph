@@ -1,0 +1,11 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/common-types" },
+    { "path": "packages/sync-lib" },
+    { "path": "packages/field-gateway" },
+    { "path": "packages/relay" },
+    { "path": "packages/prov-ledger" },
+    { "path": "packages/policy" }
+  ]
+}

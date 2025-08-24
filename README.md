@@ -901,3 +901,25 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **IntelGraph Platform** - Next-Generation Intelligence Analysis
+
+## GA-Field Vertical Slice
+
+```
+Device --> Relay --> Device
+   \                 /
+    \-- Field Gateway --/
+```
+
+### Quickstart
+
+```bash
+npm test      # run unit tests
+npm run build # compile TypeScript packages
+```
+
+Use `docker-compose -f infra/docker-compose.yml up` to start demo services.
+
+### Runbook
+- `scripts/dev-seed.ts` seeds demo tenants and cases.
+- `infra/docker-compose.yml` defines local service topology.
+- `docs/operations.md` outlines maintenance tasks.
