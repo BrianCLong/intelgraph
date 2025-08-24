@@ -42,6 +42,17 @@ module.exports = {
       testMatch: ['<rootDir>/client/**/*.{test,spec}.{js,jsx,ts,tsx}'],
       testEnvironment: 'jsdom',
       setupFilesAfterEnv: ['<rootDir>/client/src/setupTests.js']
+    },
+    {
+      displayName: 'common-types',
+      testMatch: ['<rootDir>/packages/common-types/**/*.{test,spec}.{js,ts}'],
+      preset: 'ts-jest/presets/default-esm',
+      extensionsToTreatAsEsm: ['.ts'],
+      globals: {
+        'ts-jest': {
+          useESM: true
+        }
+      }
     }
   ]
 };
