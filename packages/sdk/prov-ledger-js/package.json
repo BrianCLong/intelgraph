@@ -1,0 +1,9 @@
+{
+  "name": "@intelgraph/prov-ledger-js",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node --test"
+  }
+}
