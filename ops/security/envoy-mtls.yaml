@@ -1,0 +1,4 @@
+# Example Envoy configuration snippet enforcing mTLS using SPIFFE IDs
+static_resources:
+  listeners: []
+  clusters: []
