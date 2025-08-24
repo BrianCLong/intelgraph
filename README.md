@@ -901,3 +901,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **IntelGraph Platform** - Next-Generation Intelligence Analysis
+
+## GA-Telecom
+
+The `packages/telecom` service provides sector geometry and co-travel analytics.
+See `docs/ga-telecom` for design and usage.
