@@ -1,0 +1,12 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: dr-backup
+spec:
+  template:
+    spec:
+      containers:
+        - name: dr-backup
+          image: dr-orchestrator:latest
+          args: ['backup']
+      restartPolicy: OnFailure
