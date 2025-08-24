@@ -24,13 +24,13 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
 
       - name: Build Server Docker Image
         run: docker build -t intelgraph-server:latest -f server/Dockerfile.prod ./server
 
       - name: Scan Server Image with Trivy
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@77137e9
         with:
           image-ref: 'intelgraph-server:latest'
           format: 'table'
@@ -41,7 +41,7 @@ jobs:
         run: docker build -t intelgraph-client:latest -f client/Dockerfile.prod ./client
 
       - name: Scan Client Image with Trivy
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@77137e9
         with:
           image-ref: 'intelgraph-client:latest'
           format: 'table'

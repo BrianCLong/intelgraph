@@ -1,0 +1,46 @@
+apiVersion: v2
+name: intelgraph
+description: IntelGraph MLFP – production deployment
+version: 0.1.0
+appVersion: "2025.08.21"
+type: application
+keywords: 
+  - intelgraph
+  - graph
+  - mlfp
+  - analytics
+  - intelligence
+home: https://github.com/BrianCLong/intelgraph
+sources:
+  - https://github.com/BrianCLong/intelgraph
+maintainers:
+  - name: IntelGraph Team
+    email: team@intelgraph.com
+dependencies:
+  - name: postgresql
+    version: "12.12.10"
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+  - name: redis
+    version: "18.6.4"
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+annotations:
+  category: Analytics
+  images: |
+    - name: api-gateway
+      image: ghcr.io/brianclong/intelgraph/api-gateway:2025.08.21
+    - name: analytics-service
+      image: ghcr.io/brianclong/intelgraph/analytics-service:2025.08.21
+    - name: ml-engine
+      image: ghcr.io/brianclong/intelgraph/ml-engine:2025.08.21
+    - name: graph-analytics
+      image: ghcr.io/brianclong/intelgraph/graph-analytics:2025.08.21
+    - name: feed-processor
+      image: ghcr.io/brianclong/intelgraph/feed-processor:2025.08.21
+    - name: search-engine
+      image: ghcr.io/brianclong/intelgraph/search-engine:2025.08.21
+    - name: workflow-engine
+      image: ghcr.io/brianclong/intelgraph/workflow-engine:2025.08.21
+    - name: mobile-interface
+      image: ghcr.io/brianclong/intelgraph/mobile-interface:2025.08.21

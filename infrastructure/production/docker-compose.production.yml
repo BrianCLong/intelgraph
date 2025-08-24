@@ -1,0 +1,787 @@
+version: '3.8'
+
+name: intelgraph-production
+
+services:
+  # ===============================
+  # API Gateway - Entry Point
+  # ===============================
+  api-gateway:
+    build:
+      context: ../../services/api-gateway
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: production
+    image: intelgraph/api-gateway:3.0.0-alpha
+    container_name: intelgraph-api-gateway
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOST=0.0.0.0
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRY=24h
+      - REDIS_URL=redis://redis:6379
+      - PROMETHEUS_PORT=9090
+      - JAEGER_ENDPOINT=http://jaeger:14268
+      - SERVICE_NAME=api-gateway
+      - LOG_LEVEL=info
+      - RATE_LIMIT_MAX=1000
+      - RATE_LIMIT_WINDOW_MS=60000
+    ports:
+      - "3000:3000"
+      - "9090:9090"
+    volumes:
+      - gateway_logs:/app/logs
+    depends_on:
+      - redis
+      - jaeger
+      - prometheus
+    networks:
+      - intelgraph-network
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api-gateway.rule=Host(`api.intelgraph.com`)"
+      - "traefik.http.routers.api-gateway.tls=true"
+      - "traefik.http.routers.api-gateway.tls.certresolver=letsencrypt"
+      - "traefik.http.services.api-gateway.loadbalancer.server.port=3000"
+
+  # ===============================
+  # Advanced ML Engine
+  # ===============================
+  ml-engine:
+    build:
+      context: ../../services/advanced-ml-engine
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: production
+    image: intelgraph/advanced-ml-engine:3.0.0-alpha
+    container_name: intelgraph-ml-engine
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3006
+      - HOST=0.0.0.0
+      - REDIS_URL=redis://redis:6379
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USERNAME=neo4j
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      - POSTGRES_URL=postgres://intelgraph:${POSTGRES_PASSWORD}@postgres:5432/intelgraph
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - HUGGINGFACE_API_KEY=${HUGGINGFACE_API_KEY}
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
+      - PINECONE_ENVIRONMENT=${PINECONE_ENVIRONMENT}
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - KAFKA_BROKERS=kafka:9092
+      - STREAM_PROCESSING_ENABLED=true
+      - VECTOR_STORE_PROVIDER=hybrid
+      - MODEL_MANAGER_ENABLED=true
+      - INTELLIGENCE_TRANSFORMER_ENABLED=true
+    ports:
+      - "3006:3006"
+    volumes:
+      - ml_models:/app/models
+      - ml_cache:/app/cache
+      - ml_logs:/app/logs
+    depends_on:
+      - redis
+      - neo4j
+      - postgres
+      - elasticsearch
+      - kafka
+    networks:
+      - intelgraph-network
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 8G
+          cpus: '4.0'
+        reservations:
+          memory: 4G
+          cpus: '2.0'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3006/health"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 120s
+
+  # ===============================
+  # Visualization Engine
+  # ===============================
+  visualization-engine:
+    build:
+      context: ../../services/visualization-engine
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: production
+    image: intelgraph/visualization-engine:3.0.0-alpha
+    container_name: intelgraph-visualization-engine
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3007
+      - HOST=0.0.0.0
+      - REDIS_URL=redis://redis:6379
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USERNAME=neo4j
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      - RENDERING_QUALITY=high
+      - MAX_NODES=100000
+      - MAX_EDGES=500000
+      - ENABLE_3D=true
+      - ENABLE_VR=true
+      - ENABLE_AR=true
+      - WEBXR_ENABLED=true
+    ports:
+      - "3007:3007"
+    volumes:
+      - viz_cache:/app/cache
+      - viz_logs:/app/logs
+    depends_on:
+      - redis
+      - neo4j
+    networks:
+      - intelgraph-network
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+        reservations:
+          memory: 2G
+          cpus: '1.0'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3007/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ===============================
+  # Core Server (GraphQL API)
+  # ===============================
+  server:
+    build:
+      context: ../../server
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: production
+    image: intelgraph/server:3.0.0-alpha
+    container_name: intelgraph-server
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      - HOST=0.0.0.0
+      - DATABASE_URL=postgres://intelgraph:${POSTGRES_PASSWORD}@postgres:5432/intelgraph
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USERNAME=neo4j
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+      - BCRYPT_ROUNDS=12
+      - SESSION_SECRET=${SESSION_SECRET}
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      - RATE_LIMIT_MAX=1000
+      - GRAPHQL_DEPTH_LIMIT=10
+      - GRAPHQL_COMPLEXITY_LIMIT=1000
+    ports:
+      - "4000:4000"
+    volumes:
+      - server_uploads:/app/uploads
+      - server_logs:/app/logs
+    depends_on:
+      - postgres
+      - neo4j
+      - redis
+    networks:
+      - intelgraph-network
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+        reservations:
+          memory: 2G
+          cpus: '1.0'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ===============================
+  # Client (Frontend)
+  # ===============================
+  client:
+    build:
+      context: ../../client
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: production
+        VITE_API_URL=https://api.intelgraph.com
+        VITE_WS_URL=wss://api.intelgraph.com/graphql-ws
+        VITE_SENTRY_DSN=${SENTRY_DSN}
+    image: intelgraph/client:3.0.0-alpha
+    container_name: intelgraph-client
+    restart: unless-stopped
+    ports:
+      - "3001:80"
+    volumes:
+      - client_logs:/var/log/nginx
+    networks:
+      - intelgraph-network
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ===============================
+  # Databases
+  # ===============================
+  postgres:
+    image: postgres:16-alpine
+    container_name: intelgraph-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=intelgraph
+      - POSTGRES_USER=intelgraph
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d
+      - postgres_backups:/backups
+    networks:
+      - intelgraph-network
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+        reservations:
+          memory: 2G
+          cpus: '1.0'
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U intelgraph -d intelgraph"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    command: >
+      postgres
+      -c max_connections=500
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=4MB
+      -c min_wal_size=2GB
+      -c max_wal_size=4GB
+
+  neo4j:
+    image: neo4j:5.15-enterprise
+    container_name: intelgraph-neo4j
+    restart: unless-stopped
+    environment:
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD}
+      - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+      - NEO4J_dbms_mode=CORE
+      - NEO4J_dbms_default__listen__address=0.0.0.0
+      - NEO4J_dbms_default__advertised__address=neo4j
+      - NEO4J_dbms_routing_default__router=SERVER
+      - NEO4J_dbms_memory_heap_initial__size=2G
+      - NEO4J_dbms_memory_heap_max__size=4G
+      - NEO4J_dbms_memory_pagecache_size=2G
+      - NEO4J_dbms_query_cache__size=512
+      - NEO4J_dbms_tx__log_rotation_retention__policy=100M size
+      - NEO4J_dbms_logs_query_enabled=INFO
+      - NEO4J_dbms_logs_query_threshold=1s
+      - NEO4J_dbms_security_procedures_unrestricted=gds.*,apoc.*
+      - NEO4J_dbms_security_procedures_allowlist=gds.*,apoc.*
+      - NEO4J_dbms_jvm_additional=-XX:+UseG1GC -XX:+UnlockExperimentalVMOptions
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      - neo4j_import:/import
+      - neo4j_plugins:/plugins
+      - neo4j_backups:/backups
+    networks:
+      - intelgraph-network
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+          cpus: '4.0'
+        reservations:
+          memory: 4G
+          cpus: '2.0'
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "$NEO4J_PASSWORD", "RETURN 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  redis:
+    image: redis:7-alpine
+    container_name: intelgraph-redis
+    restart: unless-stopped
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - intelgraph-network
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    command: redis-server /usr/local/etc/redis/redis.conf --requirepass $REDIS_PASSWORD
+
+  # ===============================
+  # Search and Analytics
+  # ===============================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    container_name: intelgraph-elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms2g -Xmx4g
+      - xpack.security.enabled=true
+      - ELASTIC_PASSWORD=${ELASTICSEARCH_PASSWORD}
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      - xpack.ml.enabled=true
+      - xpack.graph.enabled=true
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+      - elasticsearch_logs:/usr/share/elasticsearch/logs
+    networks:
+      - intelgraph-network
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+          cpus: '3.0'
+        reservations:
+          memory: 4G
+          cpus: '2.0'
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q 'green\\|yellow'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.12.0
+    container_name: intelgraph-kibana
+    restart: unless-stopped
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH_PASSWORD}
+    ports:
+      - "5601:5601"
+    volumes:
+      - kibana_data:/usr/share/kibana/data
+    depends_on:
+      - elasticsearch
+    networks:
+      - intelgraph-network
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:5601/status | grep -q 'green'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ===============================
+  # Message Queue
+  # ===============================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: intelgraph-zookeeper
+    restart: unless-stopped
+    environment:
+      - ZOOKEEPER_CLIENT_PORT=2181
+      - ZOOKEEPER_TICK_TIME=2000
+      - ZOOKEEPER_SYNC_LIMIT=2
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_logs:/var/lib/zookeeper/log
+    networks:
+      - intelgraph-network
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo 'ruok' | nc localhost 2181"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: intelgraph-kafka
+    restart: unless-stopped
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
+      - KAFKA_DEFAULT_REPLICATION_FACTOR=1
+      - KAFKA_NUM_PARTITIONS=3
+      - KAFKA_LOG_RETENTION_HOURS=168
+      - KAFKA_LOG_SEGMENT_BYTES=1073741824
+      - KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS=300000
+      - KAFKA_MESSAGE_MAX_BYTES=104857600
+      - KAFKA_REPLICA_FETCH_MAX_BYTES=104857600
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+      - kafka_logs:/var/lib/kafka/logs
+    depends_on:
+      - zookeeper
+    networks:
+      - intelgraph-network
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+        reservations:
+          memory: 2G
+          cpus: '1.0'
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ===============================
+  # Monitoring and Observability
+  # ===============================
+  prometheus:
+    image: prom/prometheus:v2.48.1
+    container_name: intelgraph-prometheus
+    restart: unless-stopped
+    environment:
+      - PROMETHEUS_RETENTION_TIME=30d
+      - PROMETHEUS_RETENTION_SIZE=50GB
+    ports:
+      - "9091:9090"
+    volumes:
+      - prometheus_data:/prometheus
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/rules:/etc/prometheus/rules
+    networks:
+      - intelgraph-network
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+        reservations:
+          memory: 2G
+          cpus: '1.0'
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--storage.tsdb.retention.size=50GB'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  grafana:
+    image: grafana/grafana:10.2.3
+    container_name: intelgraph-grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel,grafana-worldmap-panel,grafana-clock-panel
+      - GF_SERVER_ROOT_URL=https://grafana.intelgraph.com
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+    ports:
+      - "3002:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+    networks:
+      - intelgraph-network
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.52
+    container_name: intelgraph-jaeger
+    restart: unless-stopped
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+    ports:
+      - "16686:16686"
+      - "14268:14268"
+      - "14250:14250"
+      - "9411:9411"
+    volumes:
+      - jaeger_data:/tmp
+    networks:
+      - intelgraph-network
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:16686/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ===============================
+  # Reverse Proxy / Load Balancer
+  # ===============================
+  traefik:
+    image: traefik:v3.0
+    container_name: intelgraph-traefik
+    restart: unless-stopped
+    environment:
+      - TRAEFIK_API_INSECURE=false
+      - TRAEFIK_PROVIDERS_DOCKER=true
+      - TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT=false
+      - TRAEFIK_ENTRYPOINTS_WEB_ADDRESS=:80
+      - TRAEFIK_ENTRYPOINTS_WEBSECURE_ADDRESS=:443
+      - TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_EMAIL=${ACME_EMAIL}
+      - TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_STORAGE=/acme/acme.json
+      - TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_HTTPCHALLENGE_ENTRYPOINT=web
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_acme:/acme
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic:/etc/traefik/dynamic:ro
+    networks:
+      - intelgraph-network
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.intelgraph.com`)"
+      - "traefik.http.routers.dashboard.tls=true"
+      - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
+
+  # ===============================
+  # Backup and Maintenance
+  # ===============================
+  backup-service:
+    image: alpine:latest
+    container_name: intelgraph-backup
+    restart: "no"
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+      - S3_BUCKET=${BACKUP_S3_BUCKET}
+    volumes:
+      - postgres_backups:/postgres-backups
+      - neo4j_backups:/neo4j-backups
+      - ./scripts/backup.sh:/backup.sh
+    networks:
+      - intelgraph-network
+    command: /bin/sh -c "apk add --no-cache postgresql-client curl aws-cli && chmod +x /backup.sh && crond -f"
+    depends_on:
+      - postgres
+      - neo4j
+
+# ===============================
+# Networks
+# ===============================
+networks:
+  intelgraph-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16
+
+# ===============================
+# Volumes
+# ===============================
+volumes:
+  # Application data
+  postgres_data:
+    driver: local
+  neo4j_data:
+    driver: local
+  neo4j_logs:
+    driver: local
+  neo4j_import:
+    driver: local
+  neo4j_plugins:
+    driver: local
+  redis_data:
+    driver: local
+  
+  # Search and analytics
+  elasticsearch_data:
+    driver: local
+  elasticsearch_logs:
+    driver: local
+  kibana_data:
+    driver: local
+  
+  # Message queue
+  zookeeper_data:
+    driver: local
+  zookeeper_logs:
+    driver: local
+  kafka_data:
+    driver: local
+  kafka_logs:
+    driver: local
+  
+  # Monitoring
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  jaeger_data:
+    driver: local
+  
+  # Application specific
+  gateway_logs:
+    driver: local
+  server_uploads:
+    driver: local
+  server_logs:
+    driver: local
+  client_logs:
+    driver: local
+  ml_models:
+    driver: local
+  ml_cache:
+    driver: local
+  ml_logs:
+    driver: local
+  viz_cache:
+    driver: local
+  viz_logs:
+    driver: local
+  
+  # Backups
+  postgres_backups:
+    driver: local
+  neo4j_backups:
+    driver: local
+  
+  # Reverse proxy
+  traefik_acme:
+    driver: local

@@ -9,7 +9,7 @@ Copyright (c) 2025 IntelGraph
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from typing import List, Dict, Any, Optional, Union
+from typing import List, Dict, Any, Optional, Union, Tuple
 import numpy as np
 import pandas as pd
 from datetime import datetime
@@ -28,6 +28,8 @@ import os
 from contextlib import asynccontextmanager
 import hashlib
 import uuid
+from neo4j import AsyncGraphDatabase
+from enum import Enum
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -40,11 +42,25 @@ postgres_pool = None
 chroma_client = None
 collection = None
 openai_client = None
+neo4j_driver = None
+
+DANGEROUS_KEYWORDS = {"DELETE", "REMOVE", "SET", "CREATE", "MERGE", "DROP"}
+MAX_SAFE_ROWS = 10000
+MAX_SAFE_COST = 100000.0
+
+
+def contains_dangerous_keyword(query: str) -> Optional[str]:
+    """Return the first dangerous keyword found in the query, if any."""
+    upper_cypher = query.upper()
+    for keyword in DANGEROUS_KEYWORDS:
+        if keyword in upper_cypher:
+            return keyword
+    return None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown events"""
-    global embedding_model, redis_client, postgres_pool, chroma_client, collection, openai_client
+    global embedding_model, redis_client, postgres_pool, chroma_client, collection, openai_client, neo4j_driver
     
     # Startup
     logger.info("Starting RAG Service...")
@@ -105,6 +121,20 @@ async def lifespan(app: FastAPI):
         logger.info("Connected to PostgreSQL")
     except Exception as e:
         logger.error(f"Failed to connect to PostgreSQL: {e}")
+
+    # Initialize Neo4j
+    try:
+        neo4j_driver = AsyncGraphDatabase.driver(
+            os.getenv("NEO4J_URL", "neo4j://localhost:7687"),
+            auth=(
+                os.getenv("NEO4J_USER", "neo4j"),
+                os.getenv("NEO4J_PASSWORD", "password"),
+            ),
+        )
+        await neo4j_driver.verify_connectivity()
+        logger.info("Connected to Neo4j")
+    except Exception as e:
+        logger.error(f"Failed to connect to Neo4j: {e}")
     
     yield
     
@@ -114,6 +144,8 @@ async def lifespan(app: FastAPI):
         await redis_client.close()
     if postgres_pool:
         await postgres_pool.close()
+    if neo4j_driver:
+        await neo4j_driver.close()
 
 app = FastAPI(
     title="IntelGraph RAG Service",
@@ -185,16 +217,29 @@ class SearchResponse(BaseModel):
     query_processed: str
     processing_time: float
 
+class AuthorityLevel(str, Enum):
+    VIEWER = "viewer"
+    EDITOR = "editor"
+    ADMIN = "admin"
+
+
 class CypherRequest(BaseModel):
     natural_language: str = Field(min_length=1, max_length=500)
     tenant_id: str
+    authority: AuthorityLevel
     schema_context: Optional[Dict[str, Any]] = None
+    sandbox: bool = False
+    manual_cypher: Optional[str] = None
 
 class CypherResponse(BaseModel):
     cypher_query: str
     explanation: str
     confidence: float = Field(ge=0, le=1)
     warnings: List[str] = Field(default_factory=list)
+    estimated_rows: Optional[float] = None
+    estimated_cost: Optional[float] = None
+    sandbox_results: Optional[List[Dict[str, Any]]] = None
+    diff_vs_manual: Optional[Dict[str, Any]] = None
 
 # Utility functions
 def count_tokens(text: str, model: str = "gpt-3.5-turbo") -> int:
@@ -440,18 +485,57 @@ Format your response as JSON:
             warnings.append("Could not parse structured response")
         
         # Validate Cypher query safety
-        dangerous_keywords = ['DELETE', 'REMOVE', 'SET', 'CREATE', 'MERGE', 'DROP']
-        upper_cypher = cypher.upper()
-        for keyword in dangerous_keywords:
-            if keyword in upper_cypher:
-                warnings.append(f"Query contains potentially dangerous keyword: {keyword}")
-                confidence = min(confidence, 0.3)
+        keyword = contains_dangerous_keyword(cypher)
+        if keyword:
+            warnings.append(f"Query contains potentially dangerous keyword: {keyword}")
+            confidence = min(confidence, 0.3)
         
         return cypher, explanation, confidence, warnings
         
     except Exception as e:
         logger.error(f"Failed to generate Cypher: {e}")
         raise HTTPException(status_code=500, detail="Failed to generate Cypher query")
+
+
+async def estimate_cypher_cost(query: str, params: Dict[str, Any]) -> Tuple[Optional[float], Optional[float]]:
+    """Estimate rows and cost for a Cypher query using Neo4j EXPLAIN"""
+    if not neo4j_driver:
+        return None, None
+    try:
+        async with neo4j_driver.session() as session:
+            result = await session.run("EXPLAIN " + query, params)
+            summary = await result.consume()
+            plan = summary.plan
+            if plan and hasattr(plan, "arguments"):
+                rows = plan.arguments.get("EstimatedRows")
+                cost = plan.arguments.get("EstimatedCost")
+                return rows, cost
+    except Exception as e:
+        logger.warning(f"Cost estimation failed: {e}")
+    return None, None
+
+
+async def run_cypher_sandbox(query: str, params: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Execute a Cypher query in read-only mode and return results."""
+    if not neo4j_driver:
+        return []
+    try:
+        async with neo4j_driver.session(default_access_mode="READ") as session:
+            result = await session.run(query, params)
+            records = [record.data() for record in await result.to_list()]
+            return records
+    except Exception as e:
+        logger.warning(f"Sandbox execution failed: {e}")
+        return []
+
+
+def diff_cypher_results(a: List[Dict[str, Any]], b: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Compute differences between two Cypher result sets."""
+    set_a = {json.dumps(row, sort_keys=True) for row in a}
+    set_b = {json.dumps(row, sort_keys=True) for row in b}
+    extra = [json.loads(row) for row in sorted(set_a - set_b)]
+    missing = [json.loads(row) for row in sorted(set_b - set_a)]
+    return {"extra": extra, "missing": missing}
 
 # Dependencies
 async def get_db():
@@ -619,14 +703,46 @@ async def generate_cypher(request: CypherRequest):
             natural_language=request.natural_language,
             schema_context=request.schema_context
         )
-        
+        keyword = contains_dangerous_keyword(cypher)
+        if keyword and request.authority != AuthorityLevel.ADMIN:
+            raise HTTPException(status_code=403, detail=f"{keyword} operations require admin authority")
+
+        rows, cost = await estimate_cypher_cost(
+            cypher, {"tenantId": request.tenant_id}
+        )
+        if rows is None or cost is None:
+            warnings.append("Cost estimation unavailable")
+        else:
+            if rows > MAX_SAFE_ROWS:
+                warnings.append("Estimated rows exceed safe threshold")
+                if request.authority != AuthorityLevel.ADMIN:
+                    raise HTTPException(status_code=403, detail="Row estimate exceeds limit for current authority")
+            if cost > MAX_SAFE_COST:
+                warnings.append("Estimated cost exceeds safe threshold")
+                if request.authority != AuthorityLevel.ADMIN:
+                    raise HTTPException(status_code=403, detail="Cost estimate exceeds limit for current authority")
+
+        sandbox_results = None
+        diff_vs_manual = None
+        if request.sandbox:
+            sandbox_results = await run_cypher_sandbox(cypher, {"tenantId": request.tenant_id})
+            if request.manual_cypher:
+                manual_results = await run_cypher_sandbox(request.manual_cypher, {"tenantId": request.tenant_id})
+                diff_vs_manual = diff_cypher_results(sandbox_results, manual_results)
+
+        logger.info("Generated Cypher", extra={"authority": request.authority})
+
         return CypherResponse(
             cypher_query=cypher,
             explanation=explanation,
             confidence=confidence,
-            warnings=warnings
+            warnings=warnings,
+            estimated_rows=rows,
+            estimated_cost=cost,
+            sandbox_results=sandbox_results,
+            diff_vs_manual=diff_vs_manual,
         )
-        
+
     except Exception as e:
         logger.error(f"Cypher generation failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))

@@ -1,0 +1,22 @@
+name: merge-governor
+on:
+  schedule: [{ cron: '*/10 * * * *' }]
+  workflow_dispatch:
+concurrency:
+  group: merge-governor
+  cancel-in-progress: true
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  govern:
+    runs-on: ubuntu-latest
+    env:
+      REPO: BrianCLong/intelgraph
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: KPI guard (pause if ci:smoke < 50%)
+        run: bash scripts/ci/kpi-check.sh
+      - name: Merge governor
+        run: bash scripts/ci/merge-governor.sh

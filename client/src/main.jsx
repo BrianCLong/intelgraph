@@ -1,8 +1,9 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.router.jsx'
-import './styles/globals.css'
-import { initWebVitals } from './utils/webVitals.js'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App.router.jsx';
+import './styles/globals.css';
+import './styles/tailwind.css';
+import { initWebVitals } from './utils/webVitals.js';
 
 console.log('🚀 Starting Full IntelGraph Router App...');
 
@@ -22,18 +23,17 @@ if (!root) {
 } else {
   try {
     console.log('📍 Creating React root with full stack...');
-    
+
     ReactDOM.createRoot(root).render(
       <React.StrictMode>
         <App />
-      </React.StrictMode>
+      </React.StrictMode>,
     );
-    
-    console.log('✅ Full IntelGraph app rendered successfully');
 
+    console.log('✅ Full IntelGraph app rendered successfully');
   } catch (error) {
     console.error('❌ CRITICAL ERROR during render:', error);
-    
+
     root.innerHTML = `
       <div style="padding: 20px; background: #ffcdd2; border: 2px solid #f44336; border-radius: 8px; margin: 20px; font-family: Arial;">
         <h1 style="color: #d32f2f;">❌ IntelGraph App Failed</h1>

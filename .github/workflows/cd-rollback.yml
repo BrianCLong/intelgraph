@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: "Target environment (dev, staging, prod)"
+        description: 'Target environment (dev, staging, prod)'
         required: true
       image_tag:
-        description: "Image tag to rollback to (e.g., git-sha or semver)"
+        description: 'Image tag to rollback to (e.g., git-sha or semver)'
         required: true
 
 jobs:
@@ -16,17 +16,17 @@ jobs:
     environment: ${{ github.event.inputs.environment }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000
+        uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
 
       - name: Login to GHCR
-        uses: docker/login-action@184bdaa
+        uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Rollback deployment
-        uses: appleboy/ssh-action@029f5b4
+        uses: appleboy/ssh-action@5622b0683c338ba79484499e87b255370afb58d1 # v0.2.0
         with:
           host: ${{ secrets[format('{0}_SSH_HOST', github.event.inputs.environment)] }}
           username: ${{ secrets[format('{0}_SSH_USER', github.event.inputs.environment)] }}

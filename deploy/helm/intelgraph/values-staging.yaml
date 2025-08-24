@@ -1,0 +1,51 @@
+# Staging environment overrides
+global:
+  tag: "{{ .Chart.AppVersion }}-staging"
+  
+  ingress:
+    host: staging.intelgraph.mycorp.com
+    annotations:
+      nginx.ingress.kubernetes.io/auth-url: "https://oauth2-proxy.auth.svc.cluster.local/oauth2/auth"
+      nginx.ingress.kubernetes.io/auth-signin: "https://oauth2-proxy.auth.svc.cluster.local/oauth2/start?rd=https://$host$request_uri"
+
+# Staging scaling (smaller than production)
+services:
+  apiGateway:
+    replicaCount: 2
+  analytics:
+    replicaCount: 2
+  mlEngine:
+    replicaCount: 2
+  graphAnalytics:
+    replicaCount: 2
+  feedProcessor:
+    replicaCount: 1
+  searchEngine:
+    replicaCount: 1
+  workflowEngine:
+    replicaCount: 1
+  mobile:
+    replicaCount: 1
+
+# Reduced autoscaling for staging
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 85
+
+# Test data seeding
+testData:
+  enabled: true
+  job:
+    image: seed-data
+    restartPolicy: OnFailure
+
+# Debug logging
+common:
+  env:
+    - name: LOG_LEVEL
+      value: debug
+    - name: NODE_ENV
+      value: staging

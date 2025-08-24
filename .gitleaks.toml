@@ -1,0 +1,133 @@
+# IntelGraph GitLeaks Configuration
+title = "IntelGraph Security Scan"
+
+[allowlist]
+description = "Allowlist for IntelGraph repository"
+
+# Allow test fixtures and examples
+paths = [
+    '''test/fixtures/.*''',
+    '''tests/fixtures/.*''',
+    '''examples/.*''',
+    '''docs/examples/.*''',
+    '''.env.example''',
+    '''.env.template''',
+    '''__tests__/.*''',
+    '''\.test\..*''',
+    '''\.spec\..*''',
+]
+
+# Allow obvious test/demo values
+regexes = [
+    '''FAKE_.*''',
+    '''TEST_.*''',
+    '''DEMO_.*''',
+    '''EXAMPLE_.*''',
+    '''PLACEHOLDER_.*''',
+    '''YOUR_.*_HERE''',
+    '''sk-test_.*''',  # Stripe test keys
+    '''pk_test_.*''',  # Stripe public test keys
+]
+
+# Common false positive patterns
+stopwords = [
+    "commit",
+    "password",
+    "secret",
+    "key",
+    "token",
+    "api",
+    "credential",
+]
+
+[[rules]]
+id = "github-pat"
+description = "GitHub Personal Access Token"
+regex = '''ghp_[0-9a-zA-Z]{36}'''
+keywords = ["ghp_"]
+
+[[rules]]
+id = "github-oauth"
+description = "GitHub OAuth Access Token"
+regex = '''gho_[0-9a-zA-Z]{36}'''
+keywords = ["gho_"]
+
+[[rules]]
+id = "github-app"
+description = "GitHub App Token"
+regex = '''(ghu|ghs)_[0-9a-zA-Z]{36}'''
+keywords = ["ghu_", "ghs_"]
+
+[[rules]]
+id = "github-refresh"
+description = "GitHub Refresh Token"
+regex = '''ghr_[0-9a-zA-Z]{76}'''
+keywords = ["ghr_"]
+
+[[rules]]
+id = "generic-api-key"
+description = "Generic API Key"
+regex = '''(?i)(?:key|api|token|secret|password)\s*[:=]\s*['"][0-9a-zA-Z\-_]{20,}['"]'''
+keywords = ["api", "key", "token", "secret", "password"]
+
+[[rules]]
+id = "jwt-token"
+description = "JWT Token"
+regex = '''eyJ[0-9a-zA-Z_-]*\.eyJ[0-9a-zA-Z_-]*\.[0-9a-zA-Z_-]*'''
+keywords = ["eyJ"]
+
+[[rules]]
+id = "aws-access-key"
+description = "AWS Access Key ID"
+regex = '''AKIA[0-9A-Z]{16}'''
+keywords = ["AKIA"]
+
+[[rules]]
+id = "aws-secret-key"
+description = "AWS Secret Access Key"
+regex = '''(?i)aws_secret_access_key\s*[:=]\s*['"][0-9a-zA-Z/+=]{40}['"]'''
+keywords = ["aws_secret_access_key"]
+
+[[rules]]
+id = "slack-token"
+description = "Slack Token"
+regex = '''xox[baprs]-[0-9a-zA-Z]{10,48}'''
+keywords = ["xoxb", "xoxa", "xoxp", "xoxr", "xoxs"]
+
+[[rules]]
+id = "env-secrets"
+description = "Environment variable secrets"
+regex = '''(?i)(?:password|secret|key|token|auth).*=\s*['"][^'"\s]{8,}['"]'''
+keywords = ["password", "secret", "key", "token", "auth"]
+path = '''\.env(?:\.[a-zA-Z]+)?$'''
+
+# Database connection strings
+[[rules]]
+id = "database-url"
+description = "Database connection string"
+regex = '''(?i)(postgres|mysql|mongodb|redis)://[^\s'"]{10,}'''
+keywords = ["postgres://", "mysql://", "mongodb://", "redis://"]
+
+# Private keys
+[[rules]]
+id = "private-key"
+description = "Private Key"
+regex = '''-----BEGIN [A-Z ]+PRIVATE KEY-----'''
+keywords = ["PRIVATE KEY"]
+
+# Docker secrets
+[[rules]]
+id = "docker-auth"
+description = "Docker registry auth"
+regex = '''(?i)"auth"\s*:\s*"[A-Za-z0-9+/=]{20,}"'''
+keywords = ["docker", "auth"]
+
+[allowlist.files]
+# Allow specific files that commonly have false positives
+paths = [
+    "package-lock.json",
+    "yarn.lock",
+    "pnpm-lock.yaml",
+    "Pipfile.lock",
+    ".gitleaks.toml",
+]

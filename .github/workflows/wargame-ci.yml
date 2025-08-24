@@ -19,27 +19,28 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4
         with:
           node-version: '20' # Ensure this matches project's engine requirement
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@824a62378795d7a63864050674956c050c8c0868 # v5
         with:
           python-version: '3.9' # Ensure this matches project's requirement
 
       - name: Install Docker Compose
-        uses: docker/setup-buildx-action@v3 # This action includes docker compose
+        uses: docker/setup-buildx-action@94ab11c4e8a0292eaf4d3e5b44313865b0473544 # v3
 
       - name: Start Docker Compose services (Neo4j, Redis, Python API)
         run: |
           docker-compose -f docker-compose.dev.yml up -d --build neo4j redis api
           # Wait for services to be healthy
           echo "Waiting for Neo4j, Redis, and Python API to be ready..."
-          sleep 30 # Adjust as needed, or use a proper health check wait utility
+          # A better approach would be to use a tool like wait-for-it.sh
+          # For now, we will rely on the healthchecks in the docker-compose file.
 
       - name: Install Server dependencies and build
         working-directory: ./server
@@ -77,45 +78,11 @@ jobs:
           npx playwright install --with-deps
           npm run test:e2e
         env:
-          # Ensure these match your docker-compose setup for E2E tests
-          # Playwright will access the client via its exposed port
-          # The client will access the server via its exposed port
-          # The server will access the API via its exposed port (or internal Docker network name)
-          # For E2E, Playwright runs outside the Docker network, so it needs exposed ports.
-          # If client is also in docker, it needs to access server via internal network.
-          # For simplicity, assuming client is run directly on host for E2E.
-          # If client is also containerized, adjust `page.goto` in wargame.spec.ts
-          # to point to the client service's exposed port.
-          # For this setup, the client is assumed to be running on localhost:3000
-          # and the server on localhost:4000, and api on localhost:8000
-          # as per the docs/DASHBOARD.md
-          # The docker-compose services are started for the server and client to connect to.
-          # The client's `npm run dev` will connect to localhost:4000 for GraphQL.
-          # The server's `axios` calls will connect to http://api:8000 (internal docker network)
-          # or localhost:8000 if server is also on host.
-          # For this CI, the server and client are run on the host (ubuntu-latest runner)
-          # and connect to the docker-compose services.
-          # So, the server needs to know the exposed port of the API.
-          # And the client needs to know the exposed port of the server.
-          # And playwright needs to know the exposed port of the client.
-          # This is why the docker-compose up -d is for neo4j, redis, api.
-          # The server and client are built and tested on the runner directly.
-          # The server will need PYTHON_API_URL set to localhost:8000
           PYTHON_API_URL: http://localhost:8000 # For server's axios calls
-          # The client will connect to localhost:4000 for GraphQL
-          # Playwright will connect to localhost:3000 for the client app
 
       - name: Validate GraphQL Schema Compatibility
         working-directory: ./server
         run: |
-          # This step assumes you have a way to compare the generated schema
-          # with a reference schema or perform a linting/validation check.
-          # For example, if you have a 'schema.graphql' file that's the source of truth:
-          # npm run codegen # to generate types from schema-unified.ts
-          # npx graphql-schema-linter --schema src/graphql/schema-unified.ts
-          # Or, if you want to compare against a baseline SDL:
-          # npx graphql-codegen --config codegen.yml --require-graphql-schema-from src/graphql/schema-unified.ts --output-sdl schema.generated.graphql
-          # diff schema.baseline.graphql schema.generated.graphql
           echo "GraphQL schema compatibility validation placeholder."
           echo "Consider adding a step to generate SDL and compare against a baseline or lint."
 
@@ -132,15 +99,9 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
 
       - name: Deploy to Staging (Placeholder)
         run: |
           echo "Deploying WarGame Dashboard to staging environment..."
-          # Add your actual deployment commands here.
-          # This might involve:
-          # - Building Docker images (docker-compose build)
-          # - Pushing images to a container registry (e.g., ECR, GCR, Docker Hub)
-          # - Updating Kubernetes manifests or Helm charts
-          # - Running Ansible playbooks or Terraform apply
           echo "Deployment steps go here."

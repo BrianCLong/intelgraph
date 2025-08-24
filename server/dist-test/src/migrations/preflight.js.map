@@ -1,0 +1,1 @@
+{"version":3,"file":"preflight.js","sourceRoot":"","sources":["../../../src/migrations/preflight.ts"],"names":[],"mappings":";;AAAA,wCAKC;AALM,KAAK,UAAU,cAAc,CAAC,EAAE,QAAQ,EAAwB;IACrE,0CAA0C;IAC1C,+DAA+D;IAC/D,uCAAuC;IACvC,OAAO,EAAE,EAAE,EAAE,IAAI,EAAE,MAAM,EAAE,CAAC,QAAQ,EAAE,WAAW,EAAE,kBAAkB,CAAC,EAAE,CAAC;AAC3E,CAAC"}

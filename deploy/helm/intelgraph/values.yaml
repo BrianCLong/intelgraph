@@ -1,0 +1,434 @@
+# IntelGraph MLFP Helm Chart Values
+# Production-ready configuration for enterprise deployment
+
+global:
+  imageRegistry: ghcr.io/brianclong/intelgraph
+  tag: "2025.08.21"
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+  
+  # OpenTelemetry configuration
+  otel:
+    enabled: true
+    exporterOtlpEndpoint: "http://otel-collector.observability:4317"
+    serviceName: intelgraph
+    samplingRate: 0.1
+  
+  # Ingress configuration
+  ingress:
+    enabled: true
+    className: nginx
+    host: intelgraph.example.com
+    tls:
+      enabled: true
+      secretName: intelgraph-tls
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/proxy-body-size: 50m
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+  
+  # Prometheus monitoring
+  prometheus:
+    scrape: true
+    port: 9090
+    path: /metrics
+  
+  # Security context
+  podSecurityContext:
+    fsGroup: 10001
+    runAsNonRoot: true
+    runAsUser: 10001
+    runAsGroup: 10001
+    seccompProfile:
+      type: RuntimeDefault
+  
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    runAsGroup: 10001
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+
+# External dependencies configuration
+external:
+  postgres:
+    enabled: true
+    host: "${POSTGRES_HOST}"
+    port: 5432
+    database: intelgraph
+    userSecretRef: postgres-credentials
+    sslMode: require
+  
+  neo4j:
+    enabled: true
+    uri: "bolt://neo4j.database.svc.cluster.local:7687"
+    userSecretRef: neo4j-credentials
+    database: intelgraph
+  
+  redis:
+    enabled: true
+    host: "redis-master.database.svc.cluster.local"
+    port: 6379
+    userSecretRef: redis-credentials
+    cluster: false
+  
+  elasticsearch:
+    enabled: true
+    url: "https://opensearch.search.svc.cluster.local:9200"
+    userSecretRef: opensearch-credentials
+    index: intelgraph
+  
+  oidc:
+    enabled: true
+    issuer: "https://auth.example.com"
+    clientIdSecretRef: oidc-client
+    scope: "openid profile email groups"
+
+# Common configuration for all services
+common:
+  replicaCount: 2
+  
+  resources:
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+  
+  # Probes configuration
+  livenessProbe:
+    httpGet:
+      path: /healthz
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  
+  readinessProbe:
+    httpGet:
+      path: /readyz
+      port: http
+    initialDelaySeconds: 15
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+  
+  # Environment variables common to all services
+  env:
+    - name: NODE_ENV
+      value: production
+    - name: LOG_LEVEL
+      value: info
+    - name: LOG_FORMAT
+      value: json
+    - name: OTEL_EXPORTER_OTLP_ENDPOINT
+      value: "{{ .Values.global.otel.exporterOtlpEndpoint }}"
+    - name: OTEL_SERVICE_NAME
+      value: "{{ .Values.global.otel.serviceName }}"
+    - name: OTEL_RESOURCE_ATTRIBUTES
+      value: "service.namespace=intelgraph,service.version={{ .Values.global.tag }}"
+  
+  # Volume mounts for tmp and cache
+  volumeMounts:
+    - name: tmp
+      mountPath: /tmp
+    - name: cache
+      mountPath: /app/.cache
+  
+  volumes:
+    - name: tmp
+      emptyDir: {}
+    - name: cache
+      emptyDir: {}
+  
+  # Pod labels
+  podLabels:
+    app.kubernetes.io/part-of: intelgraph
+    app.kubernetes.io/version: "{{ .Values.global.tag }}"
+  
+  # Pod annotations
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "{{ .Values.global.prometheus.port }}"
+    prometheus.io/path: "{{ .Values.global.prometheus.path }}"
+
+# Service-specific configurations
+services:
+  apiGateway:
+    enabled: true
+    name: api-gateway
+    image: api-gateway
+    port: 8080
+    replicaCount: 3
+    
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8080
+    
+    resources:
+      limits:
+        cpu: "2"
+        memory: "2Gi"
+      requests:
+        cpu: "500m"
+        memory: "512Mi"
+    
+    env:
+      - name: PORT
+        value: "8080"
+      - name: POSTGRES_URI
+        valueFrom:
+          secretKeyRef:
+            name: "{{ .Values.external.postgres.userSecretRef }}"
+            key: uri
+      - name: NEO4J_URI
+        value: "{{ .Values.external.neo4j.uri }}"
+      - name: NEO4J_USERNAME
+        valueFrom:
+          secretKeyRef:
+            name: "{{ .Values.external.neo4j.userSecretRef }}"
+            key: username
+      - name: NEO4J_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: "{{ .Values.external.neo4j.userSecretRef }}"
+            key: password
+      - name: REDIS_HOST
+        value: "{{ .Values.external.redis.host }}"
+      - name: REDIS_PORT
+        value: "{{ .Values.external.redis.port }}"
+      - name: ELASTICSEARCH_URL
+        value: "{{ .Values.external.elasticsearch.url }}"
+      - name: OIDC_ISSUER
+        value: "{{ .Values.external.oidc.issuer }}"
+      - name: OIDC_CLIENT_ID
+        valueFrom:
+          secretKeyRef:
+            name: "{{ .Values.external.oidc.clientIdSecretRef }}"
+            key: client_id
+      - name: OIDC_CLIENT_SECRET
+        valueFrom:
+          secretKeyRef:
+            name: "{{ .Values.external.oidc.clientIdSecretRef }}"
+            key: client_secret
+      - name: JWT_SECRET
+        valueFrom:
+          secretKeyRef:
+            name: jwt-secret
+            key: secret
+  
+  analytics:
+    enabled: true
+    name: analytics-service
+    image: analytics-service
+    port: 8081
+    replicaCount: 2
+    
+    env:
+      - name: PORT
+        value: "8081"
+      - name: POSTGRES_URI
+        valueFrom:
+          secretKeyRef:
+            name: "{{ .Values.external.postgres.userSecretRef }}"
+            key: uri
+      - name: REDIS_HOST
+        value: "{{ .Values.external.redis.host }}"
+  
+  mlEngine:
+    enabled: true
+    name: ml-engine
+    image: ml-engine
+    port: 8082
+    replicaCount: 2
+    
+    resources:
+      limits:
+        cpu: "4"
+        memory: "4Gi"
+      requests:
+        cpu: "1"
+        memory: "1Gi"
+    
+    env:
+      - name: PORT
+        value: "8082"
+      - name: POSTGRES_URI
+        valueFrom:
+          secretKeyRef:
+            name: "{{ .Values.external.postgres.userSecretRef }}"
+            key: uri
+      - name: REDIS_HOST
+        value: "{{ .Values.external.redis.host }}"
+      - name: MODEL_CACHE_DIR
+        value: "/app/.cache/models"
+  
+  graphAnalytics:
+    enabled: true
+    name: graph-analytics
+    image: graph-analytics
+    port: 8083
+    replicaCount: 2
+    
+    env:
+      - name: PORT
+        value: "8083"
+      - name: NEO4J_URI
+        value: "{{ .Values.external.neo4j.uri }}"
+      - name: NEO4J_USERNAME
+        valueFrom:
+          secretKeyRef:
+            name: "{{ .Values.external.neo4j.userSecretRef }}"
+            key: username
+      - name: NEO4J_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: "{{ .Values.external.neo4j.userSecretRef }}"
+            key: password
+  
+  feedProcessor:
+    enabled: true
+    name: feed-processor
+    image: feed-processor
+    port: 8084
+    replicaCount: 2
+    
+    env:
+      - name: PORT
+        value: "8084"
+      - name: POSTGRES_URI
+        valueFrom:
+          secretKeyRef:
+            name: "{{ .Values.external.postgres.userSecretRef }}"
+            key: uri
+      - name: REDIS_HOST
+        value: "{{ .Values.external.redis.host }}"
+      - name: TEXTRAZOR_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: external-api-keys
+            key: textrazor
+      - name: VIRUSTOTAL_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: external-api-keys
+            key: virustotal
+  
+  searchEngine:
+    enabled: true
+    name: search-engine
+    image: search-engine
+    port: 8085
+    replicaCount: 2
+    
+    env:
+      - name: PORT
+        value: "8085"
+      - name: ELASTICSEARCH_URL
+        value: "{{ .Values.external.elasticsearch.url }}"
+      - name: ELASTICSEARCH_USERNAME
+        valueFrom:
+          secretKeyRef:
+            name: "{{ .Values.external.elasticsearch.userSecretRef }}"
+            key: username
+      - name: ELASTICSEARCH_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: "{{ .Values.external.elasticsearch.userSecretRef }}"
+            key: password
+  
+  workflowEngine:
+    enabled: true
+    name: workflow-engine
+    image: workflow-engine
+    port: 8086
+    replicaCount: 2
+    
+    env:
+      - name: PORT
+        value: "8086"
+      - name: POSTGRES_URI
+        valueFrom:
+          secretKeyRef:
+            name: "{{ .Values.external.postgres.userSecretRef }}"
+            key: uri
+      - name: REDIS_HOST
+        value: "{{ .Values.external.redis.host }}"
+  
+  mobile:
+    enabled: true
+    name: mobile-interface
+    image: mobile-interface
+    port: 8087
+    replicaCount: 2
+    
+    env:
+      - name: PORT
+        value: "8087"
+      - name: API_BASE_URL
+        value: "https://{{ .Values.global.ingress.host }}"
+      - name: NEXT_PUBLIC_API_URL
+        value: "https://{{ .Values.global.ingress.host }}"
+      - name: NEXT_PUBLIC_WS_URL
+        value: "wss://{{ .Values.global.ingress.host }}"
+
+# Horizontal Pod Autoscaler
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Network Policies
+networkPolicy:
+  enabled: true
+  
+# Service Monitor for Prometheus Operator
+serviceMonitor:
+  enabled: true
+  interval: 15s
+  scrapeTimeout: 10s
+  
+# Backup configuration
+backup:
+  enabled: false
+  schedule: "0 2 * * *"
+  retention: "30d"
+
+# External secrets (using External Secrets Operator)
+externalSecrets:
+  enabled: false
+  secretStore:
+    provider: aws
+    region: us-west-2
+  
+# Pod Security Policy
+podSecurityPolicy:
+  enabled: true
+  
+# Security scanning
+security:
+  podSecurityStandards:
+    enforce: restricted
+    audit: restricted
+    warn: restricted
+  
+  networkPolicies:
+    defaultDeny: true
+    allowIngress: true
+    allowEgress: true

@@ -26,6 +26,8 @@ class Evidence(BaseModel):
     created_at: Optional[str] = None
     signed: Optional[bool] = False
     signer_fp: Optional[str] = None
+    license_terms: Optional[str] = None
+    license_owner: Optional[str] = None
 
 
 class AttachEvidenceRequest(BaseModel):
@@ -44,3 +46,24 @@ class ProvExport(BaseModel):
     nodes: List[dict]
     edges: List[dict]
     metadata: Dict[str, str]
+
+
+class BundleRequest(BaseModel):
+    claim_ids: List[str] = Field(default_factory=list)
+
+
+class ManifestEntry(BaseModel):
+    id: str
+    hash: str
+
+
+class Manifest(BaseModel):
+    root: str
+    entries: List[ManifestEntry]
+
+
+class DisclosureBundle(BaseModel):
+    bundle_id: str
+    manifest: Manifest
+    claims: List[Claim]
+    evidence: List[Evidence]

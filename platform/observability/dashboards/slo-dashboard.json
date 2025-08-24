@@ -1,0 +1,34 @@
+{
+  "title": "Service SLOs",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Request Latency p95",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"gateway\"}[5m]))"
+        }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Error Rate",
+      "targets": [
+        {
+          "expr": "rate(http_requests_total{status=~\"5..\"}[5m])"
+        }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Ingest Lag",
+      "targets": [
+        {
+          "expr": "max(process_ingest_lag_seconds)"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 16,
+  "version": 1
+}

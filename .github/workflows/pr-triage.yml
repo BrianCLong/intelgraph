@@ -11,8 +11,8 @@ jobs:
   label:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/labeler@v5
+      - uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
+      - uses: actions/labeler@85c775501f80428f35346a76b000a61718f7372a # v5
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
 
@@ -20,8 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/dependency-review-action@v4
+      - uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
+      - uses: actions/dependency-review-action@0b10202287249938026321b9242228f874612677 # v4
         with:
           fail-on-severity: high
           allow-licenses: "MIT,Apache-2.0,BSD-2-Clause,BSD-3-Clause,ISC"
@@ -30,10 +30,10 @@ jobs:
   quick-checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
       
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4
         with:
           node-version: '18'
           cache: 'npm'
@@ -48,16 +48,12 @@ jobs:
       
       - name: Lint client
         run: cd client && npm run lint --if-present
-        continue-on-error: true
       
       - name: Lint server  
         run: cd server && npm run lint --if-present
-        continue-on-error: true
       
       - name: Test client
         run: cd client && npm run test --if-present -- --watchAll=false
-        continue-on-error: true
       
       - name: Test server
         run: cd server && npm run test --if-present -- --ci
-        continue-on-error: true

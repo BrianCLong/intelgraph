@@ -6,7 +6,11 @@ from .fixtures import client
 def build_request():
     return {
         "subgraph": {
-            "nodes": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
+            "nodes": [
+                {"id": "A", "attrs": {"sensitive": "g1"}},
+                {"id": "B", "attrs": {"sensitive": "g2"}},
+                {"id": "C", "attrs": {"sensitive": "g1"}},
+            ],
             "edges": [{"src": "A", "dst": "B"}, {"src": "B", "dst": "C"}],
             "directed": False,
         },
@@ -19,7 +23,7 @@ def build_request():
 
 def test_explain_link():
     c = client()
-    res = c.post("/explain", json=build_request(), headers={"x-api-key": "test"})
+    res = c.post("/xai/explain", json=build_request(), headers={"x-api-key": "test"})
     assert res.status_code == 200
     data = res.json()
     ids = {imp["id"] for imp in data["importances"]}

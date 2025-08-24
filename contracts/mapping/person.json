@@ -1,0 +1,12 @@
+{
+  "entity": "person",
+  "license": "CC-0",
+  "mappings": {
+    "id": {"map": "id"},
+    "name": {"map": "name"},
+    "email": {"map": "email", "redact": "email"},
+    "phone": {"map": "phone", "redact": "phone"},
+    "ssn": {"map": "national_id", "redact": "national_id"},
+    "extra": {"drop": true}
+  }
+}
