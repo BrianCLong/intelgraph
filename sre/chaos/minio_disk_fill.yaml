@@ -1,0 +1,13 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: StressChaos
+metadata:
+  name: minio-disk-fill
+spec:
+  stressors:
+    memory:
+      workers: 1
+      size: '256Mi'
+  mode: one
+  selector:
+    labelSelectors:
+      app: minio

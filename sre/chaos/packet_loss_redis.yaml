@@ -1,0 +1,13 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: packet-loss-redis
+spec:
+  action: loss
+  mode: one
+  selector:
+    labelSelectors:
+      app: redis
+  loss:
+    loss: '40'
+    correlation: '0'

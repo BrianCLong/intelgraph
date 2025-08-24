@@ -1,0 +1,13 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: Schedule
+metadata:
+  name: rollback-fail-canary
+spec:
+  schedule: '@once'
+  type: PodChaos
+  podChaos:
+    action: pod-failure
+    mode: one
+    selector:
+      labelSelectors:
+        app: gateway

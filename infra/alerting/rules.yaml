@@ -1,0 +1,10 @@
+groups:
+  - name: slo-burn
+    rules:
+      - alert: HighErrorRate
+        expr: increase(http_requests_total{code~"5.."}[5m]) > 0
+        for: 2m
+        labels:
+          severity: page
+        annotations:
+          summary: High error rate

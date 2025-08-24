@@ -1,0 +1,12 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: net-latency-neo4j
+spec:
+  action: delay
+  mode: one
+  selector:
+    labelSelectors:
+      app: neo4j
+  delay:
+    latency: '100ms'

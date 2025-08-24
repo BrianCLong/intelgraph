@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: resource-budgets
+spec:
+  limits:
+    - default:
+        cpu: "500m"
+        memory: "512Mi"
+      type: Container

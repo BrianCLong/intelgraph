@@ -1,0 +1,34 @@
+name: ga-infraops
+on:
+  push:
+    paths:
+      - 'packages/**'
+      - 'infra/**'
+      - 'sre/**'
+      - 'docs/**'
+  pull_request:
+    paths:
+      - 'packages/**'
+      - 'infra/**'
+      - 'sre/**'
+      - 'docs/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install deps
+        run: |
+          npm install --workspaces packages/gateway packages/ops-operator packages/web packages/policy packages/common-types packages/prov-ledger
+      - name: Build common types
+        run: npm --workspace packages/common-types run build
+      - name: Test packages
+        run: |
+          npm --workspace packages/policy test
+          npm --workspace packages/gateway test
+          npm --workspace packages/ops-operator test
+          npm --workspace packages/web test
