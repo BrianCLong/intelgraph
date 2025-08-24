@@ -1,0 +1,12 @@
+{
+  "mappings": {
+    "properties": {
+      "text": { "type": "text" },
+      "embedding": {
+        "type": "knn_vector",
+        "dimension": 384,
+        "method": { "name": "hnsw", "space_type": "cosinesimil" }
+      }
+    }
+  }
+}
