@@ -1,0 +1,8 @@
+image:
+  repository: graphql-bff
+  tag: latest
+service:
+  type: ClusterIP
+  port: 80
+env:
+  NODE_ENV: production

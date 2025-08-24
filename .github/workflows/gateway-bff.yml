@@ -1,0 +1,87 @@
+name: gateway-bff
+
+on:
+  push:
+    branches: [feature/gateway-bff]
+    paths:
+      - 'gateway/graphql-bff/**'
+      - 'packages/sdk/gateway-js/**'
+      - 'ops/gateway/**'
+      - '.github/workflows/gateway-bff.yml'
+  pull_request:
+    paths:
+      - 'gateway/graphql-bff/**'
+      - 'packages/sdk/gateway-js/**'
+      - 'ops/gateway/**'
+      - '.github/workflows/gateway-bff.yml'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+      - run: npm ci
+        working-directory: gateway/graphql-bff
+      - run: npm ci
+        working-directory: packages/sdk/gateway-js
+      - run: npm run lint --workspaces=false
+        working-directory: gateway/graphql-bff
+      - run: npm run lint --workspaces=false
+        working-directory: packages/sdk/gateway-js
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+      - run: npm ci
+        working-directory: gateway/graphql-bff
+      - run: npm ci
+        working-directory: packages/sdk/gateway-js
+      - run: npm run typecheck
+        working-directory: gateway/graphql-bff
+      - run: npm run typecheck
+        working-directory: packages/sdk/gateway-js
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+      - run: npm ci
+        working-directory: gateway/graphql-bff
+      - run: npm ci
+        working-directory: packages/sdk/gateway-js
+      - run: npm test
+        working-directory: gateway/graphql-bff
+      - run: npm test
+        working-directory: packages/sdk/gateway-js
+  contract_federation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+      - run: npm ci
+        working-directory: gateway/graphql-bff
+      - run: npm run contract:federation
+        working-directory: gateway/graphql-bff
+  sec_zap:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'run ZAP scan'
+  docker_build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build gateway/graphql-bff -t graphql-bff
