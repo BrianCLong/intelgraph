@@ -1,0 +1,12 @@
+{
+  "name": "@intelgraph/ioc-normalizer-js",
+  "version": "0.1.0",
+  "main": "src/index.ts",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "jest"
+  }
+}

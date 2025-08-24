@@ -43,5 +43,23 @@ module.exports = {
       testEnvironment: 'jsdom',
       setupFilesAfterEnv: ['<rootDir>/client/src/setupTests.js']
     }
+    ,{
+      displayName: 'stix-taxii-service',
+      testMatch: ['<rootDir>/services/stix-taxii/**/*.{test,spec}.{js,ts}'],
+      preset: 'ts-jest/presets/default-esm',
+      extensionsToTreatAsEsm: ['.ts'],
+      globals: {
+        'ts-jest': { useESM: true }
+      }
+    }
+    ,{
+      displayName: 'ioc-normalizer-js',
+      testMatch: ['<rootDir>/packages/sdk/ioc-normalizer-js/**/*.{test,spec}.{js,ts}'],
+      preset: 'ts-jest/presets/default-esm',
+      extensionsToTreatAsEsm: ['.ts'],
+      globals: {
+        'ts-jest': { useESM: true }
+      }
+    }
   ]
 };

@@ -20,6 +20,7 @@
     "test:smoke:frontend": "cd client && npm run test:smoke",
     "test:unit": "npm run test",
     "test:integration": "cd server && npm run test:integration",
+    "contract:taxii": "jest services/stix-taxii/**/*.contract.test.ts",
     "build": "npm run build:client && npm run build:server",
     "build:client": "cd client && npm run build",
     "build:server": "cd server && npm run build",
