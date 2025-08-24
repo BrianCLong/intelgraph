@@ -10,3 +10,6 @@ node_modules
 **/*.snap
 **/generated/**
 **/.graphqlrc*
+.github
+active-measures-module
+archive/**

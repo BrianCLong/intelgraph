@@ -1,0 +1,4 @@
+props:
+  - name: nationality
+    type: enum
+    values: [US, GB, DE]
