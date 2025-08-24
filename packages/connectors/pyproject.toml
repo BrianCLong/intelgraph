@@ -1,0 +1,13 @@
+[project]
+name = "connectors"
+version = "0.1.0"
+description = "Simplified connectors service"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pandas",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "fastapi[test]"]
