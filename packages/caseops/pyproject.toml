@@ -1,0 +1,17 @@
+[project]
+name = "caseops"
+version = "0.1.0"
+description = "Minimal CaseOps service"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
