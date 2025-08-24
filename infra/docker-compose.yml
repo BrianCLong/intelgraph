@@ -1,0 +1,41 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: example
+    ports:
+      - '5432:5432'
+  redis:
+    image: redis:7
+    ports:
+      - '6379:6379'
+  neo4j:
+    image: neo4j:5
+    environment:
+      NEO4J_AUTH: neo4j/test
+    ports:
+      - '7474:7474'
+      - '7687:7687'
+  minio:
+    image: minio/minio
+    environment:
+      MINIO_ACCESS_KEY: minio
+      MINIO_SECRET_KEY: minio123
+    command: server /data
+    ports:
+      - '9000:9000'
+  analyst:
+    build: ../packages/analyst
+    ports:
+      - '8000:8000'
+  gateway:
+    build: ../packages/gateway
+    environment:
+      ANALYST_URL: http://analyst:8000
+    ports:
+      - '4000:4000'
+  web:
+    build: ../packages/web
+    ports:
+      - '3000:3000'
