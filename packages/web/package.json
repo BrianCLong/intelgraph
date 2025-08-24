@@ -1,0 +1,27 @@
+{
+  "name": "@ga-fintel/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "vitest run --environment jsdom"
+  },
+  "dependencies": {
+    "@mui/material": "^5.15.14",
+    "@rollup/rollup-linux-x64-gnu": "^4.48.0",
+    "jquery": "^3.7.1",
+    "jsdom": "^26.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/jquery": "^3.5.29",
+    "@types/react": "^18.2.21",
+    "@types/react-dom": "^18.2.7",
+    "@vitejs/plugin-react": "^4.0.0",
+    "typescript": "^5.7.3",
+    "vite": "^5.4.8",
+    "vitest": "^1.1.0"
+  }
+}

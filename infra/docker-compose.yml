@@ -1,0 +1,21 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: postgres
+    ports: ['5432:5432']
+  gateway:
+    build: ../packages/gateway
+    environment:
+      FININTEL_URL: http://finintel:8000
+    ports: ['4000:4000']
+    depends_on: [finintel]
+  finintel:
+    build: ../packages/finintel
+    ports: ['8000:8000']
+  ingestors:
+    build: ../packages/ingestors
+  web:
+    build: ../packages/web
+    ports: ['5173:5173']

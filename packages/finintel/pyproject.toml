@@ -1,0 +1,23 @@
+[project]
+name = "finintel"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi",
+  "uvicorn",
+  "pandas",
+  "networkx",
+  "rapidfuzz",
+  "unidecode",
+  "metaphone"
+]
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
