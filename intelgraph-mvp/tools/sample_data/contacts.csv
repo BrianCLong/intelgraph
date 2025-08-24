@@ -1,0 +1,4 @@
+person_name,person_email,person_phone,org_name,event_name,event_time,location_name,lat,lon,doc_title,doc_url
+"Alice Monroe","alice@example.com","+1-202-555-0175","Northstar Labs","Kickoff","2024-05-12T14:00:00Z","HQ","38.8977","-77.0365","Agenda","https://example.com/agenda"
+"Alicia Monroe","alice@example.com","+1-202-555-0175","Northstar Labs","Design Review","2024-06-01T16:30:00Z","Design Center","37.7749","-122.4194","Notes","https://example.com/notes"
+"Bob Ortega","bob@contoso.io","+44-20-7946-0958","Contoso","Briefing","2024-07-20T09:00:00Z","London Office","51.5074","-0.1278","Brief","https://contoso.io/brief.pdf"
