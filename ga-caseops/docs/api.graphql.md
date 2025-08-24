@@ -1,0 +1,3 @@
+# api.graphql
+
+Documentation placeholder.
