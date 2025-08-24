@@ -1,0 +1,35 @@
+version: '3.9'
+services:
+  neo4j:
+    image: neo4j:5-community
+    ports:
+      - '7474:7474'
+      - '7687:7687'
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: example
+    ports:
+      - '5432:5432'
+  redis:
+    image: redis:7
+    ports:
+      - '6379:6379'
+  gateway:
+    build: ../packages/gateway
+    ports:
+      - '4000:4000'
+    depends_on:
+      - neo4j
+      - postgres
+      - redis
+  etl:
+    build: ../packages/etl
+    ports:
+      - '8000:8000'
+  web:
+    build: ../packages/web
+    ports:
+      - '3000:3000'
+    depends_on:
+      - gateway

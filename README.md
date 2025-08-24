@@ -2,6 +2,20 @@
 
 ---
 
+## GA-Core Vertical Slice
+
+```
+ETL -> Gateway -> Web
+  \         |
+   \        v
+   Neo4j & PostgreSQL
+```
+
+Core services contract:
+- Gateway exposes GraphQL at `/graphql` and Socket.IO at `/`.
+- ETL accepts uploads at `/ingest` and reports status at `/jobs/{id}`.
+- Web app consumes the Gateway API and streams updates in real time.
+
 ## 🛠 Developer Onboarding (Deployable-First)
 
 IntelGraph follows a **deployable-first mantra**:  
