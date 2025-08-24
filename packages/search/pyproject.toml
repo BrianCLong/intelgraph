@@ -1,0 +1,18 @@
+[project]
+name = "intelgraph-search"
+version = "0.1.0"
+description = "Hybrid search service"
+authors = [{name="IntelGraph"}]
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi",
+  "uvicorn",
+  "scikit-learn",
+  "numpy",
+  "pydantic",
+  "python-multipart"
+]
+[project.optional-dependencies]
+test = ["pytest"]
+[tool.pytest.ini_options]
+addopts = "-q --cov=packages.search --cov-report=term-missing"

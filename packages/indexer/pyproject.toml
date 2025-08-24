@@ -1,0 +1,9 @@
+[project]
+name = "intelgraph-indexer"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = ["aiohttp"]
+[project.optional-dependencies]
+test = ["pytest", "pytest-asyncio"]
+[tool.pytest.ini_options]
+addopts = "-q --cov=packages.indexer --cov-report=term-missing"

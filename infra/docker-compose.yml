@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  search:
+    build: ../packages/search
+    ports:
+      - '8000:8000'
+    command: uvicorn packages.search.src.main:app --host 0.0.0.0 --port 8000
+  gateway:
+    build: ../packages/gateway
+    ports:
+      - '3000:3000'
+    command: node dist/index.js
+    depends_on:
+      - search
+  web:
+    build: ../packages/web
+    ports:
+      - '5173:5173'
+    command: npm run dev
+    depends_on:
+      - gateway

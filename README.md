@@ -901,3 +901,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **IntelGraph Platform** - Next-Generation Intelligence Analysis
+
+## GA-Search Quickstart
+
+Run `docker-compose -f infra/docker-compose.yml up` to launch gateway, search, indexer and web services.
+
