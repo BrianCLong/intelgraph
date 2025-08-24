@@ -1,10 +1,12 @@
 [tool.black]
 line-length = 100
+target-version = ["py312"]
 
 [tool.ruff]
 line-length = 100
-select = ["E","F","I","UP","B","C90"]
-ignore = ["E501"]
+target-version = "py312"
+select = ["E","F","W","I","UP","B","SIM"]
+ignore = ["E203","W503"]
 fix = true
 
 [tool.mypy]
@@ -16,3 +18,4 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 addopts = "-q --cov=apps --cov=packages --cov-report=xml"
+

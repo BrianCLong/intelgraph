@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from urllib.parse import urlparse
 
 from .evidence import get_evidence
@@ -11,7 +11,7 @@ def independence(evidence_ids):
 
 
 def recency(evidence_ids):
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     dates = [datetime.fromisoformat(get_evidence(eid)["created_at"]) for eid in evidence_ids]
     if not dates:
         return 0.0

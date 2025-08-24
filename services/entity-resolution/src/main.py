@@ -28,6 +28,17 @@ import hashlib
 import json
 import os
 from contextlib import asynccontextmanager
+<<<<<<< HEAD
+from sklearn.metrics import precision_score, recall_score, f1_score
+from sklearn.calibration import CalibratedClassifierCV
+from sklearn.cluster import HDBSCAN
+import re
+from phonenumbers import parse as parse_phone, format_number, PhoneNumberFormat
+from phonenumbers.phonenumberutil import NumberParseException
+import geocoder
+from geopy.distance import geodesic
+=======
+>>>>>>> main
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -146,6 +157,11 @@ class ResolutionRequest(BaseModel):
     threshold: float = Field(default=0.8, ge=0, le=1)
     tenant_id: str
     include_explanations: bool = True
+<<<<<<< HEAD
+    use_blocking: bool = True
+    entity_type_specific_thresholds: bool = True
+=======
+>>>>>>> main
 
 class ResolutionResponse(BaseModel):
     matches: List[EntityResolutionScore]
@@ -189,6 +205,104 @@ async def get_redis():
         raise HTTPException(status_code=503, detail="Cache not available")
     return redis_client
 
+<<<<<<< HEAD
+# Enhanced normalization and blocking functions
+def normalize_name(name: str) -> str:
+    """Normalize name for better matching"""
+    if not name:
+        return ""
+    
+    # Convert to lowercase and strip
+    normalized = name.lower().strip()
+    
+    # Remove common prefixes/suffixes
+    prefixes = ['mr', 'mrs', 'ms', 'dr', 'prof', 'sir', 'dame']
+    suffixes = ['jr', 'sr', 'ii', 'iii', 'iv', 'esq']
+    
+    words = normalized.split()
+    words = [w for w in words if w not in prefixes and w not in suffixes]
+    
+    # Remove special characters but keep spaces
+    normalized = re.sub(r'[^a-z0-9\s]', '', ' '.join(words))
+    
+    return normalized.strip()
+
+def normalize_email(email: str) -> str:
+    """Normalize email for canonical comparison"""
+    if not email or '@' not in email:
+        return ""
+    
+    try:
+        local, domain = email.lower().split('@', 1)
+        
+        # Handle Gmail dots and plus addressing
+        if 'gmail.com' in domain:
+            local = local.replace('.', '').split('+')[0]
+        
+        return f"{local}@{domain}"
+    except:
+        return email.lower()
+
+def normalize_phone(phone: str) -> str:
+    """Normalize phone to E.164 format"""
+    if not phone:
+        return ""
+    
+    try:
+        parsed = parse_phone(phone, 'US')  # Default to US, could be smarter
+        return format_number(parsed, PhoneNumberFormat.E164)
+    except NumberParseException:
+        # Fallback: just digits
+        digits_only = re.sub(r'\D', '', phone)
+        return digits_only if len(digits_only) >= 10 else ""
+
+def generate_blocking_keys(entity: Entity) -> List[str]:
+    """Generate blocking keys to reduce candidate set size"""
+    keys = []
+    
+    # Name-based blocking
+    if entity.name:
+        normalized_name = normalize_name(entity.name)
+        words = normalized_name.split()
+        if words:
+            # First word + last word
+            if len(words) >= 2:
+                keys.append(f"name:{words[0]}_{words[-1]}")
+            # First 3 characters + last 3 characters
+            if len(normalized_name) >= 6:
+                keys.append(f"name_prefix:{normalized_name[:3]}_{normalized_name[-3:]}")
+    
+    # Email domain blocking
+    if 'email' in entity.properties:
+        email = normalize_email(entity.properties['email'])
+        if '@' in email:
+            domain = email.split('@')[1]
+            keys.append(f"email_domain:{domain}")
+    
+    # Phone area code blocking
+    if 'phone' in entity.properties:
+        phone = normalize_phone(entity.properties['phone'])
+        if len(phone) >= 4:
+            keys.append(f"phone_area:{phone[:4]}")
+    
+    # Geographic blocking (if location available)
+    if 'latitude' in entity.properties and 'longitude' in entity.properties:
+        try:
+            lat = float(entity.properties['latitude'])
+            lng = float(entity.properties['longitude'])
+            # Grid-based geo blocking (10km squares)
+            geo_key = f"geo:{int(lat*100)}_{int(lng*100)}"
+            keys.append(geo_key)
+        except (ValueError, TypeError):
+            pass
+    
+    # Entity type blocking
+    keys.append(f"type:{entity.type}")
+    
+    return keys
+
+=======
+>>>>>>> main
 # Feature extraction functions
 def extract_name_features(name1: str, name2: str) -> Dict[str, float]:
     """Extract name-based similarity features"""

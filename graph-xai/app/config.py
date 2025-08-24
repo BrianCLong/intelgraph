@@ -22,6 +22,7 @@ class Settings(BaseSettings):
 
     robustness_samples: int = Field(64, alias="ROBUSTNESS_SAMPLES")
     fairness_enabled: bool = Field(False, alias="FAIRNESS_ENABLED")
+    random_seed: int = Field(0, alias="RANDOM_SEED")
 
     enable_prometheus: bool = Field(True, alias="ENABLE_PROMETHEUS")
     log_level: str = Field("info", alias="LOG_LEVEL")

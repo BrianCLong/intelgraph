@@ -11,9 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Add to GitHub Project
-        uses: actions/add-to-project@v1.0.2
+        uses: actions/add-to-project@9b3397b14f383d75452e3f633e1b2c03c3303123 # v1.0.2
         with:
           project-url: ${{ vars.PROJECT_URL }}
           github-token: ${{ secrets.PROJECT_TOKEN || github.token }}
         continue-on-error: true
-

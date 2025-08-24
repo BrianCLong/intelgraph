@@ -1,0 +1,8 @@
+name: Hello Actions
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Hello from GitHub Actions!"

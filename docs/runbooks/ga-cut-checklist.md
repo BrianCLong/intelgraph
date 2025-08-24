@@ -1,6 +1,0 @@
-- [ ] CI green (lint/type/smoke/unit/e2e, chaos dry-run)
-- [ ] SBOM generated and attached; CVE scan ≤ threshold
-- [ ] Cosign signatures + SLSA provenance verified
-- [ ] Pre-flight migration validator PASSED; backup taken
-- [ ] Residency/retention policies verified per tenant
-- [ ] Rollback script rehearsed; on-call schedule set

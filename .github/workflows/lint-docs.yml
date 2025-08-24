@@ -3,15 +3,15 @@ name: Docs Lint
 on:
   pull_request:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   markdownlint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
       - name: Use Node 18
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4
         with:
           node-version: 18
       - name: Install markdownlint-cli
@@ -23,8 +23,8 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
       - name: Validate commits with commitlint
-        uses: wagoid/commitlint-github-action@v6
+        uses: wagoid/commitlint-github-action@522d288e3c1218536da6b035514144653547d0a1 # v6
         with:
           configFile: commitlint.config.js

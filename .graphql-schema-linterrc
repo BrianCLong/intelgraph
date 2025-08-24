@@ -1,0 +1,8 @@
+{
+  "rules": {
+    "fields-have-descriptions": "warn",
+    "types-have-descriptions": "warn",
+    "input-object-values-are-camel-cased": "error",
+    "enum-values-all-caps": "off"
+  }
+}

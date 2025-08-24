@@ -1,0 +1,13 @@
+rules:
+  # keep it pragmatic for now
+  - fields-have-descriptions
+  - types-have-descriptions
+  - relay-page-info
+  - enum-values-all-caps
+  - deprecated-fields-have-reason
+schemaPaths:
+  - 'server/**/schema/**/*.graphql'
+  - 'server/graphql/schema/**/*.graphql'
+operationsPaths:
+  - 'client/**/src/**/*.graphql'
+  - 'apps/**/src/**/*.graphql'

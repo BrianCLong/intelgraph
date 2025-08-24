@@ -29,6 +29,7 @@
     "@mui/material": "^7.3.1",
     "@mui/x-data-grid": "^8.10.1",
     "@reduxjs/toolkit": "^2.8.2",
+    "cmdk": "^1.1.1",
     "cytoscape": "^3.33.1",
     "cytoscape-cola": "^2.5.1",
     "cytoscape-context-menus": "^4.2.1",
@@ -52,6 +53,7 @@
     "jquery": "^3.7.1",
     "leaflet": "^1.9.4",
     "lodash": "^4.17.21",
+    "recharts": "^2.12.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-grid-layout": "^1.5.2",
@@ -65,7 +67,8 @@
     "uuid": "^9.0.1",
     "vis-timeline": "^8.3.0",
     "web-vitals": "^5.1.0",
-    "zod": "^4.0.17"
+    "zod": "^4.0.17",
+    "zustand": "^4.5.2"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",
@@ -86,14 +89,18 @@
     "@typescript-eslint/parser": "^8.39.1",
     "@vitejs/plugin-react": "^4.7.0",
     "apollo": "^2.34.0",
+    "autoprefixer": "^10.4.18",
     "eslint": "^9.33.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "ioredis": "^5.7.0",
     "jest": "^30.0.5",
+    "jest-axe": "^10.0.0",
     "jest-junit": "^16.0.0",
+    "postcss": "^8.4.33",
     "prettier": "^3.3.3",
+    "tailwindcss": "^3.4.4",
     "ts-jest": "^29.4.1",
     "typescript": "^5.6.2",
     "vite": "^4.5.14",
@@ -105,6 +112,8 @@
     "eslint-plugin-jest": "^29.0.1",
     "typescript-eslint": "^8.0.0"
   },
-  "engines": { "node": ">=18.18 <20" },
+  "engines": {
+    "node": ">=18.18 <20"
+  },
   "packageManager": "npm @10.8.1"
 }

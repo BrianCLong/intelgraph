@@ -1,6 +1,8 @@
 name: Dependabot Auto Merge
+
 on:
-  pull_request: { types: [opened, synchronize] }
+  pull_request: 
+    types: [opened, synchronize]
 
 jobs:
   dependabot:
@@ -10,7 +12,51 @@ jobs:
       pull-requests: write
       contents: write
     steps:
-      - uses: fastify/github-action-merge-dependabot@9e3b0035baf695d18723687b4f9ed38e9978d28a # v3.10.1
+      - name: Wait for status checks
+        id: wait_for_checks
+        uses: lewagon/wait-on-check-action@v1.3.1 # v1.3.1
+        with:
+          ref: ${{ github.ref }}
+          check-name: 'ci-test'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 60
+
+      - name: Merge dependabot PR
+        if: steps.wait_for_checks.outputs.conclusion == 'success'
+        uses: fastify/github-action-merge-dependabot@9e3b0035baf695d18723687b4f9ed38e9978d28a # v3.10.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           target: 'patch'
+
+  batch-dependabot:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
+      - name: Get dependabot PRs
+        id: get_prs
+        uses: actions/github-script@60a0d83 # v6
+        with:
+          script: | 
+            const result = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: 'dependabot/'
+            });
+            return result.data.map(pr => pr.head.ref);
+
+      - name: Create batch PR
+        uses: peter-evans/create-pull-request@522d288e3c1218536da6b035514144653547d0a1 # v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore(deps): batch update dependabot PRs"
+          title: "chore(deps): batch update dependabot PRs"
+          body: "This PR batches the following dependabot PRs:\n${{ steps.get_prs.outputs.result }}"
+          branch: "dependabot-batch"
+          base: "main"
+          delete-branch: true
+          script: | 
+            for (const branch of ${{ steps.get_prs.outputs.result }}) {
+              execSync(`git merge --no-ff --no-edit origin/${branch}`)
+            }
