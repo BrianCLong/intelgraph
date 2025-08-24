@@ -1,0 +1,53 @@
+{
+  "$ref": "#/definitions/connector",
+  "definitions": {
+    "connector": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["BUILTIN", "PLUGIN"]
+        },
+        "entrypoint": {
+          "type": "string"
+        },
+        "manifestHash": {
+          "type": "string"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "paramsSchema": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "policyLabels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "name", "version", "kind", "entrypoint", "permissions", "createdAt"],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

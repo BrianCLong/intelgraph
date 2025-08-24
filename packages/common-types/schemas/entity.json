@@ -1,0 +1,54 @@
+{
+  "$ref": "#/definitions/entity",
+  "definitions": {
+    "entity": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["Person", "Org", "Location", "Event", "Document", "Indicator", "Case", "Claim"]
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "observedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "tenantId": {
+          "type": "string"
+        },
+        "policyLabels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "provenance": {
+          "type": "object",
+          "properties": {
+            "chain": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": ["chain"],
+          "additionalProperties": false,
+          "default": {
+            "chain": []
+          }
+        }
+      },
+      "required": ["id", "kind", "payload", "observedAt", "tenantId"],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}
