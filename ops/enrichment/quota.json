@@ -1,0 +1,7 @@
+{
+  "osint": { "capacity": 5, "refillPerSecond": 1 },
+  "whois": { "capacity": 5, "refillPerSecond": 1 },
+  "dns": { "capacity": 5, "refillPerSecond": 1 },
+  "vt": { "capacity": 5, "refillPerSecond": 1 },
+  "shodan": { "capacity": 5, "refillPerSecond": 1 }
+}

@@ -1,0 +1,7 @@
+{
+  "osint": { "failureThreshold": 5, "resetTimeoutMs": 60000 },
+  "whois": { "failureThreshold": 5, "resetTimeoutMs": 60000 },
+  "dns": { "failureThreshold": 5, "resetTimeoutMs": 60000 },
+  "vt": { "failureThreshold": 5, "resetTimeoutMs": 60000 },
+  "shodan": { "failureThreshold": 5, "resetTimeoutMs": 60000 }
+}
