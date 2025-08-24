@@ -1,0 +1,14 @@
+{
+  "name": "claim-verifier",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "claim-verifier": "cli.js"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  }
+}
