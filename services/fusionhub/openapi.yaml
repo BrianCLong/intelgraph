@@ -1,0 +1,58 @@
+openapi: 3.1.0
+info:
+  title: Elite Counterforce – FusionHub
+  version: 0.1.0
+paths:
+  /score:
+    post:
+      summary: Score content for narrative/cyber risk indicators (defense-only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScoreRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScoreResponse'
+components:
+  schemas:
+    ScoreRequest:
+      type: object
+      properties:
+        text:
+          type: string
+        context:
+          type: object
+        source_meta:
+          type: object
+        org_profile:
+          type: object
+          properties:
+            pack_id:
+              type: string
+              example: 'pla'
+            role:
+              type: string
+              enum: ['adversary', 'partner']
+          required: [pack_id, role]
+      required: [text]
+    ScoreResponse:
+      type: object
+      properties:
+        risk_score:
+          type: number
+        signals:
+          type: array
+          items:
+            type: string
+        provenance:
+          type: array
+          items:
+            type: string
+        trace_id:
+          type: string
