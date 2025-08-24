@@ -1,0 +1,15 @@
+rules:
+  - id: req-name
+    field: name
+    type: required
+  - id: age-range
+    field: age
+    type: range
+    params:
+      min: 0
+      max: 120
+  - id: email-format
+    field: email
+    type: regex
+    params:
+      pattern: "^[^@\s]+@[^@\s]+$"

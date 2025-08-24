@@ -160,6 +160,7 @@
   "private": true,
   "workspaces": [
     "packages/*",
+    "packages/sdk/*",
     "client",
     "server"
   ]
