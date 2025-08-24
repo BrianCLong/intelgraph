@@ -1,0 +1,50 @@
+find Person where name is Alice	{"type": "find", "label": "Person", "filter": {"property": "name", "value": "Alice"}}	MATCH (n:Person {name: 'Alice'}) RETURN n
+find Person where name is Bob	{"type": "find", "label": "Person", "filter": {"property": "name", "value": "Bob"}}	MATCH (n:Person {name: 'Bob'}) RETURN n
+find Person where name is Carol	{"type": "find", "label": "Person", "filter": {"property": "name", "value": "Carol"}}	MATCH (n:Person {name: 'Carol'}) RETURN n
+find Person where name is Dave	{"type": "find", "label": "Person", "filter": {"property": "name", "value": "Dave"}}	MATCH (n:Person {name: 'Dave'}) RETURN n
+find Person where name is Eve	{"type": "find", "label": "Person", "filter": {"property": "name", "value": "Eve"}}	MATCH (n:Person {name: 'Eve'}) RETURN n
+find Person where name is Frank	{"type": "find", "label": "Person", "filter": {"property": "name", "value": "Frank"}}	MATCH (n:Person {name: 'Frank'}) RETURN n
+find Person where name is Grace	{"type": "find", "label": "Person", "filter": {"property": "name", "value": "Grace"}}	MATCH (n:Person {name: 'Grace'}) RETURN n
+find Person where name is Heidi	{"type": "find", "label": "Person", "filter": {"property": "name", "value": "Heidi"}}	MATCH (n:Person {name: 'Heidi'}) RETURN n
+find Person where name is Ivan	{"type": "find", "label": "Person", "filter": {"property": "name", "value": "Ivan"}}	MATCH (n:Person {name: 'Ivan'}) RETURN n
+find Person where name is Judy	{"type": "find", "label": "Person", "filter": {"property": "name", "value": "Judy"}}	MATCH (n:Person {name: 'Judy'}) RETURN n
+find Person where name is Karl	{"type": "find", "label": "Person", "filter": {"property": "name", "value": "Karl"}}	MATCH (n:Person {name: 'Karl'}) RETURN n
+find Person where name is Liam	{"type": "find", "label": "Person", "filter": {"property": "name", "value": "Liam"}}	MATCH (n:Person {name: 'Liam'}) RETURN n
+find Person where name is Mallory	{"type": "find", "label": "Person", "filter": {"property": "name", "value": "Mallory"}}	MATCH (n:Person {name: 'Mallory'}) RETURN n
+find Person where name is Neil	{"type": "find", "label": "Person", "filter": {"property": "name", "value": "Neil"}}	MATCH (n:Person {name: 'Neil'}) RETURN n
+find Person where name is Olivia	{"type": "find", "label": "Person", "filter": {"property": "name", "value": "Olivia"}}	MATCH (n:Person {name: 'Olivia'}) RETURN n
+find Person where name is Peggy	{"type": "find", "label": "Person", "filter": {"property": "name", "value": "Peggy"}}	MATCH (n:Person {name: 'Peggy'}) RETURN n
+find Person where name is Quentin	{"type": "find", "label": "Person", "filter": {"property": "name", "value": "Quentin"}}	MATCH (n:Person {name: 'Quentin'}) RETURN n
+find Person where name is Ruth	{"type": "find", "label": "Person", "filter": {"property": "name", "value": "Ruth"}}	MATCH (n:Person {name: 'Ruth'}) RETURN n
+find Person where name is Sybil	{"type": "find", "label": "Person", "filter": {"property": "name", "value": "Sybil"}}	MATCH (n:Person {name: 'Sybil'}) RETURN n
+find Person where name is Trent	{"type": "find", "label": "Person", "filter": {"property": "name", "value": "Trent"}}	MATCH (n:Person {name: 'Trent'}) RETURN n
+find Person where name is Uma	{"type": "find", "label": "Person", "filter": {"property": "name", "value": "Uma"}}	MATCH (n:Person {name: 'Uma'}) RETURN n
+find Person where name is Victor	{"type": "find", "label": "Person", "filter": {"property": "name", "value": "Victor"}}	MATCH (n:Person {name: 'Victor'}) RETURN n
+find Person where name is Walter	{"type": "find", "label": "Person", "filter": {"property": "name", "value": "Walter"}}	MATCH (n:Person {name: 'Walter'}) RETURN n
+find Person where name is Xavier	{"type": "find", "label": "Person", "filter": {"property": "name", "value": "Xavier"}}	MATCH (n:Person {name: 'Xavier'}) RETURN n
+find Person where name is Yvonne	{"type": "find", "label": "Person", "filter": {"property": "name", "value": "Yvonne"}}	MATCH (n:Person {name: 'Yvonne'}) RETURN n
+count Person	{"type": "count", "label": "Person"}	MATCH (n:Person) RETURN count(n) AS count
+count City	{"type": "count", "label": "City"}	MATCH (n:City) RETURN count(n) AS count
+count Movie	{"type": "count", "label": "Movie"}	MATCH (n:Movie) RETURN count(n) AS count
+count Book	{"type": "count", "label": "Book"}	MATCH (n:Book) RETURN count(n) AS count
+count Company	{"type": "count", "label": "Company"}	MATCH (n:Company) RETURN count(n) AS count
+count Event	{"type": "count", "label": "Event"}	MATCH (n:Event) RETURN count(n) AS count
+count Location	{"type": "count", "label": "Location"}	MATCH (n:Location) RETURN count(n) AS count
+count Organization	{"type": "count", "label": "Organization"}	MATCH (n:Organization) RETURN count(n) AS count
+count Product	{"type": "count", "label": "Product"}	MATCH (n:Product) RETURN count(n) AS count
+count Vehicle	{"type": "count", "label": "Vehicle"}	MATCH (n:Vehicle) RETURN count(n) AS count
+count Country	{"type": "count", "label": "Country"}	MATCH (n:Country) RETURN count(n) AS count
+count State	{"type": "count", "label": "State"}	MATCH (n:State) RETURN count(n) AS count
+count Agency	{"type": "count", "label": "Agency"}	MATCH (n:Agency) RETURN count(n) AS count
+count Incident	{"type": "count", "label": "Incident"}	MATCH (n:Incident) RETURN count(n) AS count
+count Operation	{"type": "count", "label": "Operation"}	MATCH (n:Operation) RETURN count(n) AS count
+count Network	{"type": "count", "label": "Network"}	MATCH (n:Network) RETURN count(n) AS count
+count System	{"type": "count", "label": "System"}	MATCH (n:System) RETURN count(n) AS count
+count Asset	{"type": "count", "label": "Asset"}	MATCH (n:Asset) RETURN count(n) AS count
+count Node	{"type": "count", "label": "Node"}	MATCH (n:Node) RETURN count(n) AS count
+count Alert	{"type": "count", "label": "Alert"}	MATCH (n:Alert) RETURN count(n) AS count
+count Account	{"type": "count", "label": "Account"}	MATCH (n:Account) RETURN count(n) AS count
+count Transaction	{"type": "count", "label": "Transaction"}	MATCH (n:Transaction) RETURN count(n) AS count
+count Session	{"type": "count", "label": "Session"}	MATCH (n:Session) RETURN count(n) AS count
+count Message	{"type": "count", "label": "Message"}	MATCH (n:Message) RETURN count(n) AS count
+count Threat	{"type": "count", "label": "Threat"}	MATCH (n:Threat) RETURN count(n) AS count

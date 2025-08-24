@@ -5,6 +5,9 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
+# Lockfiles
+package-lock.json
+
 # Runtime data
 pids
 *.pid
@@ -122,6 +125,9 @@ conflicts/
 *.egg-info/
 __pycache__/
 *.pyc
+
+# Python dependency lockfiles
+cognitive_insights_engine/poetry.lock
 
 .aider*
 .env
