@@ -901,3 +901,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **IntelGraph Platform** - Next-Generation Intelligence Analysis
+
+## GA-DocsNLP Vertical Slice
+
+A minimal pipeline for document upload, entity extraction, search, redaction and packaging lives under `packages/`.  Run tests with `pytest packages/docsnlp` and `npm test --prefix packages/gateway`.
+

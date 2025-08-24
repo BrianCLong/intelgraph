@@ -1,0 +1,12 @@
+version: '3'
+services:
+  docsnlp:
+    build: ../packages/docsnlp
+    ports:
+      - '8000:8000'
+  gateway:
+    build: ../packages/gateway
+    environment:
+      DOCSNLP_URL: http://docsnlp:8000
+    ports:
+      - '4000:4000'

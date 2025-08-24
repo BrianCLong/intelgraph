@@ -1,0 +1,12 @@
+[project]
+name = "docsnlp"
+version = "0.1.0"
+dependencies = [
+  "fastapi>=0.109",
+  "uvicorn>=0.24",
+  "python-multipart>=0.0.6"
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
