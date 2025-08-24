@@ -1,0 +1,55 @@
+name: Batch Merge PRs
+
+on:
+  workflow_dispatch:
+    inputs:
+      integration_branch:
+        description: 'The branch to merge PRs into'
+        required: true
+        default: 'integration/batch'
+      label_name:
+        description: 'The label to look for on PRs'
+        required: true
+        default: 'batch-merge'
+
+jobs:
+  batch-merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
+        with:
+          ref: ${{ github.event.inputs.integration_branch }}
+
+      - name: Get PRs with label
+        id: get_prs
+        uses: actions/github-script@60a0d83 # v6
+        with:
+          script: |
+            const result = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['${{ github.event.inputs.label_name }}']
+            });
+            const prs = result.data.filter(issue => issue.pull_request);
+            return prs.map(pr => pr.number);
+
+      - name: Merge PRs
+        uses: actions/github-script@60a0d83 # v6
+        with:
+          script: |
+            const prs = ${{ steps.get_prs.outputs.result }};
+            for (const prNumber of prs) {
+              try {
+                await github.rest.pulls.merge({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: prNumber,
+                  merge_method: 'squash'
+                });
+                console.log(`Successfully merged PR #${prNumber}`);
+              } catch (error) {
+                console.log(`Failed to merge PR #${prNumber}: ${error.message}`);
+              }
+            }

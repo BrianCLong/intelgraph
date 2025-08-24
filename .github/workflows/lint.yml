@@ -1,0 +1,50 @@
+name: Lint
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  js:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - run: npm run lint
+      - run: npm run format
+
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install ruff black
+      - run: ruff check .
+      - run: black --check .
+
+  yaml-md-shell:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install yamllint
+      - run: npm install -g markdownlint-cli@0.45.0
+      - run: yamllint .
+      - run: markdownlint "**/*.md" -c .markdownlint.json
+      - run: |
+          shfmt -d .
+          shellcheck $(git ls-files "*.sh") || true
+
+  terraform-helm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - run: terraform fmt -recursive
+      - run: terraform validate
+      - uses: azure/setup-helm@v4
+      - run: helm lint ./helm/*

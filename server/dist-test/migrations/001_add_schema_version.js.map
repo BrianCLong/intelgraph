@@ -1,0 +1,1 @@
+{"version":3,"file":"001_add_schema_version.js","sourceRoot":"","sources":["../../src/migrations/001_add_schema_version.ts"],"names":[],"mappings":";;AAAA,gBAIC;AACD,oBAEC;AAPM,KAAK,UAAU,EAAE,CAAC,EAAO;IAC9B,MAAM,EAAE,CAAC,KAAK,CACZ,sEAAsE,CACvE,CAAC;AACJ,CAAC;AACM,KAAK,UAAU,IAAI,CAAC,EAAO;IAChC,MAAM,EAAE,CAAC,KAAK,CAAC,qCAAqC,CAAC,CAAC;AACxD,CAAC"}

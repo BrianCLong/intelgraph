@@ -1,0 +1,161 @@
+# Entity Resolution GraphQL Schema Extensions
+# Critical Path: ER explainability and precision improvements for GA Core
+
+type MergeDecision {
+  id: ID!
+  leftId: ID!
+  rightId: ID! 
+  overallScore: Float!
+  featureScores: JSON!   # { nameSimilarity:0.91, emailExact:1.0, geoProx:0.4, phoneticMatch:0.85, ... }
+  modelVersion: String!
+  algorithm: String!     # "deterministic" | "probabilistic" | "hybrid"
+  createdAt: DateTime!
+  decidedBy: ID         # User who made manual decision
+  decision: String      # "merge" | "reject" | "defer" 
+  decisionReason: String
+  confidence: Float!    # Model confidence in recommendation
+  threshold: Float!     # Decision threshold used
+  entityType: String!   # "PERSON" | "ORGANIZATION" | "ASSET" etc.
+  
+  # Explainability fields
+  explanation: JSON!    # Structured explanation of decision factors
+  humanOverride: Boolean! # Was this decision overridden by human?
+  overrideReason: String
+  
+  # Audit trail
+  reviewedBy: [ID!]     # Users who reviewed this decision
+  reviewedAt: [DateTime!]
+  auditTrail: [MergeAuditEntry!]!
+}
+
+type MergeAuditEntry {
+  id: ID!
+  action: String!       # "created" | "reviewed" | "decided" | "overridden"
+  userId: ID!
+  timestamp: DateTime!
+  reason: String
+  previousState: JSON
+  newState: JSON
+}
+
+type EntityResolutionStats {
+  totalDecisions: Int!
+  pendingReview: Int!
+  automaticMerges: Int!
+  humanOverrides: Int!
+  precisionByType: JSON! # { "PERSON": 0.923, "ORGANIZATION": 0.887, ... }
+  recallByType: JSON!
+  f1ScoreByType: JSON!
+  averageConfidence: Float!
+  modelVersion: String!
+  lastTrainingDate: DateTime
+}
+
+type ReconcileQueueItem {
+  mergeDecision: MergeDecision!
+  leftEntity: Entity!
+  rightEntity: Entity!
+  priority: Float!      # Higher = more urgent
+  similarCases: [MergeDecision!]! # Help human decide
+  recommendedAction: String! # "merge" | "reject" | "defer"
+}
+
+# Extend existing types
+extend type Query {
+  pendingMergeDecisions(
+    limit: Int = 50
+    entityType: String
+    minScore: Float
+    maxScore: Float
+    sortBy: String = "createdAt"
+    sortOrder: String = "DESC"
+  ): [MergeDecision!]!
+  
+  mergeDecision(id: ID!): MergeDecision
+  
+  entityResolutionStats(
+    entityType: String
+    timeRange: String = "7d"
+  ): EntityResolutionStats!
+  
+  reconcileQueue(
+    limit: Int = 20
+    entityType: String
+    priorityThreshold: Float = 0.5
+  ): [ReconcileQueueItem!]!
+  
+  # For explainability - show decisions for specific entity
+  entityMergeHistory(entityId: ID!): [MergeDecision!]!
+}
+
+extend type Mutation {
+  decideMerge(
+    id: ID!
+    decision: String!     # "merge" | "reject" | "defer"
+    reason: String!
+    confidence: Float    # Human confidence override
+  ): MergeDecision!
+  
+  # Batch operations for efficiency
+  decideMergeBatch(
+    decisions: [MergeDecisionInput!]!
+  ): [MergeDecision!]!
+  
+  # Manual merge trigger
+  triggerEntityResolution(
+    entityIds: [ID!]
+    algorithm: String = "hybrid"
+    threshold: Float
+  ): [MergeDecision!]!
+  
+  # Model retraining trigger
+  triggerERModelTraining(
+    includeRecentDecisions: Boolean = true
+    validationSplit: Float = 0.2
+  ): ERTrainingJob!
+}
+
+input MergeDecisionInput {
+  id: ID!
+  decision: String!
+  reason: String!
+  confidence: Float
+}
+
+type ERTrainingJob {
+  id: ID!
+  status: String!       # "pending" | "running" | "completed" | "failed"
+  progress: Float!      # 0.0 to 1.0
+  trainingDataSize: Int
+  validationDataSize: Int
+  currentMetrics: JSON  # Real-time metrics during training
+  estimatedCompletion: DateTime
+  createdBy: ID!
+  createdAt: DateTime!
+}
+
+# For active learning loop
+type UncertainMergeCandidate {
+  leftEntity: Entity!
+  rightEntity: Entity!
+  uncertaintyScore: Float! # Higher = more uncertain, needs human review
+  featureScores: JSON!
+  modelPrediction: String! # "merge" | "reject"
+  confidence: Float!
+  priority: Float!        # For queue ranking
+}
+
+extend type Query {
+  uncertainMergeCandidates(
+    limit: Int = 10
+    entityType: String
+    minUncertainty: Float = 0.3
+  ): [UncertainMergeCandidate!]!
+}
+
+# Subscription for real-time updates
+extend type Subscription {
+  mergeDecisionUpdated(entityType: String): MergeDecision!
+  erStatsUpdated: EntityResolutionStats!
+  reconcileQueueUpdated(entityType: String): ReconcileQueueItem!
+}

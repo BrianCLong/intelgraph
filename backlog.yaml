@@ -1,0 +1,60 @@
+backlog:
+  - epic: Collaboration (E)
+    stories:
+      - story: Case spaces with immutable audit + SLA timers
+        priority: P0 - Must
+        sprint: Sprint 1
+      - story: Comment threads bound to graph nodes
+        priority: P0 - Must
+        sprint: Sprint 1
+      - story: Live co-editing of link charts
+        priority: P1 - Love
+        sprint: Sprint 2
+      - story: '@Mentions with inline entity previews'
+        priority: P1 - Love
+        sprint: Sprint 2
+
+  - epic: Integrations (G)
+    stories:
+      - story: STIX/TAXII + MISP bi-directional connectors
+        priority: P0 - Must
+        sprint: Sprint 1
+      - story: Slack/Teams + Jira/ServiceNow integration
+        priority: P0 - Must
+        sprint: Sprint 1
+      - story: Push graph updates into chat with visual snippets
+        priority: P1 - Love
+        sprint: Sprint 2
+      - story: Magic paste (auto-entity creation from raw text/CSV/URL)
+        priority: P2 - Delight
+        sprint: Sprint 3
+
+  - epic: Ops & Reliability (H)
+    stories:
+      - story: Metrics/Prometheus + DR/BCP baseline
+        priority: P0 - Must
+        sprint: Sprint 1
+      - story: Smart query budgeter with optimization hints
+        priority: P1 - Love
+        sprint: Sprint 2
+      - story: Predictive latency heatmaps
+        priority: P2 - Fearsome Delight
+        sprint: Sprint 3
+
+  - epic: Frontend Experience (I)
+    stories:
+      - story: Tri-pane Timeline + Map + Graph view
+        priority: P0 - Must
+        sprint: Sprint 1
+      - story: Undo/Redo + Explain-this-view panel
+        priority: P0 - Must
+        sprint: Sprint 1
+      - story: Drag-and-drop narrative builder
+        priority: P1 - Love
+        sprint: Sprint 2
+      - story: Beautiful graph expansion animations
+        priority: P2 - Delight
+        sprint: Sprint 3
+      - story: UI clutter dimming for focus (cognitive load guardrails)
+        priority: P2 - Fearsome Delight
+        sprint: Sprint 3

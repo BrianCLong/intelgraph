@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from functools import wraps
+from contextlib import asynccontextmanager
 
 from prometheus_client import Counter, Histogram
 
@@ -11,17 +11,12 @@ cf_search_ms = Histogram("cf_search_ms", "Counterfactual search latency")
 robustness_samples_total = Counter("robustness_samples_total", "Robustness samples")
 
 
-def track(route: str):
-    def decorator(func):
-        @wraps(func)
-        async def wrapper(*args, **kwargs):
-            requests_total.labels(route).inc()
-            start = time.time()
-            try:
-                return await func(*args, **kwargs)
-            finally:
-                latency_ms.labels(route).observe((time.time() - start) * 1000)
+@asynccontextmanager
+async def track(route: str):
+    requests_total.labels(route).inc()
+    start = time.time()
+    try:
+        yield
+    finally:
+        latency_ms.labels(route).observe((time.time() - start) * 1000)
 
-        return wrapper
-
-    return decorator

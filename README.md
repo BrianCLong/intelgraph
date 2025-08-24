@@ -4,8 +4,8 @@
 
 ## 🛠 Developer Onboarding (Deployable-First)
 
-IntelGraph follows a **deployable-first mantra**:  
-🚨 If `make up` or `make smoke` fails, **stop everything and fix it**.  
+IntelGraph follows a **deployable-first mantra**:
+🚨 If `make up` or `make smoke` fails, **stop everything and fix it**.
 No code merges that break the golden path workflow:
 
 **Investigation → Entities → Relationships → Copilot → Results**
@@ -20,9 +20,9 @@ make up        # Core services only (minimal hardware)
 make smoke
 ```
 
-* Client: [http://localhost:3000](http://localhost:3000)
-* GraphQL: [http://localhost:4000/graphql](http://localhost:4000/graphql)
-* Neo4j Browser: [http://localhost:7474](http://localhost:7474) (neo4j / devpassword)
+- Client: [http://localhost:3000](http://localhost:3000)
+- GraphQL: [http://localhost:4000/graphql](http://localhost:4000/graphql)
+- Neo4j Browser: [http://localhost:7474](http://localhost:7474) (neo4j / devpassword)
 
 ### Optional AI/Kafka Services
 
@@ -43,6 +43,7 @@ Historical plans and reports are kept in [docs/archive](docs/archive/README.md).
 
 ---
 
+[![CI Status](https://github.com/BrianCLong/intelgraph/actions/workflows/ci.yml/badge.svg)](https://github.com/BrianCLong/intelgraph/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com)
 [![Node.js](https://img.shields.io/badge/Node.js-20+-brightgreen.svg)](https://nodejs.org)
@@ -50,6 +51,14 @@ Historical plans and reports are kept in [docs/archive](docs/archive/README.md).
 [![GraphQL](https://img.shields.io/badge/GraphQL-API-E10098.svg)](https://graphql.org)
 
 **Production-Ready MVP** • AI-augmented intelligence analysis platform combining graph analytics, real-time collaboration, and enterprise security. Built for the intelligence community with deployability-first principles.
+
+### Latest GA Release (v3.0.0‑GA)
+
+- Release Notes: `docs/releases/phase-3-ga/release-notes-v3.0.0-ga.md`
+- Status Page Announcement: `docs/releases/phase-3-ga/status-page-announcement.md`
+- GO‑LIVE NOW Runbook: `docs/runbooks/go-live-now-v3.0.0-ga.md`
+- Evidence Pack Index: `docs/releases/phase-3-ga/README.md`
+- Generated Overview: `docs/generated/RELEASE_V3_0_0_GA.md`
 
 ## 🚀 Quick Start (< 60 Seconds)
 
@@ -85,6 +94,13 @@ cd intelgraph
 5. **View Results**: Explore generated insights and recommendations
 
 ## 📋 Table of Contents
+
+- [Onboarding](docs/ONBOARDING.md)
+- [Golden Path](docs/GOLDEN_PATH.md)
+- [Environment Variables](docs/ENV_VARS.md)
+- [Runbooks](docs/RUNBOOKS.md)
+- [GA Criteria](docs/GA_CRITERIA.md)
+- [Troubleshooting](docs/TROUBLESHOOTING.md)
 
 - [Features](#-features)
 - [Architecture](#-architecture)
@@ -449,7 +465,7 @@ make bootstrap && make up
 # With AI capabilities
 make up-ai
 
-# With Kafka streaming  
+# With Kafka streaming
 make up-kafka
 
 # Full deployment (AI + Kafka)

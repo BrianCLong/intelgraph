@@ -1,0 +1,29 @@
+{{- $service := .Values.services.apiGateway -}}
+{{- if $service.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $service.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "intelgraph.serviceLabels" (dict "serviceName" $service.name "root" .) | nindent 4 }}
+  {{- if .Values.global.prometheus.scrape }}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "{{ .Values.global.prometheus.port }}"
+    prometheus.io/path: "{{ .Values.global.prometheus.path }}"
+  {{- end }}
+spec:
+  type: {{ $service.service.type }}
+  selector:
+    {{- include "intelgraph.serviceSelectorLabels" (dict "serviceName" $service.name "root" .) | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ $service.service.port }}
+      targetPort: {{ $service.service.targetPort }}
+      protocol: TCP
+    - name: metrics
+      port: {{ .Values.global.prometheus.port }}
+      targetPort: {{ .Values.global.prometheus.port }}
+      protocol: TCP
+{{- end }}

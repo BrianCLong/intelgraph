@@ -1,0 +1,9 @@
+{
+  "testEnvironment": "jsdom",
+  "setupFilesAfterEnv": ["<rootDir>/jest.setup.ts"],
+  "testPathIgnorePatterns": ["/e2e/", "/__heavy__/", "/node_modules/", "/dist/"],
+  "testRegex": "(/__tests__/.*\\.(test|spec)\\.(t|j)sx?)$",
+  "reporters": ["default", ["jest-junit", { "outputName": "junit.xml" }]],
+  "maxWorkers": "50%",
+  "verbose": false
+}

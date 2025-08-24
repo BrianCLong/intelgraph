@@ -1,0 +1,28 @@
+name: Docs Only Lint
+
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'README.md'
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'README.md'
+
+jobs:
+  markdownlint:
+    name: markdownlint (docs/ + README)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
+      - name: Use Node 18
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4
+        with:
+          node-version: 18
+      - name: Install markdownlint-cli
+        run: npm i -g markdownlint-cli@0.45.0
+      - name: Lint docs and README
+        run: |
+          markdownlint "docs/**/*.md" README.md -c .markdownlint.jsonc || markdownlint "docs/**/*.md" README.md -c .markdownlint.json || markdownlint "docs/**/*.md" README.md

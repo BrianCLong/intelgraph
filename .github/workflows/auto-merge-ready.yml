@@ -14,9 +14,9 @@ jobs:
       contains(github.event.pull_request.labels.*.name, 'ready-to-merge') &&
       github.event.pull_request.draft == false
     steps:
-      - uses: peter-evans/enable-pull-request-automerge@v3
+      - uses: peter-evans/enable-pull-request-automerge@a2144309020110500360b140664d10a712086058 # v3
         with:
-          token: "${{ secrets.GITHUB_TOKEN }}"
+          token: '${{ secrets.GITHUB_TOKEN }}'
           pull-request-number: ${{ github.event.pull_request.number }}
           merge-method: squash
           required-statuses: |

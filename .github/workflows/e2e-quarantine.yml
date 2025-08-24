@@ -1,0 +1,38 @@
+name: e2e-quarantine
+on:
+  workflow_run:
+    workflows: ['ci:smoke']
+    types: [completed]
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  quarantine:
+    if: ${{ always() }} # run regardless of pass/fail; we want data
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Playwright report artifact
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: ci:smoke
+          name: playwright-report
+          name_is_regexp: false
+          path: playwright-report
+          if_no_artifact_found: ignore
+      - name: Ensure file exists
+        run: |
+          mkdir -p .ci
+          [ -f .ci/flaky-tests.json ] || echo "[]" > .ci/flaky-tests.json
+      - name: Run flake-manager
+        run: node scripts/ci/flake-manager.js || true
+      - name: Create PR with updated flaky list
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: ci/flake-quarantine
+          commit-message: 'ci: update flaky tests quarantine'
+          title: 'ci: update flaky tests quarantine'
+          body: 'Automated update from e2e-quarantine workflow.'
+          add-paths: |
+            .ci/flaky-tests.json
+            .ci/flaky-db.json

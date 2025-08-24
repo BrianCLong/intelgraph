@@ -9,7 +9,7 @@ on:
       - main
 
 env:
-  PYTHON_VERSION: "3.11"
+  PYTHON_VERSION: '3.11'
   # Docker image details
   IMAGE_NAME: intelgraph-psyops-orchestrator
   REGISTRY: ghcr.io/${{ github.repository_owner }}
@@ -19,10 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@824a62378795d7a63864050674956c050c8c0868 # v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -56,10 +56,10 @@ jobs:
     environment: production # Or staging, based on your setup
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@c9ef52556095b32f140b0c7d74474f53696d9000 # v4
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c # v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -76,7 +76,7 @@ jobs:
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
       - name: Deploy to Kubernetes (Placeholder)
-        uses: azure/k8s-set-context@v3 # Example for Azure, replace with your cloud provider's action
+        uses: azure/k8s-set-context@a8293405358683a03b7f843855a6ab12cf159a6a # v3
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets.KUBE_CONFIG }}

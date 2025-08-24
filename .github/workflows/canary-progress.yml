@@ -17,10 +17,10 @@ jobs:
     environment: ${{ github.event.inputs.env }}
     steps:
       - name: Setup kubectl
-        uses: azure/setup-kubectl@v4
+        uses: azure/setup-kubectl@a8293405358683a03b7f843855a6ab12cf159a6a # v4
         with: { version: 'v1.30.0' }
       - name: Auth to cluster
-        uses: azure/k8s-set-context@v4
+        uses: azure/k8s-set-context@a8293405358683a03b7f843855a6ab12cf159a6a # v4
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets.KUBE_CONFIG }}

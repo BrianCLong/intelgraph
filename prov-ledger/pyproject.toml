@@ -13,3 +13,6 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["pytest", "httpx"]
+
+[project.scripts]
+ig-prov-verify = "app.cli:main"

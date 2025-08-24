@@ -10,23 +10,23 @@ import { defineConfig, devices } from '@playwright/test';
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  testDir: './tests/e2e', // Assuming E2E tests are in client/tests/e2e
+  testDir: './tests',
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Enhanced retry strategy for stability */
-  retries: process.env.CI ? 3 : 1,
+  retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI for stability */
   workers: process.env.CI ? 1 : undefined,
   /* Enhanced reporting */
   reporter: [
-    ['html'],
+    ['list'],
+    ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['junit', { outputFile: 'junit.xml' }],
-    ['json', { outputFile: 'test-results.json' }]
   ],
   /* Timeout settings for stability */
-  timeout: 60000, // 60 seconds for individual tests
+  timeout: 30000, // 30 seconds for individual tests (faster for smoke)
   expect: {
     timeout: 10000, // 10 seconds for assertions
   },
@@ -36,18 +36,19 @@ export default defineConfig({
     baseURL: 'http://localhost:3000',
 
     /* Enhanced stability settings */
+    headless: true,
     actionTimeout: 15000, // 15 seconds for actions
     navigationTimeout: 30000, // 30 seconds for navigation
-    
+
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
-    
+
     /* Network stability */
     launchOptions: {
-      slowMo: process.env.CI ? 100 : 0, // Slow down interactions in CI
-    }
+      slowMo: process.env.CI ? 50 : 0, // Slow down interactions in CI
+    },
   },
 
   /* Configure projects for major browsers */

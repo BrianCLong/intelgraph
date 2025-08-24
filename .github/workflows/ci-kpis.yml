@@ -1,0 +1,59 @@
+name: CI KPIs Snapshot
+on:
+  schedule: [{ cron: '17 * * * *' }] # hourly
+  workflow_dispatch:
+jobs:
+  kpis:
+    runs-on: ubuntu-latest
+    permissions: { issues: write, contents: read }
+    outputs:
+      smoke_success_pct: ${{ steps.metrics.outputs.smoke_success_pct }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Calculate CI metrics
+        id: metrics
+        run: |
+          # Get ci:smoke success rate
+          SMOKE_RATE=$(gh run list -R "BrianCLong/intelgraph" --workflow "ci:smoke" -L 20 --json conclusion | \
+            jq '[.[].conclusion=="success"] | (add/length*100)')
+          echo "smoke_success_pct=$SMOKE_RATE" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const owner="BrianCLong", repo="intelgraph";
+            const prs = await github.paginate(github.rest.pulls.list, { owner, repo, state: "open", per_page: 100 });
+            const since = new Date(Date.now()-3600*1000);
+            const runs = await github.paginate(github.rest.actions.listWorkflowRunsForRepo, { owner, repo, per_page: 100 });
+            const recent = runs.filter(r => new Date(r.created_at) > since);
+            const ok = recent.filter(r => r.conclusion==="success").length;
+            const fail = recent.filter(r => r.conclusion==="failure").length;
+            const q = prs.filter(p=>new Date(p.updated_at)>since).length;
+            const smokeRate = "${{ steps.metrics.outputs.smoke_success_pct }}";
+            const body = [
+              `**CI KPIs (last hour)**`,
+              `- Runs: ${recent.length} (✅ ${ok} / ❌ ${fail})`,
+              `- ci:smoke success rate: ${smokeRate}%`,
+              `- Open PRs touched: ${q}`,
+              `- Queue velocity target: 5–10 PRs/day`,
+              `- Updated: ${new Date().toISOString()}`
+            ].join("\n");
+            const issue = 762; // stabilization keystone issue
+            await github.rest.issues.createComment({ owner, repo, issue_number: issue, body });
+
+  merge-freeze-guard:
+    needs: kpis
+    if: ${{ needs.kpis.outputs.smoke_success_pct < 50 }}
+    runs-on: ubuntu-latest
+    permissions: { issues: write, pull-requests: write, contents: read }
+    steps:
+      - name: Apply merge freeze for low pass rate
+        run: |
+          echo "🚨 Pass rate low (< 50%) → applying merge-freeze"
+          for PR_NUM in $(gh pr list -R "BrianCLong/intelgraph" --state open --json number -q '.[].number'); do
+            echo "Freezing PR #$PR_NUM"
+            gh pr edit -R "BrianCLong/intelgraph" "$PR_NUM" --add-label merge-freeze || true
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

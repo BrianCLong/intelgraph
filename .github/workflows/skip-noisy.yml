@@ -1,0 +1,16 @@
+name: skip-noisy
+on:
+  schedule: [{ cron: '17 * * * *' }]
+  workflow_dispatch:
+permissions:
+  pull-requests: write
+  contents: read
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REPO: BrianCLong/intelgraph
+    steps:
+      - uses: actions/checkout@v4
+      - run: node scripts/ci/skip-noisy.js
