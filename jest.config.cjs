@@ -3,8 +3,8 @@ module.exports = {
   extensionsToTreatAsEsm: ['.ts'],
   globals: {
     'ts-jest': {
-      useESM: true
-    }
+      useESM: true,
+    },
   },
   testEnvironment: 'node',
   collectCoverageFrom: [
@@ -13,18 +13,13 @@ module.exports = {
     '!**/dist/**',
     '!**/build/**',
     '!**/*.config.{js,ts}',
-    '!**/coverage/**'
+    '!**/coverage/**',
   ],
-  testMatch: [
-    '**/__tests__/**/*.{ts,tsx,js,jsx}',
-    '**/?(*.)+(spec|test).{ts,tsx,js,jsx}'
-  ],
+  testMatch: ['**/__tests__/**/*.{ts,tsx,js,jsx}', '**/?(*.)+(spec|test).{ts,tsx,js,jsx}'],
   moduleNameMapping: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
-  transformIgnorePatterns: [
-    'node_modules/(?!(.*\\.mjs$))'
-  ],
+  transformIgnorePatterns: ['node_modules/(?!(.*\\.mjs$))'],
   projects: [
     {
       displayName: 'server',
@@ -33,15 +28,24 @@ module.exports = {
       extensionsToTreatAsEsm: ['.ts'],
       globals: {
         'ts-jest': {
-          useESM: true
-        }
-      }
+          useESM: true,
+        },
+      },
     },
     {
       displayName: 'client',
       testMatch: ['<rootDir>/client/**/*.{test,spec}.{js,jsx,ts,tsx}'],
       testEnvironment: 'jsdom',
-      setupFilesAfterEnv: ['<rootDir>/client/src/setupTests.js']
-    }
-  ]
+      setupFilesAfterEnv: ['<rootDir>/client/src/setupTests.js'],
+    },
+    {
+      displayName: 'detect',
+      testMatch: ['<rootDir>/services/detect/**/*.{test,spec}.{js,ts}'],
+      preset: 'ts-jest/presets/default-esm',
+      extensionsToTreatAsEsm: ['.ts'],
+      globals: {
+        'ts-jest': { useESM: true },
+      },
+    },
+  ],
 };
