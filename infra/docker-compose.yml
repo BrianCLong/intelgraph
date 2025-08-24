@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  platform:
+    build: ../packages/platform
+    ports:
+      - "8000:8000"
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8000
+  gateway:
+    build: ../packages/gateway
+    environment:
+      - PLATFORM_URL=http://platform:8000
+    ports:
+      - "4000:4000"
+    depends_on:
+      - platform

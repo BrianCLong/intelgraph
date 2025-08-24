@@ -1,0 +1,16 @@
+[project]
+name = "ga-platform"
+version = "0.1.0"
+description = "IntelGraph GA Platform service"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi",
+  "uvicorn",
+  "pydantic",
+  "passlib[argon2]",
+  "pyjwt",
+  "cryptography",
+]
+
+[tool.pytest.ini_options]
+addopts = "-q"

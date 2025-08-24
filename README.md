@@ -1,5 +1,12 @@
 # IntelGraph Platform
 
+## GA-Platform Quickstart
+
+```bash
+python -m packages.platform.src.main  # start FastAPI service
+node packages/gateway/src/index.ts    # start GraphQL gateway
+```
+
 ---
 
 ## 🛠 Developer Onboarding (Deployable-First)
