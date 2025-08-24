@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { waitFor } from './utils/wait';
 
 test.describe('WebSocket Persisted Queries Enforcement', () => {
   test('should block non-persisted queries over WebSocket in production mode', async ({ page }) => {
@@ -13,12 +14,12 @@ test.describe('WebSocket Persisted Queries Enforcement', () => {
     let connectionMessages: any[] = [];
 
     // Track WebSocket errors and messages
-    page.on('websocket', ws => {
-      ws.on('framereceived', event => {
+    page.on('websocket', (ws) => {
+      ws.on('framereceived', (event) => {
         try {
           const message = JSON.parse(event.payload.toString());
           connectionMessages.push(message);
-          
+
           // Check for error messages related to persisted queries
           if (message.type === 'error' && message.payload) {
             websocketErrors.push(message.payload);
@@ -31,7 +32,7 @@ test.describe('WebSocket Persisted Queries Enforcement', () => {
     });
 
     await page.goto('/graph/new-canvas');
-    await page.waitForTimeout(2000);
+    await waitFor(() => connectionMessages.length > 0);
 
     // First, verify that the schema supports subscriptions
     const schemaResponse = await page.request.post('http://localhost:4000/graphql', {
@@ -50,19 +51,19 @@ test.describe('WebSocket Persisted Queries Enforcement', () => {
               }
             }
           }
-        `
+        `,
       },
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
     });
 
     expect(schemaResponse.ok()).toBeTruthy();
     const schemaResult = await schemaResponse.json();
-    
+
     // Verify subscription types exist
     expect(schemaResult.data.__schema.subscriptionType).toBeTruthy();
     const subscriptionFields = schemaResult.data.__schema.subscriptionType.fields;
     const fieldNames = subscriptionFields.map((f: any) => f.name);
-    
+
     expect(fieldNames).toContain('entityUpdated');
     expect(fieldNames).toContain('entityCreated');
 
@@ -113,9 +114,9 @@ test.describe('WebSocket Persisted Queries Enforcement', () => {
     `;
 
     await page.evaluate(testScript);
-    
+
     // Wait for WebSocket operations to complete
-    await page.waitForTimeout(3000);
+    await waitFor(() => websocketErrors.length > 0 || connectionMessages.length > 0);
 
     // Check if we received any messages
     const wsMessages = await page.evaluate(() => window.wsMessages || []);
@@ -128,10 +129,10 @@ test.describe('WebSocket Persisted Queries Enforcement', () => {
     // In production mode, we should either:
     // 1. Receive an error message about non-persisted queries, OR
     // 2. Connection should be working (indicating we're in dev mode)
-    
+
     // For now, just verify that the WebSocket connection infrastructure is working
     // The actual blocking will depend on the production environment settings
-    
+
     expect(wsMessages.length).toBeGreaterThanOrEqual(0);
     console.log('✅ WebSocket persisted query enforcement test completed');
     console.log('📊 Messages received:', wsMessages.length);
@@ -140,9 +141,11 @@ test.describe('WebSocket Persisted Queries Enforcement', () => {
   test('should allow persisted subscriptions in all modes', async ({ page }) => {
     // Test that known, persisted subscription queries work
     let subscriptionMessages: any[] = [];
-    
-    page.on('websocket', ws => {
-      ws.on('framereceived', event => {
+    let websocketConnected = false;
+
+    page.on('websocket', (ws) => {
+      websocketConnected = true;
+      ws.on('framereceived', (event) => {
         try {
           const message = JSON.parse(event.payload.toString());
           if (message.type === 'data' && message.payload?.data) {
@@ -155,7 +158,7 @@ test.describe('WebSocket Persisted Queries Enforcement', () => {
     });
 
     await page.goto('/graph/new-canvas');
-    await page.waitForTimeout(3000);
+    await waitFor(() => websocketConnected);
 
     // Verify that the basic subscription schema is accessible
     const introspectionResult = await page.request.post('http://localhost:4000/graphql', {
@@ -169,20 +172,20 @@ test.describe('WebSocket Persisted Queries Enforcement', () => {
               }
             }
           }
-        `
+        `,
       },
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
     });
 
     expect(introspectionResult.ok()).toBeTruthy();
     const introspectionData = await introspectionResult.json();
-    
+
     expect(introspectionData.data.__type).toBeTruthy();
     expect(introspectionData.data.__type.fields).toBeTruthy();
-    
+
     const subscriptionFields = introspectionData.data.__type.fields.map((f: any) => f.name);
     expect(subscriptionFields).toContain('entityUpdated');
-    
+
     console.log('✅ Persisted subscription schema validated');
     console.log('📋 Available subscriptions:', subscriptionFields);
   });
