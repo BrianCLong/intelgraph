@@ -1,0 +1,23 @@
+gateway:
+  env:
+    ENFORCE_PERSISTED: 'true'
+    GQL_MAX_COST: '1000'
+  resources:
+    requests: { cpu: '500m', memory: '1Gi' }
+    limits: { cpu: '2', memory: '4Gi' }
+
+opa:
+  bundleUrl: s3://intelgraph-policies/bundles/prod.tar.gz
+  poll:
+    minDelaySeconds: 10
+    maxDelaySeconds: 60
+
+audit:
+  signing:
+    enabled: true
+    publicKeyHex: '<ed25519-hex>'
+
+traefik:
+  additionalArguments:
+    - '--serverstransport.insecureskipverify=false'
+    - '--accesslog=true'

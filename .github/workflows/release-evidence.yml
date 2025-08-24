@@ -1,0 +1,35 @@
+name: Verify Phase-3 Evidence & Policy
+on:
+  push: { tags: ['v3.*'] }
+  pull_request:
+    paths: ['docs/releases/phase-3-ga/**', 'policy/**', 'apps/gateway/**', 'deploy/**', 'tests/**']
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Evidence files exist
+        run: |
+          req=( README.md performance/slo-validation-report.md \
+                chaos-engineering/broker-kill-drill-report.md \
+                security-governance/abac-policy-enforcement-report.md \
+                disaster-recovery/signed-drill-report.md \
+                cost-governance/budget-enforcement-report.md )
+          cd docs/releases/phase-3-ga
+          for f in "${req[@]}"; do [ -f "$f" ] || { echo "Missing $f"; exit 1; }; done
+      - name: Verify checksums
+        run: cd docs/releases/phase-3-ga && sha256sum --check SHA256SUMS
+      - name: Verify GPG signature
+        run: cd docs/releases/phase-3-ga && gpg --verify SHA256SUMS.asc SHA256SUMS
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 18 }
+      - run: npm ci
+      - name: Jest (gateway)
+        run: npm run test --workspaces -- tests/gateway
+      - name: OPA tests
+        uses: open-policy-agent/setup-opa@v2
+      - run: opa test -v policy tests/opa

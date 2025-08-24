@@ -1,0 +1,20 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: gateway
+  namespace: intelgraph
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`intelgraph.example.com`) && PathPrefix(`/graphql`)
+      kind: Rule
+      services:
+        - name: gateway-green
+          port: 4000
+          weight: 100
+        - name: gateway-blue
+          port: 4000
+          weight: 0
+  tls:
+    certResolver: letsencrypt

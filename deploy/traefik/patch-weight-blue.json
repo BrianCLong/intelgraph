@@ -1,0 +1,4 @@
+[
+  { "op": "replace", "path": "/spec/routes/0/services/0/weight", "value": 0 },
+  { "op": "replace", "path": "/spec/routes/0/services/1/weight", "value": 100 }
+]
