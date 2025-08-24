@@ -1,0 +1,14 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: example
+    ports:
+      - '5432:5432'
+  gateway:
+    build: ../packages/gateway
+    ports:
+      - '4000:4000'
+    depends_on:
+      - postgres
