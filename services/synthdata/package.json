@@ -1,0 +1,17 @@
+{
+  "name": "@intelgraph/synthdata-service",
+  "version": "0.1.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "uuid": "^9.0.1",
+    "@intelgraph/synthdata-js": "file:../../packages/sdk/synthdata-js"
+  },
+  "devDependencies": {
+    "supertest": "^6.3.3"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "@intelgraph/synthdata-js",
+  "version": "0.1.0",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {
+    "seedrandom": "^3.0.5"
+  },
+  "devDependencies": {
+    "fast-check": "^3.15.1"
+  }
+}

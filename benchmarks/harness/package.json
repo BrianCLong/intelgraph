@@ -1,0 +1,12 @@
+{
+  "name": "@intelgraph/bench-harness",
+  "version": "0.1.0",
+  "main": "index.js",
+  "scripts": {
+    "perf:mini": "node run-mini.js",
+    "report:publish": "node report.js"
+  },
+  "dependencies": {
+    "@intelgraph/synthdata-js": "file:../../packages/sdk/synthdata-js"
+  }
+}
