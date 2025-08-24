@@ -1,0 +1,15 @@
+experiments:
+  - id: sample-experiment
+    description: Example experiment for testing new feature
+    hypothesis:
+      - H1: New feature increases user engagement
+      - H2: Error rate does not increase
+    variant_split:
+      control: 50
+      treatment: 50
+    metrics:
+      success:
+        - click_through_rate
+      guardrails:
+        - latency_ms
+        - error_rate
