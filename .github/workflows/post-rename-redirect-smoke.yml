@@ -1,0 +1,98 @@
+name: Post-Rename Redirect Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      old_repo:
+        description: Old full repo (OWNER/REPO)
+        required: true
+      new_repo:
+        description: New full repo (OWNER/REPO)
+        required: true
+      private:
+        description: Is the repo private? (uses GITHUB_TOKEN for HTTPS)
+        required: false
+        default: 'false'
+      do_ssh:
+        description: Also test SSH (requires secrets.DEPLOY_KEY)
+        required: false
+        default: 'false'
+  workflow_call:
+    inputs:
+      old_repo:
+        required: true
+        type: string
+      new_repo:
+        required: true
+        type: string
+      private:
+        required: false
+        type: string
+        default: 'false'
+      do_ssh:
+        required: false
+        type: string
+        default: 'false'
+
+jobs:
+  api-redirect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check GitHub API redirect (old → new)
+        env:
+          OLD: ${{ inputs.old_repo }}
+          NEW: ${{ inputs.new_repo }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          url="https://api.github.com/repos/${OLD}"
+          code=$(curl -sI -H "Authorization: token $GH_TOKEN" "$url" | awk '/^HTTP\//{print $2; exit}')
+          loc=$(curl -sI -H "Authorization: token $GH_TOKEN" "$url" | awk '/^[Ll]ocation:/{print $2; exit}')
+          echo "HTTP $code Location: $loc"
+          if [ "$code" != "301" ] && [ "$code" != "302" ] && [ "$code" != "307" ] && [ "$code" != "308" ]; then
+            echo "Expected redirect status from GitHub API for old repo" >&2; exit 1; fi
+          # Normalize and compare API path in location
+          want="https://api.github.com/repos/${NEW}"
+          if [ "${loc%$'\r'}" != "$want" ]; then
+            echo "Expected Location $want but got $loc" >&2; exit 1; fi
+          echo "[OK] GitHub API redirect points to new repo"
+
+  https-clone:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone over HTTPS (old URL → new repo via redirect)
+        env:
+          OLD: ${{ inputs.old_repo }}
+          NEW: ${{ inputs.new_repo }}
+          PRIVATE: ${{ inputs.private }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          cd /tmp
+          if [ "$PRIVATE" = "true" ]; then
+            url="https://x-access-token:${GH_TOKEN}@github.com/${OLD}.git"
+          else
+            url="https://github.com/${OLD}.git"
+          fi
+          echo "git clone $url"
+          git clone --depth 1 "$url" oldrepo
+          cd oldrepo
+          echo "Remote URLs:"; git remote -v
+          echo "ls-remote check on old URL (should succeed):"
+          git ls-remote "$url" HEAD >/dev/null
+          echo "[OK] HTTPS clone/ls-remote succeeded via redirect"
+
+  ssh-lsremote:
+    if: inputs.do_ssh == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+      - name: SSH ls-remote on old repo
+        env:
+          OLD: ${{ inputs.old_repo }}
+        run: |
+          set -euo pipefail
+          git ls-remote "git@github.com:${OLD}.git" HEAD >/dev/null
+          echo "[OK] SSH ls-remote succeeded via redirect"

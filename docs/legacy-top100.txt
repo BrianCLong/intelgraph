@@ -1,0 +1,10 @@
+/intelgraph/getting-started
+/intelgraph/installation
+/intelgraph/api/overview
+/intelgraph/sdk/javascript
+/intelgraph/sdk/python
+/intelgraph/guides/persisted-queries
+/intelgraph/security/export
+/intelgraph/deployment/kubernetes
+/intelgraph/faq
+/intelgraph/changelog

@@ -1,0 +1,24 @@
+name: Redirects Smoke (docs)
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Legacy docs base URL (e.g., https://docs.intelgraph.com)
+        required: true
+      new_ok_host:
+        description: New docs host (e.g., https://docs.summit.com) for 200 checks
+        required: false
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run redirects smoke
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+          NEW_OK_HOST: ${{ inputs.new_ok_host }}
+        run: |
+          chmod +x scripts/smoke-redirects.sh
+          ./scripts/smoke-redirects.sh docs/legacy-top100.txt

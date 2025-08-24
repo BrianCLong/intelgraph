@@ -1,0 +1,145 @@
+name: Rebrand Control Panel
+
+on:
+  workflow_dispatch:
+    inputs:
+      # Post-Rename GitHub Checks
+      expected_repo:
+        description: Expected repo name after rename (e.g., summit or summit-platform)
+        required: false
+        default: ''
+      expected_owner:
+        description: Expected owner/org (optional)
+        required: false
+        default: ''
+      # Post-Rename Redirect Smoke
+      old_repo:
+        description: Old full repo (OWNER/REPO)
+        required: true
+      new_repo:
+        description: New full repo (OWNER/REPO)
+        required: true
+      private:
+        description: Is the repo private? (uses GITHUB_TOKEN for HTTPS)
+        required: false
+        default: 'false'
+      do_ssh:
+        description: Also test SSH (requires secrets.DEPLOY_KEY)
+        required: false
+        default: 'false'
+      # Cutover Smoke
+      base_url:
+        description: Legacy docs base URL (e.g., https://docs.intelgraph.com)
+        required: true
+      new_ok_host:
+        description: New docs host (e.g., https://docs.summit.com) for 200 checks
+        required: false
+        default: ''
+      image_tag:
+        description: Image tag or commit SHA to verify dual tags
+        required: true
+      sdk_smoke:
+        description: Run optional SDK install smoke (requires NPM_TOKEN)
+        required: false
+        default: 'false'
+      # Optional runtime brand preflight (reads X-Brand-Name header)
+      brand_check_url:
+        description: Optional URL to check current brand via X-Brand-Name header (e.g., https://app.example.com/health)
+        required: false
+        default: ''
+      expected_current_brand:
+        description: Expected current brand before flip (default IntelGraph)
+        required: false
+        default: 'IntelGraph'
+      # Brand Flip placeholder
+      target_brand:
+        description: Desired PRODUCT_BRAND (Summit or IntelGraph)
+        required: false
+        default: 'Summit'
+      brand_flip_confirm:
+        description: Type 'ack' to acknowledge brand flip is external to CI (no-op)
+        required: false
+        default: ''
+
+jobs:
+  brand-scan:
+    uses: ./.github/workflows/brand-scan.yml
+    with:
+      allowlist: scripts/brand-scan-allowlist.txt
+    secrets: inherit
+
+  brand-preflight:
+    runs-on: ubuntu-latest
+    needs: [brand-scan]
+    steps:
+      - name: Check current brand via header (optional)
+        env:
+          URL: ${{ inputs.brand_check_url }}
+          EXPECT: ${{ inputs.expected_current_brand }}
+        run: |
+          set -euo pipefail
+          if [ -z "${URL}" ]; then
+            echo "No brand_check_url provided; skipping runtime brand preflight"
+            exit 0
+          fi
+          echo "Probing $URL for X-Brand-Name header..."
+          hdr=$(curl -sI "$URL" | awk -F': ' '/^[Xx]-Brand-Name:/ {gsub(/\r/,"",$2); print $2; exit}')
+          if [ -z "$hdr" ]; then
+            echo "[WARN] X-Brand-Name header not present at $URL; cannot assert current brand"
+            exit 0
+          fi
+          echo "Current brand reported: '$hdr' (expected: '$EXPECT')"
+          if [ "$hdr" = "$EXPECT" ]; then
+            echo "[OK] Current brand matches expected pre-cutover brand"
+          elif [ "$hdr" = "Summit" ]; then
+            echo "[WARN] Service already reports Summit — avoid double flip; verify environment before proceeding"
+          else
+            echo "[INFO] Unexpected brand '$hdr' — continue with caution"
+          fi
+  github-checks:
+    uses: ./.github/workflows/post-rename-check.yml
+    needs: [brand-preflight]
+    with:
+      expected_repo: ${{ inputs.expected_repo }}
+      expected_owner: ${{ inputs.expected_owner }}
+    secrets: inherit
+
+  github-redirects:
+    uses: ./.github/workflows/post-rename-redirect-smoke.yml
+    needs: [github-checks]
+    with:
+      old_repo: ${{ inputs.old_repo }}
+      new_repo: ${{ inputs.new_repo }}
+      private: ${{ inputs.private }}
+      do_ssh: ${{ inputs.do_ssh }}
+    secrets: inherit
+
+  brand-flip:
+    uses: ./.github/workflows/brand-flip-placeholder.yml
+    needs: [github-redirects]
+    with:
+      target_brand: ${{ inputs.target_brand }}
+      confirm: ${{ inputs.brand_flip_confirm }}
+    secrets: inherit
+
+  cutover:
+    uses: ./.github/workflows/cutover-smoke.yml
+    needs: [github-redirects]
+    with:
+      base_url: ${{ inputs.base_url }}
+      new_ok_host: ${{ inputs.new_ok_host }}
+      image_tag: ${{ inputs.image_tag }}
+      sdk_smoke: ${{ inputs.sdk_smoke }}
+    secrets: inherit
+
+  panel-summary:
+    runs-on: ubuntu-latest
+    needs: [cutover]
+    steps:
+      - name: Print checklist URL
+        run: |
+          echo "Cutover Checklist: ${{ needs.cutover.outputs.issue_url }} (issue #${{ needs.cutover.outputs.issue_number }})"
+      - name: Add to job summary
+        run: |
+          echo "## Rebrand Control Panel" >> $GITHUB_STEP_SUMMARY
+          echo "Cutover Checklist: ${{ needs.cutover.outputs.issue_url }}" >> $GITHUB_STEP_SUMMARY

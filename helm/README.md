@@ -1,22 +1,6 @@
-Helm charts for IntelGraph services.
+# Helm Canary Values
 
-Charts included:
-- server
-- client
-- neo4j
-- postgres
-- redis
-- ai-service
-- nlp-service
-- osint-service
-
-Each chart supports:
-- Ingress with cert-manager annotations
-- HPA (optional)
-- ServiceMonitor (optional) for Prometheus Operator
-- PodDisruptionBudget (optional)
-- Resource requests/limits via values
-- Optional ExternalSecrets or plain Secret
-
-See each chart's values.yaml for configuration.
-
+- File: `values-canary.yaml`
+- Purpose: Enable 5% traffic canary, enforce persisted queries, disable introspection, and attach Prometheus SLO rules and OPA.
+- Deploy: `helm upgrade --install intelgraph chart/ -f helm/values-canary.yaml`
+- Acceptance: Canary annotations present; Prometheus rules loaded; OPA policies mounted.

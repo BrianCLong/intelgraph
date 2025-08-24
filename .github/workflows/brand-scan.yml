@@ -1,0 +1,44 @@
+name: Brand Scan
+on:
+  pull_request:
+  push:
+    branches: [ feature/rename-summit ]
+  workflow_call:
+    inputs:
+      allowlist:
+        description: Optional custom allowlist file path
+        required: false
+        type: string
+        default: ''
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail on stray IntelGraph literals
+        env:
+          ALLOWLIST: ${{ inputs.allowlist }}
+        run: |
+          set -euo pipefail
+          if [ -n "${ALLOWLIST:-}" ] && [ -f "$ALLOWLIST" ]; then
+            pattern=$(paste -sd'|' "$ALLOWLIST")
+          elif [ -f scripts/brand-scan-allowlist.txt ]; then
+            pattern=$(paste -sd'|' scripts/brand-scan-allowlist.txt)
+          else
+            pattern='^docs/|^CHANGELOG.md$|^config/brand/brand.yaml$|^server/src/middleware/brandHeaders.ts$'
+          fi
+          # Search tracked text files for IntelGraph
+          hits=$(git ls-files | grep -E '\.(ts|js|tsx|jsx|md|yml|yaml|json|html|css)$' | xargs grep -n "IntelGraph" || true)
+          # Filter allowlist
+          BAD=()
+          while IFS= read -r line; do
+            [ -z "$line" ] && continue
+            file=${line%%:*}
+            if echo "$file" | grep -Eq "$pattern"; then continue; fi
+            BAD+=("$line")
+          done <<< "$hits"
+          if [ ${#BAD[@]} -gt 0 ]; then
+            echo 'Found non-allowlisted IntelGraph literals:' >&2
+            printf '%s\n' "${BAD[@]}" >&2
+            exit 1
+          fi

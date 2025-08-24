@@ -1,0 +1,12 @@
+[[redirects]]
+  from = "/intelgraph/*"
+  to   = "/summit/:splat"
+  status = 301
+  force  = true
+
+[[redirects]]
+  from = "/intelgraph"
+  to   = "/summit"
+  status = 301
+  force  = true
+

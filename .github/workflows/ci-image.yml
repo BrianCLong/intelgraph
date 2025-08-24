@@ -56,7 +56,7 @@ jobs:
           context: ./server
           file: ./server/Dockerfile.prod # Assuming a production Dockerfile exists
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ steps.meta.outputs.tags }},ghcr.io/${{ github.repository_owner }}/summit-server:${{ github.sha }}
 
       - name: Build and push client image
         if: steps.changes.outputs.client == 'true' || steps.changes.outputs.dockerfile == 'true'
@@ -65,7 +65,7 @@ jobs:
           context: ./client
           file: ./client/Dockerfile.prod # Assuming a production Dockerfile exists
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ steps.meta.outputs.tags }},ghcr.io/${{ github.repository_owner }}/summit-client:${{ github.sha }}
 
       - name: Run hadolint
         if: steps.changes.outputs.dockerfile == 'true'

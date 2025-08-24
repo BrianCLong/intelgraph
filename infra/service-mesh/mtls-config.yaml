@@ -1,0 +1,609 @@
+# 🔗 Cross-Service mTLS Configuration
+# Multi-Service Architecture Mutual TLS Implementation
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: intelgraph-ga
+  labels:
+    istio-injection: enabled
+    security.istio.io/tlsMode: ISTIO_MUTUAL
+
+---
+# Certificate Authority for IntelGraph GA Services
+apiVersion: v1
+kind: Secret
+metadata:
+  name: intelgraph-ca-secret
+  namespace: intelgraph-ga
+  labels:
+    app: intelgraph-ca
+type: Opaque
+data:
+  # Root CA certificate and private key (base64 encoded)
+  ca-cert.pem: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t...
+  ca-key.pem: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0t...
+  cert-chain.pem: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t...
+
+---
+# Istio Service Mesh Security Policy
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: intelgraph-ga
+spec:
+  mtls:
+    mode: STRICT  # Enforce mTLS for all services
+
+---
+# AdminSec Service mTLS Configuration
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: adminsec-mtls
+  namespace: intelgraph-ga
+spec:
+  selector:
+    matchLabels:
+      app: ga-adminsec
+  mtls:
+    mode: STRICT
+  portLevelMtls:
+    3000:  # HTTP API port
+      mode: STRICT
+    3001:  # gRPC port
+      mode: STRICT
+
+---
+# GraphAI Service mTLS Configuration
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: graphai-mtls
+  namespace: intelgraph-ga
+spec:
+  selector:
+    matchLabels:
+      app: ga-graphai
+  mtls:
+    mode: STRICT
+  portLevelMtls:
+    8000:  # FastAPI port
+      mode: STRICT
+
+---
+# Gateway Service mTLS Configuration
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: gateway-mtls
+  namespace: intelgraph-ga
+spec:
+  selector:
+    matchLabels:
+      app: ga-gateway
+  mtls:
+    mode: STRICT
+  portLevelMtls:
+    4000:  # GraphQL port
+      mode: STRICT
+    4001:  # WebSocket port
+      mode: STRICT
+
+---
+# Intelligence Vertical Services mTLS
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: intelligence-verticals-mtls
+  namespace: intelgraph-ga
+spec:
+  selector:
+    matchLabels:
+      component: intelligence-vertical
+  mtls:
+    mode: STRICT
+
+---
+# Forensics Service mTLS Configuration
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: forensics-mtls
+  namespace: intelgraph-ga
+spec:
+  selector:
+    matchLabels:
+      app: ga-forensics
+  mtls:
+    mode: STRICT
+  portLevelMtls:
+    9000:  # Forensics API port
+      mode: STRICT
+
+---
+# Authorization Policies for Cross-Service Communication
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: cross-service-access
+  namespace: intelgraph-ga
+spec:
+  rules:
+  # Gateway can access all services
+  - from:
+    - source:
+        principals: ["cluster.local/ns/intelgraph-ga/sa/ga-gateway"]
+    to:
+    - operation:
+        methods: ["GET", "POST", "PUT", "DELETE"]
+  
+  # AdminSec can be accessed by gateway and other services for auth
+  - to:
+    - operation:
+        paths: ["/auth/*", "/users/*", "/policies/*"]
+    when:
+    - key: source.principal
+      values: ["cluster.local/ns/intelgraph-ga/sa/ga-gateway"]
+
+  # GraphAI can be accessed by gateway and worker services
+  - to:
+    - operation:
+        paths: ["/feature/*", "/embed/*", "/er/*", "/lp/*", "/community/*"]
+    when:
+    - key: source.principal
+      values: 
+        - "cluster.local/ns/intelgraph-ga/sa/ga-gateway"
+        - "cluster.local/ns/intelgraph-ga/sa/ga-worker"
+
+  # Intelligence verticals cross-communication
+  - from:
+    - source:
+        principals:
+          - "cluster.local/ns/intelgraph-ga/sa/ga-osint"
+          - "cluster.local/ns/intelgraph-ga/sa/ga-fintel"
+          - "cluster.local/ns/intelgraph-ga/sa/ga-cyber"
+          - "cluster.local/ns/intelgraph-ga/sa/ga-tradecraft"
+    to:
+    - operation:
+        methods: ["GET", "POST"]
+        paths: ["/intel/*", "/analysis/*", "/synthesis/*"]
+
+  # Forensics evidence integrity validation
+  - to:
+    - operation:
+        paths: ["/evidence/*", "/custody/*", "/integrity/*"]
+    when:
+    - key: source.principal
+      values:
+        - "cluster.local/ns/intelgraph-ga/sa/ga-gateway"
+        - "cluster.local/ns/intelgraph-ga/sa/ga-forensics"
+        - "cluster.local/ns/intelgraph-ga/sa/ga-adminsec"
+
+---
+# Service Accounts for mTLS Identity
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ga-adminsec
+  namespace: intelgraph-ga
+  labels:
+    account: adminsec
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ga-gateway
+  namespace: intelgraph-ga
+  labels:
+    account: gateway
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ga-graphai
+  namespace: intelgraph-ga
+  labels:
+    account: graphai
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ga-worker
+  namespace: intelgraph-ga
+  labels:
+    account: worker
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ga-forensics
+  namespace: intelgraph-ga
+  labels:
+    account: forensics
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ga-osint
+  namespace: intelgraph-ga
+  labels:
+    account: osint
+    component: intelligence-vertical
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ga-fintel
+  namespace: intelgraph-ga
+  labels:
+    account: fintel
+    component: intelligence-vertical
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ga-cyber
+  namespace: intelgraph-ga
+  labels:
+    account: cyber
+    component: intelligence-vertical
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ga-tradecraft
+  namespace: intelgraph-ga
+  labels:
+    account: tradecraft
+    component: intelligence-vertical
+
+---
+# Certificate Management with cert-manager
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: intelgraph-ca-issuer
+spec:
+  ca:
+    secretName: intelgraph-ca-secret
+
+---
+# Automatic certificate generation for services
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ga-adminsec-cert
+  namespace: intelgraph-ga
+spec:
+  secretName: ga-adminsec-tls
+  issuerRef:
+    name: intelgraph-ca-issuer
+    kind: ClusterIssuer
+  commonName: ga-adminsec.intelgraph-ga.svc.cluster.local
+  dnsNames:
+  - ga-adminsec
+  - ga-adminsec.intelgraph-ga
+  - ga-adminsec.intelgraph-ga.svc
+  - ga-adminsec.intelgraph-ga.svc.cluster.local
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ga-gateway-cert
+  namespace: intelgraph-ga
+spec:
+  secretName: ga-gateway-tls
+  issuerRef:
+    name: intelgraph-ca-issuer
+    kind: ClusterIssuer
+  commonName: ga-gateway.intelgraph-ga.svc.cluster.local
+  dnsNames:
+  - ga-gateway
+  - ga-gateway.intelgraph-ga
+  - ga-gateway.intelgraph-ga.svc
+  - ga-gateway.intelgraph-ga.svc.cluster.local
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ga-graphai-cert
+  namespace: intelgraph-ga
+spec:
+  secretName: ga-graphai-tls
+  issuerRef:
+    name: intelgraph-ca-issuer
+    kind: ClusterIssuer
+  commonName: ga-graphai.intelgraph-ga.svc.cluster.local
+  dnsNames:
+  - ga-graphai
+  - ga-graphai.intelgraph-ga
+  - ga-graphai.intelgraph-ga.svc
+  - ga-graphai.intelgraph-ga.svc.cluster.local
+
+---
+# Network Policies for Additional Security
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: intelgraph-network-policy
+  namespace: intelgraph-ga
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow ingress from same namespace with mTLS
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: intelgraph-ga
+    ports:
+    - protocol: TCP
+      port: 3000  # AdminSec
+    - protocol: TCP
+      port: 4000  # Gateway
+    - protocol: TCP
+      port: 8000  # GraphAI
+    - protocol: TCP
+      port: 9000  # Forensics
+  
+  egress:
+  # Allow egress to same namespace
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: intelgraph-ga
+  
+  # Allow egress to databases
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: intelgraph-data
+    ports:
+    - protocol: TCP
+      port: 5432  # PostgreSQL
+    - protocol: TCP
+      port: 7687  # Neo4j
+    - protocol: TCP
+      port: 6379  # Redis
+
+---
+# Service Monitor for Prometheus mTLS metrics
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: intelgraph-mtls-metrics
+  namespace: intelgraph-ga
+spec:
+  selector:
+    matchLabels:
+      monitoring: intelgraph-mtls
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+    scheme: https
+    tlsConfig:
+      insecureSkipVerify: false
+      caFile: /etc/prometheus/secrets/intelgraph-ca-secret/ca-cert.pem
+      certFile: /etc/prometheus/secrets/prometheus-tls/tls.crt
+      keyFile: /etc/prometheus/secrets/prometheus-tls/tls.key
+
+---
+# Deployment configuration with mTLS
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ga-adminsec
+  namespace: intelgraph-ga
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ga-adminsec
+  template:
+    metadata:
+      labels:
+        app: ga-adminsec
+        version: v1
+        monitoring: intelgraph-mtls
+      annotations:
+        sidecar.istio.io/inject: "true"
+    spec:
+      serviceAccountName: ga-adminsec
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+      containers:
+      - name: adminsec
+        image: intelgraph/ga-adminsec:latest
+        ports:
+        - containerPort: 3000
+          name: http
+          protocol: TCP
+        - containerPort: 3001
+          name: grpc
+          protocol: TCP
+        - containerPort: 9090
+          name: metrics
+          protocol: TCP
+        env:
+        - name: TLS_ENABLED
+          value: "true"
+        - name: MTLS_ENABLED
+          value: "true"
+        - name: CA_CERT_PATH
+          value: "/etc/ssl/certs/ca-cert.pem"
+        - name: TLS_CERT_PATH
+          value: "/etc/ssl/certs/tls.crt"
+        - name: TLS_KEY_PATH
+          value: "/etc/ssl/private/tls.key"
+        volumeMounts:
+        - name: tls-certs
+          mountPath: /etc/ssl/certs
+          readOnly: true
+        - name: tls-private
+          mountPath: /etc/ssl/private
+          readOnly: true
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+            scheme: HTTPS
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3000
+            scheme: HTTPS
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+      volumes:
+      - name: tls-certs
+        secret:
+          secretName: ga-adminsec-tls
+          items:
+          - key: tls.crt
+            path: tls.crt
+          - key: ca.crt
+            path: ca-cert.pem
+      - name: tls-private
+        secret:
+          secretName: ga-adminsec-tls
+          items:
+          - key: tls.key
+            path: tls.key
+
+---
+# Service configuration with mTLS
+apiVersion: v1
+kind: Service
+metadata:
+  name: ga-adminsec
+  namespace: intelgraph-ga
+  labels:
+    app: ga-adminsec
+    monitoring: intelgraph-mtls
+spec:
+  selector:
+    app: ga-adminsec
+  ports:
+  - name: http
+    port: 3000
+    targetPort: 3000
+    protocol: TCP
+  - name: grpc
+    port: 3001
+    targetPort: 3001
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+    protocol: TCP
+
+---
+# Istio Virtual Service for secure routing
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: ga-services-routing
+  namespace: intelgraph-ga
+spec:
+  hosts:
+  - ga-adminsec
+  - ga-gateway  
+  - ga-graphai
+  - ga-forensics
+  http:
+  - match:
+    - uri:
+        prefix: /auth
+    route:
+    - destination:
+        host: ga-adminsec
+        port:
+          number: 3000
+    headers:
+      request:
+        set:
+          X-Service-Auth: "required"
+  - match:
+    - uri:
+        prefix: /graphql
+    route:
+    - destination:
+        host: ga-gateway
+        port:
+          number: 4000
+    headers:
+      request:
+        set:
+          X-Service-Source: "istio"
+
+---
+# Istio Destination Rules for mTLS
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: ga-services-mtls
+  namespace: intelgraph-ga
+spec:
+  host: "*.intelgraph-ga.svc.cluster.local"
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+  exportTo:
+  - "."
+
+---
+# Certificate rotation CronJob
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cert-rotation-check
+  namespace: intelgraph-ga
+spec:
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: cert-manager
+          containers:
+          - name: cert-checker
+            image: cert-manager/cert-manager-ctl:latest
+            command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Checking certificate expiration..."
+              kubectl get certificates -n intelgraph-ga -o json | \
+              jq -r '.items[] | select(.status.renewalTime != null) | 
+                     .metadata.name + " expires at " + .status.renewalTime'
+              
+              echo "Triggering renewal for certificates expiring within 30 days..."
+              kubectl annotate certificates -n intelgraph-ga \
+                --all cert-manager.io/force-renew="$(date +%s)"
+          restartPolicy: OnFailure
