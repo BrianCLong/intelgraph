@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ga-assist"
+version = "0.1.0"
+description = "GA-Assist service for NL to Cypher and retrieval"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [{name = "IntelGraph"}]
+dependencies = [
+  "fastapi",
+  "uvicorn",
+  "pydantic",
+  "lark",
+  "networkx",
+  "numpy",
+  "scikit-learn",
+  "rank-bm25",
+  "nltk",
+  "rapidfuzz"
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]

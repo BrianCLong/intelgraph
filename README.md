@@ -901,3 +901,17 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **IntelGraph Platform** - Next-Generation Intelligence Analysis
+
+## GA-Assist Demo
+
+This repository now includes a minimal GA-Assist vertical slice providing:
+
+- NL→Cypher translation via FastAPI service.
+- BM25 text retrieval.
+
+Run the assist service:
+
+```bash
+cd packages/assist
+uvicorn src.main:app --reload
+```
