@@ -54,7 +54,10 @@
     "release": "changeset version && changeset publish",
     "precommit": "lint-staged",
     "db:prisma:diff": "prisma migrate diff --from-url $DATABASE_URL --to-schema-datamodel prisma/schema.prisma",
-    "db:knex:smoke": "knex migrate:down && knex migrate:up"
+    "db:knex:smoke": "knex migrate:down && knex migrate:up",
+    "perf:micro": "node --loader ts-node/esm server/perf/microbench.ts",
+    "perf:load": "k6 run server/perf/k6-load-test.js --out json=server/perf/load-results.json",
+    "perf:check": "node server/perf/check-budgets.js"
   },
   "keywords": [
     "intelligence-analysis",

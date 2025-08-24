@@ -1,0 +1,5 @@
+{
+  "p95LatencyMs": 200,
+  "peakRps": 100,
+  "memoryMb": 512
+}
