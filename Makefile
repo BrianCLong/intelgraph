@@ -1,13 +1,13 @@
 SHELL := /bin/bash
 PY := python3
 
-.PHONY: bootstrap up down logs ps server client ingest graph smoke clean reset-db ingest-assets
+.PHONY: bootstrap up down logs ps server client ingest graph smoke clean reset-db ingest-assets changelog
 
-bootstrap: ; @test -f .env || cp .env.example .env; 
-	npm ci; 
-	npm ci --prefix server; 
-	npm ci --prefix client; 
-	echo "✅ .env and dependencies ready. Next: make up"
+bootstrap: ; @test -f .env || cp .env.example .env;
+        npm ci;
+        npm ci --prefix server;
+        npm ci --prefix client;
+        echo "✅ .env and dependencies ready. Next: make up"
 up: ; docker compose up -d --build
 up-ai: ; docker compose --profile ai up -d --build
 up-kafka: ; docker compose --profile kafka up -d --build
@@ -28,22 +28,23 @@ reset-db: ; docker compose down; \
   V=$$(docker volume ls -q | grep neo4j_data || true); \
   if [ -n "$$V" ]; then docker volume rm $$V; fi; \
   echo "🗑️  Neo4j volume removed"
+changelog: ; ./scripts/generate-changelog.sh
 
 # MVP-1++ Sprint Targets
 preflight:
-	@ts-node scripts/migrate/preflight_cli.ts
+        @ts-node scripts/migrate/preflight_cli.ts
 
 migrate-1_0_0:
-	@ts-node server/src/migrations/1.0.0_migration.ts
+        @ts-node server/src/migrations/1.0.0_migration.ts
 
 cost-report:
-	@bash scripts/ops/cost_report.sh
+        @bash scripts/ops/cost_report.sh
 
 ingest-assets:
-	@if [ -z "$(path)" ]; then echo "path=<csv> required"; exit 1; fi; \
-	if [ -z "$(org)" ]; then echo "org=<ORG> required"; exit 1; fi; \
-	$(PY) data-pipelines/universal-ingest/assets_csv.py $(path) --org $(org)
+        @if [ -z "$(path)" ]; then echo "path=<csv> required"; exit 1; fi; \
+        if [ -z "$(org)" ]; then echo "org=<ORG> required"; exit 1; fi; \
+        $(PY) data-pipelines/universal-ingest/assets_csv.py $(path) --org $(org)
 
 # GA Release Target
 ga:
-	make preflight && npm test && npx @cyclonedx/cyclonedx-npm --output-file sbom.json && ./scripts/release/verify_install.sh
+        make preflight && npm test && npx @cyclonedx/cyclonedx-npm --output-file sbom.json && ./scripts/release/verify_install.sh
