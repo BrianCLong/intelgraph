@@ -1,0 +1,11 @@
+{
+  "anomaly-detector": {
+    "latest": "1.0.0",
+    "models": {
+      "1.0.0": {
+        "seed": 42,
+        "description": "EWMA + MAD + graphwalk rarity"
+      }
+    }
+  }
+}
