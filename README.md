@@ -901,3 +901,31 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **IntelGraph Platform** - Next-Generation Intelligence Analysis
+
+### GA-Ontology Vertical Slice
+
+Quick demo using in-memory stores:
+
+```bash
+npx ts-node scripts/dev-seed.ts
+npx jest packages/ontology/src packages/gateway/tests
+```
+
+#### Model Lifecycle
+
+```
+Authoring -> Registry -> Activation -> Deprecation
+```
+
+#### Validation Pipeline
+
+```
+Entity -> JSON Schema -> SHACL -> Report
+```
+
+#### Migration Plan
+
+```
+v1 --diff--> plan --apply--> v2
+          \--rollback--/
+```

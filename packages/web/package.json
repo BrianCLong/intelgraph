@@ -1,0 +1,21 @@
+{
+  "name": "@intelgraph/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "echo 'no tests'"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@mui/material": "^5.15.0",
+    "jquery": "^3.7.1"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "typescript": "^5.7.3"
+  }
+}
