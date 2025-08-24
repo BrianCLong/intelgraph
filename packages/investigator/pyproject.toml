@@ -1,0 +1,14 @@
+[project]
+name = "investigator"
+version = "0.1.0"
+dependencies = [
+  "fastapi",
+  "uvicorn",
+  "pydantic>=2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.pytest.ini_options]
+addopts = "-q"

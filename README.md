@@ -901,3 +901,25 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **IntelGraph Platform** - Next-Generation Intelligence Analysis
+
+## GA-Investigator Vertical Slice
+
+### Pivot Flow
+```
+[Scene] --(run pivot)--> [Query] --(merge)--> [Graph]
+```
+
+### Notebook Cell Pipeline
+```
+[Cell] -> [Execute] -> [Artifact] -> [Citation]
+```
+
+### Playbook Runner
+```
+[Playbook] -> [Step1] -> [Step2] -> ... -> [Manifest]
+```
+
+To start the stack:
+```
+cd infra && docker-compose up
+```

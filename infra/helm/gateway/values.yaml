@@ -1,0 +1,5 @@
+image:
+  repository: gateway
+  tag: latest
+service:
+  port: 4000
