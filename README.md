@@ -12,6 +12,10 @@ No code merges that break the golden path workflow:
 
 ## Quickstart (Local)
 
+```
+feeds -> normalize -> snapshot -> extract -> analyze -> detect -> export
+```
+
 **Prereqs:** Docker Desktop (6–8 GB memory), Node 18 (optional for host dev), Python 3.10+
 
 ```bash
