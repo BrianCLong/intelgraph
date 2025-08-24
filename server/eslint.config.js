@@ -22,8 +22,9 @@ export default [
     },
     linterOptions: { reportUnusedDisableDirectives: true },
     rules: {
-      '@typescript-eslint/await-thenable': 'error',
-      '@typescript-eslint/no-misused-promises': ['error', { checksVoidReturn: { attributes: false } }],
+      // Disabled pending project-wide type-aware linting setup
+      '@typescript-eslint/await-thenable': 'off',
+      '@typescript-eslint/no-misused-promises': 'off',
       '@typescript-eslint/consistent-type-imports': ['warn', { prefer: 'type-imports' }],
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'no-process-exit': 'off'

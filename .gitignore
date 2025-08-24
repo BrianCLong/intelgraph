@@ -125,3 +125,7 @@ __pycache__/
 
 .aider*
 .env
+
+# Lock files
+package-lock.json
+**/package-lock.json
