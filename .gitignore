@@ -125,3 +125,6 @@ __pycache__/
 
 .aider*
 .env
+
+# NL-Cypher lockfile
+nl-cypher/package-lock.json
