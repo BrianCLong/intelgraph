@@ -1,0 +1,176 @@
+openapi: 3.0.0
+info:
+  title: Graph Core API
+  version: 0.1.0
+paths:
+  /api/v1/entities/{type}:
+    post:
+      summary: Upsert entity
+      parameters:
+        - in: path
+          name: type
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Entity'
+      responses:
+        '200':
+          description: Entity upserted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity'
+  /api/v1/relationships:
+    post:
+      summary: Upsert relationship
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Relationship'
+      responses:
+        '200':
+          description: Relationship upserted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Relationship'
+  /api/v1/er/candidates:
+    post:
+      summary: Score two entities for merge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                entities:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Entity'
+      responses:
+        '200':
+          description: Candidate score
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateScore'
+    get:
+      summary: List queued candidates
+      responses:
+        '200':
+          description: Queue of pending candidates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CandidateScore'
+  /api/v1/er/decide:
+    post:
+      summary: Approve or reject merge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                candidateId:
+                  type: string
+                approved:
+                  type: boolean
+                user:
+                  type: string
+      responses:
+        '200':
+          description: Decision recorded
+  /api/v1/er/explanations/{id}:
+    get:
+      summary: Retrieve score explanation
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Score explanation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateScore'
+components:
+  schemas:
+    Policy:
+      type: object
+      properties:
+        origin:
+          type: string
+        sensitivity:
+          type: string
+        clearance:
+          type: string
+        legalBasis:
+          type: string
+        needToKnow:
+          type: string
+    Entity:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        attributes:
+          type: object
+        validFrom:
+          type: string
+          format: date-time
+        validTo:
+          type: string
+          format: date-time
+        policy:
+          $ref: '#/components/schemas/Policy'
+    Relationship:
+      type: object
+      properties:
+        id:
+          type: string
+        from:
+          type: string
+        to:
+          type: string
+        type:
+          type: string
+        attributes:
+          type: object
+        validFrom:
+          type: string
+          format: date-time
+        validTo:
+          type: string
+          format: date-time
+        policy:
+          $ref: '#/components/schemas/Policy'
+    CandidateScore:
+      type: object
+      properties:
+        id:
+          type: string
+        score:
+          type: number
+        breakdown:
+          type: object
+          additionalProperties:
+            type: number
+        weights:
+          type: object
+          additionalProperties:
+            type: number
