@@ -2,12 +2,45 @@ import os
 import json
 import time
 import random
-from fastapi import FastAPI, BackgroundTasks
+from fastapi import FastAPI, BackgroundTasks, Response
 from kafka import KafkaConsumer, KafkaProducer
 from kafka.errors import NoBrokersAvailable
 import redis
+from prometheus_client import Histogram, generate_latest, CONTENT_TYPE_LATEST
+
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.instrumentation.redis import RedisInstrumentor
+from opentelemetry.instrumentation.kafka import KafkaInstrumentor
 
 app = FastAPI()
+
+trace.set_tracer_provider(TracerProvider())
+span_processor = BatchSpanProcessor(OTLPSpanExporter())
+trace.get_tracer_provider().add_span_processor(span_processor)
+FastAPIInstrumentor.instrument_app(app)
+RedisInstrumentor().instrument()
+KafkaInstrumentor().instrument()
+
+graph_query_hist = Histogram(
+    "graph_query_duration_seconds",
+    "Graph scoring duration",
+    buckets=[0.1, 0.5, 1, 1.5, 2, 3]
+)
+
+ingest_e2e_hist = Histogram(
+    "ingest_e2e_duration_seconds",
+    "Ingest end-to-end duration",
+    buckets=[60, 120, 180, 240, 300, 360]
+)
+
+
+@app.get("/metrics")
+def metrics():
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379')
 KAFKA_BOOTSTRAP_SERVERS = os.environ.get('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092')
@@ -68,6 +101,7 @@ else:
 async def consume_kafka_messages_task():
     print("Reliability service: Starting Kafka consumer background task...")
     for message in consumer:
+        start = time.time()
         post = message.value
         user_id = post.get('metadata', {}).get('user')
         if user_id:
@@ -75,6 +109,8 @@ async def consume_kafka_messages_task():
             redis_client.incr(f"source:{user_id}:posts_count")
             redis_client.incr(f"source:{user_id}:words_count", len(post.get('text', '').split()))
             print(f"Reliability service: Processed post from user {user_id}")
+        duration = time.time() - start
+        ingest_e2e_hist.observe(duration)
 
 @app.on_event("startup")
 async def startup_event():
@@ -93,6 +129,7 @@ def health_check():
 @app.get("/score_source/{source_id}")
 def score_source(source_id: str):
     """Returns a simulated reliability score for a given source_id."""
+    start = time.time()
     posts_count = int(redis_client.get(f"source:{source_id}:posts_count") or 0)
     words_count = int(redis_client.get(f"source:{source_id}:words_count") or 0)
 
@@ -109,5 +146,7 @@ def score_source(source_id: str):
         }
     }
     producer.send(SOURCE_SCORES_TOPIC, value=source_score)
+    duration = time.time() - start
+    graph_query_hist.observe(duration)
     print(f"Reliability service: Scored source {source_id} with score {score}")
     return source_score
