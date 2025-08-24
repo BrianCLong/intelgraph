@@ -1,0 +1,17 @@
+{
+  "name": "@intelgraph/policy-audit",
+  "version": "0.1.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.33.0",
+    "@typescript-eslint/eslint-plugin": "^8.40.0",
+    "@typescript-eslint/parser": "^8.40.0",
+    "eslint": "^9.33.0",
+    "eslint-config-prettier": "^10.1.8",
+    "jest": "^29.7.0",
+    "typescript-eslint": "^8.40.0"
+  }
+}

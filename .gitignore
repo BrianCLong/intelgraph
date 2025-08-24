@@ -1,5 +1,6 @@
 # Dependencies
 node_modules/
+package-lock.json
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -86,6 +87,13 @@ Thumbs.db
 # Logs
 logs/
 *.log
+audit/
+tmp-audit/
+tmp-sidecar-audit/
+
+# OPA binary downloads
+opa
+opa.exe
 
 # Temporary files
 tmp/
