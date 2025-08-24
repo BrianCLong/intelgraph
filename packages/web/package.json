@@ -1,0 +1,23 @@
+{
+  "name": "@ga-forensics/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "@mui/material": "5.15.14",
+    "jquery": "3.7.1"
+  },
+  "devDependencies": {
+    "vite": "5.2.0",
+    "vitest": "1.6.0",
+    "jsdom": "24.0.0",
+    "@vitejs/plugin-react": "4.2.1",
+    "typescript": "5.4.5"
+  }
+}

@@ -901,3 +901,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **IntelGraph Platform** - Next-Generation Intelligence Analysis
+
+## GA-Forensics Vertical Slice
+
+A minimal forensics pipeline is available under `/docs/ga-forensics` and `/packages`. Run `docker-compose` in `infra/` to start the services.

@@ -1,0 +1,14 @@
+[project]
+name = "ga-forensics"
+version = "0.1.0"
+dependencies = [
+  "fastapi",
+  "uvicorn",
+  "pillow",
+  "imagehash",
+  "pypdf2"
+]
+[project.optional-dependencies]
+test = ["pytest"]
+[build-system]
+requires = ["setuptools", "wheel"]

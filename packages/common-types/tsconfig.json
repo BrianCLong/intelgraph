@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "emitDeclarationOnly": false,
+    "outDir": "dist",
+    "target": "ES2020",
+    "module": "ES2020",
+    "strict": true
+  },
+  "include": ["index.ts"]
+}
