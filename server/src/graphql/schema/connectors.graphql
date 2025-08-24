@@ -1,0 +1,17 @@
+type ConnectorStatus { name: String!, enabled: Boolean!, version: String! }
+
+input EcsIngestOptions {
+  source: String!
+  batchId: String
+  normalize: Boolean = true
+}
+
+type IngestResult { received: Int!, accepted: Int!, rejected: Int!, batchId: String }
+
+extend type Query {
+  connectorStatus: [ConnectorStatus!]!
+}
+
+extend type Mutation {
+  ingestEcsEvents(events: JSON!, options: EcsIngestOptions!): IngestResult!
+}

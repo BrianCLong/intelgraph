@@ -1,0 +1,7 @@
+opa:
+  enabled: true
+  serviceUrl: https://your-bundle-cdn.example.com
+  tenants:
+    - slug: acme
+    - slug: globex
+    - slug: initech

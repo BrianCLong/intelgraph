@@ -69,6 +69,7 @@ import {
 } from '@mui/icons-material';
 import { useMutation, useQuery } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
+import EcsIngestPanel from '../connectors/EcsIngestPanel';
 
 // GraphQL operations (would be imported from actual files)
 const CREATE_INVESTIGATION = `
@@ -499,7 +500,7 @@ const GoldenPathWizard = ({ open, onClose, onComplete }) => {
               >
                 Simulate CSV Import
               </Button>
-              
+
               <Button
                 variant="outlined"
                 startIcon={<TimelineIcon />}
@@ -511,6 +512,9 @@ const GoldenPathWizard = ({ open, onClose, onComplete }) => {
               >
                 Simulate STIX Import
               </Button>
+            </Box>
+            <Box mt={3}>
+              <EcsIngestPanel />
             </Box>
           </Box>
         );

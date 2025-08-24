@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opa-config
+data:
+  config.yaml: |
+    services:
+      bundlesvc:
+        url: {{ .Values.opa.serviceUrl }}
+    bundles:
+      global:
+        service: bundlesvc
+        resource: bundles/global.tar.gz
+      {{- range .Values.opa.tenants }}
+      tenant-{{ .slug }}:
+        service: bundlesvc
+        resource: bundles/tenant/{{ .slug }}.tar.gz
+      {{- end }}
+    decision_logs:
+      console: true

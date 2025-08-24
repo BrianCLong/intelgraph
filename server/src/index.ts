@@ -12,6 +12,7 @@ import { typeDefs } from "./graphql/schema.js";
 import resolvers from "./graphql/resolvers/index.js";
 import { DataRetentionService } from './services/DataRetentionService.js';
 import { getNeo4jDriver } from './db/neo4j.js';
+import connectorRoutes from './routes/connectors.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const logger = logger.child({ name: 'index' });
@@ -30,6 +31,7 @@ const startServer = async () => {
     }
   }
   const app = await createApp();
+  app.use('/api', connectorRoutes);
   const schema = makeExecutableSchema({ typeDefs, resolvers });
   const httpServer = http.createServer(app);
 

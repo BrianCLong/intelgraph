@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "intelgraph.fullname" . }}-server
+spec:
+  template:
+    spec:
+      containers:
+        - name: opa
+          image: openpolicyagent/opa:0.67.0-rootless
+          args: ["run","--server","--addr=0.0.0.0:8181","--config-file=/config/config.yaml"]
+          ports:
+            - containerPort: 8181
+          volumeMounts:
+            - name: opa-config
+              mountPath: /config
+      volumes:
+        - name: opa-config
+          configMap:
+            name: opa-config

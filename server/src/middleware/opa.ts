@@ -24,6 +24,8 @@ interface User {
 interface PolicyInput {
   user?: User;
   action: string;
+  operation?: string;
+  field?: string;
   resource: {
     type: string;
     field?: string;
@@ -72,6 +74,7 @@ interface OPAStats {
 
 interface GraphQLContext {
   user?: User;
+  req?: Request;
 }
 
 interface GraphQLInfo {
@@ -196,31 +199,34 @@ export class OPAMiddleware {
   createGraphQLMiddleware() {
     return async (resolve: GraphQLResolver, parent: any, args: any, context: GraphQLContext, info: GraphQLInfo) => {
       const user = context.user;
+      const tenantSlug = (user as any)?.tenant_slug || context.req?.headers['x-tenant-slug'] as string || 'default';
       const operation = info.operation.operation; // query, mutation, subscription
       const fieldName = info.fieldName;
       const parentType = info.parentType.name;
 
       // Build policy input
-      const policyInput: PolicyInput = {
-        user: {
-          id: user?.id,
-          email: user?.email,
-          role: user?.role,
-          tenantId: user?.tenantId,
-          permissions: user?.permissions || []
-        },
-        action: `${operation}.${fieldName}`,
-        resource: {
-          type: parentType,
+        const policyInput: PolicyInput = {
+          user: {
+            id: user?.id,
+            email: user?.email,
+            role: user?.role,
+            tenantId: tenantSlug,
+            permissions: user?.permissions || []
+          },
+          action: `${operation}.${fieldName}`,
+          operation,
           field: fieldName,
-          args: this.sanitizeArgs(args)
-        },
-        context: {
-          investigationId: args.investigationId || args.input?.investigationId,
-          entityType: args.input?.type || args.type,
-          tenantId: user?.tenantId
-        }
-      };
+          resource: {
+            type: parentType,
+            field: fieldName,
+            args: this.sanitizeArgs(args)
+          },
+          context: {
+            investigationId: args.investigationId || args.input?.investigationId,
+            entityType: args.input?.type || args.type,
+            tenantId: tenantSlug
+          }
+        };
 
       const decision = await this.checkPolicy(policyInput);
 

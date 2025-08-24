@@ -41,6 +41,7 @@ jspm_packages/
 # Prevent secrets / env files
 .env.*
 !.env.example
+!.env.sample
 
 # dotenv environment variables file
 .env.test
