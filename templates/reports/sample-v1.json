@@ -1,0 +1,7 @@
+{
+  "id": "sample",
+  "version": 1,
+  "layout": "sample.handlebars",
+  "watermark": "CONFIDENTIAL",
+  "fields": ["title", "content"]
+}

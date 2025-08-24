@@ -1,0 +1,14 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`report templates matches snapshot 1`] = `
+{
+  "fields": [
+    "title",
+    "content",
+  ],
+  "id": "sample",
+  "layout": "sample.handlebars",
+  "version": 1,
+  "watermark": "CONFIDENTIAL",
+}
+`;
