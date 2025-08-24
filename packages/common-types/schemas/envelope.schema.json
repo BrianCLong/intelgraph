@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Envelope",
+  "type": "object",
+  "required": ["tenantId", "source", "kind", "type", "payload", "observedAt", "hash", "provenance"],
+  "properties": {
+    "tenantId": { "type": "string" },
+    "source": {
+      "type": "object",
+      "required": ["name", "license"],
+      "properties": {
+        "name": { "type": "string" },
+        "url": { "type": "string", "format": "uri" },
+        "license": { "type": "string" }
+      }
+    },
+    "kind": { "enum": ["ENTITY", "EDGE"] },
+    "type": { "type": "string" },
+    "payload": {},
+    "observedAt": { "type": "string", "format": "date-time" },
+    "hash": { "type": "string" },
+    "policyLabels": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["chain"],
+      "properties": {
+        "chain": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["actor", "tool", "inputHash", "outputHash", "timestamp"],
+            "properties": {
+              "actor": { "type": "string" },
+              "tool": { "type": "string" },
+              "inputHash": { "type": "string" },
+              "outputHash": { "type": "string" },
+              "timestamp": { "type": "string", "format": "date-time" },
+              "parameters": { "type": "object" }
+            }
+          }
+        }
+      }
+    },
+    "dedupeKey": { "type": "string" }
+  }
+}

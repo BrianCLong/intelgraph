@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Edge",
+  "type": "object",
+  "required": ["id", "type", "from", "to"],
+  "properties": {
+    "id": { "type": "string" },
+    "type": {
+      "enum": [
+        "relatesTo",
+        "locatedAt",
+        "participatesIn",
+        "derivedFrom",
+        "mentions",
+        "contradicts",
+        "supports",
+        "mergedInto"
+      ]
+    },
+    "from": { "type": "string" },
+    "to": { "type": "string" },
+    "properties": { "type": "object" }
+  }
+}
