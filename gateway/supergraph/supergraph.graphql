@@ -1,0 +1,41 @@
+schema
+  @core(feature: "https://specs.apollo.dev/core/v0.2")
+  @core(feature: "https://specs.apollo.dev/join/v0.3") {
+  query: Query
+}
+
+interface Node @interfaceObject {
+  id: ID!
+}
+
+type Query {
+  node(id: ID!): Node
+}
+
+type Claim implements Node @key(fields: "id") {
+  id: ID!
+}
+
+type Evidence implements Node @key(fields: "id") {
+  id: ID!
+}
+
+type Decision implements Node @key(fields: "id") {
+  id: ID!
+}
+
+type TranslateResult implements Node @key(fields: "id") {
+  id: ID!
+}
+
+type Entity implements Node @key(fields: "id") {
+  id: ID!
+}
+
+type MergeOp implements Node @key(fields: "id") {
+  id: ID!
+}
+
+type Alert implements Node @key(fields: "id") {
+  id: ID!
+}

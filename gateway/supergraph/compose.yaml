@@ -1,0 +1,6 @@
+# Placeholder Rover configuration for supergraph composition.
+# subgraphs:
+#   prov-ledger:
+#     routing_url: http://prov-ledger/graphql
+#     schema:
+#       file: ./prov-ledger.graphql

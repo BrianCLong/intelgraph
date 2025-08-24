@@ -1,0 +1,32 @@
+{
+  "name": "intelgraph-gateway",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@apollo/server": "^4.11.0",
+    "@apollo/gateway": "^2.6.4",
+    "graphql": "^16.8.1",
+    "graphql-query-complexity": "^0.12.0",
+    "pino": "^8.17.0",
+    "redis": "^5.8.1",
+    "dataloader": "^2.2.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.11.30",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.6",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3",
+    "tsx": "^4.7.0",
+    "eslint": "^8.57.0",
+    "@typescript-eslint/eslint-plugin": "^8.15.0",
+    "@typescript-eslint/parser": "^8.15.0"
+  }
+}
