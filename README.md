@@ -901,3 +901,17 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **IntelGraph Platform** - Next-Generation Intelligence Analysis
+
+## Entity Resolution (GA-EntityRes)
+
+```
+[Blocking] -> [Pairwise] -> [Clustering] -> [Canonical]
+```
+
+Run locally:
+
+```bash
+npm install
+npm test packages/common-types packages/gateway packages/web
+pytest packages/er
+```

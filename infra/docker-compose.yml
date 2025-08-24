@@ -1,0 +1,17 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: example
+    ports: ['5432:5432']
+  gateway:
+    build: ../packages/gateway
+    command: npm start
+    ports: ['4000:4000']
+    depends_on: [postgres]
+  er:
+    build: ../packages/er
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    ports: ['8000:8000']
+    depends_on: [postgres]

@@ -1,0 +1,24 @@
+{
+  "name": "@intelgraph/web",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "jest"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "jquery": "^3.7.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.3",
+    "@types/jquery": "^3.5.29",
+    "ts-jest": "^29.2.6",
+    "@types/jest": "^29.5.14",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/jest-dom": "^6.4.2"
+  }
+}
