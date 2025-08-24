@@ -1,0 +1,10 @@
+{
+  "name": "ingest-gw",
+  "version": "0.1.0",
+  "type": "module",
+  "dependencies": {
+    "fastify": "^4.28.0",
+    "kafkajs": "^2.2.4",
+    "uuid": "^9.0.1"
+  }
+}
