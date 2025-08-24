@@ -1,0 +1,27 @@
+name: rapid-service
+
+on:
+  push:
+    paths:
+      - 'services/rapid-service/**'
+      - '.github/workflows/rapid-service.yml'
+  pull_request:
+    paths:
+      - 'services/rapid-service/**'
+      - '.github/workflows/rapid-service.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/rapid-service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - run: npm ci
+      - run: npm test
+      - run: docker build -t rapid-service .
+      - run: docker run -d -p 3000:3000 --name rapid-service rapid-service && sleep 3 && curl -f http://localhost:3000/health && docker stop rapid-service

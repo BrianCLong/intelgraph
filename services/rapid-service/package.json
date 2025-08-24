@@ -1,0 +1,19 @@
+{
+  "name": "rapid-service",
+  "version": "0.1.0",
+  "description": "Sample microservice with health endpoint",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "pino": "^8.17.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3"
+  }
+}
