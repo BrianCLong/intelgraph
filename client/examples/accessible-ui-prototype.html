@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Accessible Prototype</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 0;
+        padding: 1rem;
+      }
+      header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .mode-toggle button {
+        margin-right: 0.5rem;
+      }
+      button:focus,
+      input:focus {
+        outline: 2px solid #005fcc;
+        outline-offset: 2px;
+      }
+      main {
+        margin-top: 1rem;
+        max-width: 600px;
+      }
+      ul {
+        padding: 0;
+      }
+      li {
+        list-style: none;
+        margin: 0.5rem 0;
+      }
+      @media (max-width: 600px) {
+        header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>IntelGraph Mock Search</h1>
+      <div class="mode-toggle" role="group" aria-label="Interaction mode">
+        <button id="minimalBtn" aria-pressed="true">Minimal Path</button>
+        <button id="copilotBtn" aria-pressed="false">Assistive Copilot</button>
+        <button id="powerBtn" aria-pressed="false">Power User</button>
+      </div>
+    </header>
+
+    <main>
+      <form id="searchForm">
+        <label for="searchInput">Search reports</label>
+        <input id="searchInput" type="text" />
+        <button type="submit">Search</button>
+      </form>
+      <p id="assistiveHint" role="status" aria-live="polite" hidden>Hint: try "cyber threat"</p>
+      <ul id="results" role="list"></ul>
+    </main>
+
+    <script>
+      const data = [
+        { id: 1, title: 'Supply chain risk' },
+        { id: 2, title: 'GeoInt imagery update' },
+        { id: 3, title: 'Cyber threat bulletin' },
+      ];
+      let mode = 'minimal';
+      const resultsEl = document.getElementById('results');
+      const hint = document.getElementById('assistiveHint');
+      const searchInput = document.getElementById('searchInput');
+      const logEvent = (name, detail) => {
+        console.log('event', name, detail);
+      };
+
+      function renderResults(items) {
+        resultsEl.innerHTML = '';
+        items.forEach((item) => {
+          const li = document.createElement('li');
+          const btn = document.createElement('button');
+          btn.textContent = item.title;
+          btn.addEventListener('click', () => logEvent('select_item', { id: item.id }));
+          li.appendChild(btn);
+          resultsEl.appendChild(li);
+        });
+      }
+
+      renderResults(data);
+
+      document.getElementById('searchForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const q = searchInput.value.toLowerCase();
+        const filtered = data.filter((d) => d.title.toLowerCase().includes(q));
+        renderResults(filtered);
+        logEvent('search', { query: q });
+      });
+
+      function setMode(newMode) {
+        mode = newMode;
+        document.querySelectorAll('.mode-toggle button').forEach((btn) => {
+          btn.setAttribute('aria-pressed', btn.id.startsWith(mode));
+        });
+        hint.hidden = mode !== 'copilot';
+        logEvent('variant_change', { variant: mode });
+      }
+
+      document.getElementById('minimalBtn').addEventListener('click', () => setMode('minimal'));
+      document.getElementById('copilotBtn').addEventListener('click', () => setMode('copilot'));
+      document.getElementById('powerBtn').addEventListener('click', () => setMode('power'));
+
+      window.addEventListener('keydown', (e) => {
+        if (mode === 'power' && e.key === '/') {
+          e.preventDefault();
+          searchInput.focus();
+        }
+      });
+    </script>
+  </body>
+</html>
