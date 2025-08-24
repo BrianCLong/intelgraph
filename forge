@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: forge {build|attest} [args...]" >&2
+}
+
+cmd=${1:-}
+shift || true
+
+case "$cmd" in
+  build)
+    cache_flags=""
+    if [[ -n "${FORGE_REMOTE_CACHE:-}" ]]; then
+      cache_flags="--remote_cache=$FORGE_REMOTE_CACHE"
+      if [[ "${FORGE_CACHE_ONLY:-false}" == "true" ]]; then
+        cache_flags+=" --noremote_upload_local_results"
+      fi
+    fi
+    nix-shell --pure --run "bazel build $* $cache_flags"
+    ;;
+  attest)
+    artifact=${1:-}
+    if [[ -z "$artifact" ]]; then
+      usage; exit 1; fi
+    shift || true
+    if command -v cyclonedx-bom >/dev/null 2>&1; then
+      cyclonedx-bom -o "${artifact}.sbom.json" "$artifact"
+    else
+      echo "cyclonedx-bom not found" >&2
+      exit 1
+    fi
+    echo '{"slsa":"L3","artifact":"'"$artifact"'"}' > "${artifact}.provenance.json"
+    ;;
+  *)
+    usage
+    exit 1
+    ;;
+esac

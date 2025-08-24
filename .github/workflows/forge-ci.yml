@@ -1,0 +1,28 @@
+name: Forge CI
+
+on:
+  workflow_call:
+    inputs:
+      cache-only:
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@a5ac7e51b4109f5124f9564e9f05e504dfbe8c05 # v4.1.7
+      - uses: cachix/install-nix-action@fc6e360bedc9ee72d75e701397f0bb30dce77568 # v31.5.2
+      - uses: bazel-contrib/setup-bazel@4fd964a13a440a8aeb0be47350db2fc640f19ca8 # 0.15.0
+      - name: Build
+        env:
+          FORGE_CACHE_ONLY: ${{ inputs.cache-only }}
+        run: ./forge build //...
+      - name: Attest
+        if: ${{ !inputs.cache-only }}
+        run: ./forge attest bazel-bin
+      - uses: actions/upload-artifact@a8a3f3054ee345891c80fa8aa84a2b65b824e06a # v4.3.3
+        if: ${{ !inputs.cache-only }}
+        with:
+          name: sbom
+          path: bazel-bin/**/*.sbom.json
