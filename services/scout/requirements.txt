@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+hnswlib
+rank-bm25
+sentence-transformers
+requests
