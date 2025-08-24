@@ -1,0 +1,49 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: example
+    ports:
+      - '5432:5432'
+  redis:
+    image: redis:7
+    ports:
+      - '6379:6379'
+  finintel:
+    build: ../packages/finintel
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - '8000:8000'
+  gateway:
+    build: ../packages/gateway
+    depends_on:
+      - finintel
+    ports:
+      - '4000:4000'
+  worker:
+    build: ../packages/worker
+    depends_on:
+      - finintel
+      - redis
+  web:
+    build: ../packages/web
+    depends_on:
+      - gateway
+    ports:
+      - '3000:3000'
+  neo4j:
+    image: neo4j:5
+    ports:
+      - '7474:7474'
+      - '7687:7687'
+  minio:
+    image: minio/minio
+    command: server /data
+    environment:
+      MINIO_ACCESS_KEY: minio
+      MINIO_SECRET_KEY: minio123
+    ports:
+      - '9000:9000'

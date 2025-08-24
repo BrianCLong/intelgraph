@@ -1,0 +1,9 @@
+[project]
+name = "finintel-worker"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = ["celery", "redis"]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
