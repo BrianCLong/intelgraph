@@ -12,6 +12,8 @@ import monitoringRouter from "./routes/monitoring.js";
 import aiRouter from "./routes/ai.js";
 import { register } from "./monitoring/metrics.js";
 import rbacRouter from "./routes/rbacRoutes.js";
+import synthRouter from "./routes/synthRoutes.js";
+import privacyRouter from "./routes/privacyRoutes.js";
 import { typeDefs } from "./graphql/schema.js";
 import resolvers from "./graphql/resolvers/index.js";
 import { getContext } from "./lib/auth.js";
@@ -42,6 +44,8 @@ export const createApp = async () => {
   app.use("/monitoring", monitoringRouter);
   app.use("/api/ai", aiRouter);
   app.use("/rbac", rbacRouter);
+  app.use("/synth", synthRouter);
+  app.use("/privacy", privacyRouter);
   app.get("/metrics", async (_req, res) => {
     res.set("Content-Type", register.contentType);
     res.end(await register.metrics());
