@@ -81,6 +81,9 @@ function Dashboard() {
         <Button sx={{ ml: 2 }} variant="outlined" onClick={() => setShowTemplateModal(true)} size="large">
           Start from Template
         </Button>
+        <Button sx={{ ml: 2 }} variant="outlined" onClick={() => navigate('/dashboard/designer')} size="large">
+          Customize Dashboard
+        </Button>
         <Button sx={{ ml: 2 }} variant="outlined" onClick={() => createAlert({ variables: { title: 'Demo alert', message: 'This is a demo alert from Dashboard' } })}>
           Send Demo Alert
         </Button>

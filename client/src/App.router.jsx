@@ -58,6 +58,7 @@ import ExecutiveDashboard from "./features/wargame/ExecutiveDashboard"; // WAR-G
 import { MilitaryTech } from "@mui/icons-material"; // WAR-GAMED SIMULATION - FOR DECISION SUPPORT ONLY
 import AccessIntelPage from "./features/rbac/AccessIntelPage.jsx";
 import { Security } from "@mui/icons-material";
+import DashboardDesigner from "./components/dashboard/DashboardDesigner.jsx";
 
 // Navigation items
 const navigationItems = [
@@ -606,6 +607,7 @@ function MainLayout() {
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/dashboard/designer" element={<DashboardDesigner />} />
             <Route path="/investigations" element={<InvestigationsPage />} />
             <Route path="/graph" element={<GraphExplorerPage />} />
             <Route path="/copilot" element={<CopilotPage />} />
