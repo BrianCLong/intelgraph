@@ -1,0 +1,9 @@
+{
+  "name": "@intelgraph/privacy-js",
+  "version": "0.1.0",
+  "main": "index.js",
+  "type": "module",
+  "dependencies": {
+    "axios": "^1.11.0"
+  }
+}
