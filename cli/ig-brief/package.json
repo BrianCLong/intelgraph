@@ -1,0 +1,7 @@
+{
+  "name": "ig-brief",
+  "version": "0.0.1",
+  "bin": {
+    "ig-brief": "index.js"
+  }
+}

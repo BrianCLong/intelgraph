@@ -1,0 +1,8 @@
+type BriefDocument {
+  id: ID!
+  title: String
+}
+
+extend type Query {
+  brief(id: ID!): BriefDocument
+}
