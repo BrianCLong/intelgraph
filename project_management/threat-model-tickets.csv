@@ -1,0 +1,8 @@
+Title,Rationale,Acceptance Tests
+"Add JWT and mTLS authentication to provenance ledger","Prevent spoofing of ledger API","- Requests without valid JWT are rejected\n- Connections without client cert fail\n- Authorized requests succeed"
+"Implement hash-chained append-only ledger","Detect tampering with provenance records","- Each entry stores previous hash\n- Tampering test triggers integrity error\n- Unit tests cover hash chain"
+"Pseudonymize and encrypt ledger identifiers","Reduce linkability and information disclosure","- User IDs stored as salted hashes\n- PII fields encrypted at rest\n- Decryption requires proper keys"
+"Introduce rate limiting middleware","Mitigate denial of service attacks","- Burst requests beyond threshold return 429\n- Legitimate traffic under limit succeeds\n- Rate limit metrics exposed"
+"Enforce no-secret-string ESLint rule","Prevent accidental secret commits in code","- ESLint fails on hard-coded secrets\n- Pre-commit hook runs lint rule\n- CI blocks violating commits"
+"Integrate gitleaks secret scanning in CI","Detect leaked secrets across repository","- CI job runs gitleaks on PRs\n- Builds fail when secrets detected\n- False positives can be suppressed"
+"Run npm audit and pip-audit in pipeline","Catch vulnerable dependencies early","- CI step fails on high severity issues\n- Audit reports stored in artifacts\n- Exceptions require documented justification"
