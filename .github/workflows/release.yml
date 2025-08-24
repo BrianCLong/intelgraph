@@ -1,46 +1,52 @@
-name: Release
+name: release
 on:
   push:
-    branches:
-      - main
-
+    tags: ["v*.*.*"]
+permissions:
+  contents: read
+  id-token: write
+  packages: write
 jobs:
-  release:
-    name: Release
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-      id-token: write # for provenance
+  build_sign_attest:
+    runs-on: self-hosted
     steps:
-      - name: Checkout Repo
-        uses: actions/checkout@a5ac7e51b4109f5124f9564e9f05e504dfbe8c05 # v4.1.7
-
-      - name: Setup Node.js
-        uses: actions/setup-node@8f152de45cc393bb48ce5d89d36b731f54556e65 # v4.0.2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 18
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Create Release Pull Request or Publish to npm
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          publish: npm run release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
+          node-version: '20'
+      - run: corepack enable && pnpm i --frozen-lockfile
+      - name: Build image (pinned base)
+        run: |
+          BASE_DIGEST=$(crane digest cgr.dev/chainguard/node:20)
+          docker buildx build \
+            --build-arg BASE_DIGEST=${BASE_DIGEST} \
+            --label org.opencontainers.image.revision=${GITHUB_SHA} \
+            --provenance=false \
+            -t ghcr.io/${{ github.repository }}/app:${GITHUB_SHA} \
+            -t ghcr.io/${{ github.repository }}/app:${GITHUB_REF_NAME} \
+            --push .
       - name: Generate SBOM
-        if: steps.changesets.outputs.published == 'true'
-        uses: CycloneDX/gh-node-module-generatebom@b266740b26029650ad7e1b18555b2451325c9853 # v3.0.0
+        run: syft ghcr.io/${{ github.repository }}/app:${GITHUB_SHA} -o spdx-json=sbom.spdx.json
+      - name: Vulnerability scan
+        run: trivy image --scanners vuln --format json --severity CRITICAL,HIGH \
+             --ignore-unfixed --exit-code 0 ghcr.io/${{ github.repository }}/app:${GITHUB_SHA} > trivy.json
+      - name: Enforce vuln budget
+        run: node scripts/enforceBudget.js trivy.json --critical 0 --high 3
+      - name: Cosign sign (keyless OIDC)
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: cosign sign ghcr.io/${{ github.repository }}/app@$(crane digest ghcr.io/${{ github.repository }}/app:${GITHUB_SHA})
+      - name: SLSA provenance attestation
+        run: cosign attest --predicate slsa/predicate.json --type slsaprovenance \
+             ghcr.io/${{ github.repository }}/app@$(crane digest ghcr.io/${{ github.repository }}/app:${GITHUB_SHA})
+      - name: Trust report
+        run: node scripts/trustReport.js --image ghcr.io/${{ github.repository }}/app:${GITHUB_SHA} \
+             --sbom sbom.spdx.json --scan trivy.json > trust-report.json
+      - uses: actions/upload-artifact@v4
         with:
-          output: 'bom.xml'
+          name: trust-artifacts
+          path: |
+            sbom.spdx.json
+            trivy.json
+            trust-report.json
 
-      - name: Upload SBOM to Release
-        if: steps.changesets.outputs.published == 'true'
-        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
-        with:
-          files: bom.xml
