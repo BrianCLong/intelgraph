@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Wizard Fixture Admin</title>
+  </head>
+  <body>
+    <h1>Simulated Fixture Editor</h1>
+    <textarea id="fixtures" style="width:100%;height:300px;"></textarea>
+    <br />
+    <button onclick="save()">Save</button>
+    <script>
+      async function load() {
+        const res = await fetch('/api/wizard/fixtures');
+        document.getElementById('fixtures').value = JSON.stringify(await res.json(), null, 2);
+      }
+      async function save() {
+        try {
+          const data = JSON.parse(document.getElementById('fixtures').value);
+          await fetch('/api/wizard/fixtures', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+          });
+          alert('Saved');
+        } catch (e) {
+          alert('Invalid JSON');
+        }
+      }
+      load();
+    </script>
+  </body>
+</html>
