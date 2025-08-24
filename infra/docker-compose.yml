@@ -1,0 +1,43 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+  neo4j:
+    image: neo4j:5
+    environment:
+      - NEO4J_AUTH=neo4j/test
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+  minio:
+    image: minio/minio
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+    ports:
+      - "9000:9000"
+  docs:
+    build: ../packages/docs
+    environment:
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "8000:8000"
+  gateway:
+    build: ../packages/gateway
+    environment:
+      - NODE_ENV=development
+    ports:
+      - "4000:4000"
+  web:
+    build: ../packages/web
+    ports:
+      - "5173:5173"

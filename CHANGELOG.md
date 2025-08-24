@@ -170,7 +170,6 @@ c0a7a6cccf8ae11d6b011d570977f7df577de30f - IntelGraph Developer, 3 days ago : GN
 ef69d551597c8029bed6d0c3cd528769919176e9 - IntelGraph Developer, 3 days ago : GNN
 e5578e3788bef9574149d7a8c97dc5cb0f0a37af - IntelGraph Developer, 3 days ago : Issues
 759b787887c22180cf4a564bd45e8a484b0fcf3d - IntelGraph Developer, 3 days ago : roadmap: expand v0.2.0/v0.3.0 scope with AI, collab, monitoring, devops; add helper to set PROJECT_URL; extend label set; sync backlog to issues
-fa55b5635c4f75f05c5ae613017c02ab019274f3 - IntelGraph Developer, 3 days ago : Update package-lock.json
 936629780008a143201be560e59c50210332baeb - IntelGraph Developer, 3 days ago : ci(projects,smoke): auto-add issues/PRs to GitHub Project via var PROJECT_URL; add docker-compose smoke test; add resolver unit tests; harden DB indexes
 0063ccbaa9a73dca3e73fb2be35311f6584d804b - IntelGraph Developer, 3 days ago : ops(issues): harden bootstrap flow; add Node-based CSV parser; normalize assignees to OWNER; auto-create due:* labels
 883974b6993c4f963c753fddc5f5254f8a7751b9 - IntelGraph Developer, 3 days ago : db(schema): extend Postgres baseline (users, roles, entities, relationships, audit_events); add Neo4j constraints; add health test with lightweight app factory

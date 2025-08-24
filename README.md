@@ -901,3 +901,16 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **IntelGraph Platform** - Next-Generation Intelligence Analysis
+
+## GA-DocsNLP Quickstart
+
+```bash
+npm run dev # starts gateway and web
+uvicorn packages.docs.app.main:app --reload
+```
+
+### Pipeline
+
+```
+Upload -> Parse -> OCR -> NER -> Link -> Redact -> Export
+```

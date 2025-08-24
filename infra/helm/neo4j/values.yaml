@@ -1,0 +1,7 @@
+replicaCount: 1
+image:
+  repository: $svc
+  tag: latest
+service:
+  type: ClusterIP
+  port: 80

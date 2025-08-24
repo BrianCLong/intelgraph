@@ -1,0 +1,25 @@
+{
+  "name": "@intelgraph/web",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@reduxjs/toolkit": "^2.2.3",
+    "react-redux": "^9.1.2",
+    "jquery": "^3.7.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3",
+    "vite": "^5.0.0",
+    "@types/react": "^18.2.16",
+    "@types/react-dom": "^18.2.7",
+    "@types/jquery": "^3.5.16"
+  },
+  "license": "MIT"
+}

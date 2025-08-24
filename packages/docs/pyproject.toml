@@ -1,0 +1,14 @@
+[project]
+name = "docs"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi",
+  "reportlab",
+  "uvicorn",
+  "pydantic",
+  "PyPDF2"
+]
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
