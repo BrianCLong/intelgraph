@@ -1,7 +1,10 @@
-frontend: { - 'apps/frontend/**' }
-backend: { - 'apps/api/**' }
-analytics: { - 'apps/worker/**' }
-graphql: { - 'packages/graphql/**' }
-db: { - 'packages/db/**' }
-neo4j: { - 'packages/neo4j/**' }
-infra: { - 'infra/**' }
+gateway:
+  - changed-files:
+      - any-glob-to-any-file: ['gateway/**']
+risk/critical:
+  - changed-files:
+      - any-glob-to-any-file: ['policies/**', 'auth/**', 'db/migrations/**']
+backport-to-v3.0.x:
+  - base-branch: 'main'
+    changed-files:
+      - any-glob-to-any-file: ['gateway/**','stream/**','security/**']

@@ -1,1 +1,6 @@
-# MVP-1++ Codeowners
+# Critical CODEOWNERS surfaces
+/gateway/**        @platform-eng @secops
+/policies/**       @secops
+/stream/**         @platform-eng
+/infra/**          @sre-team
+/docs/compliance/** @secops @legal

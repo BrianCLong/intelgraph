@@ -1,0 +1,12 @@
+name: Merge Queue
+on:
+  merge_group:
+    types: [checks_requested]
+jobs:
+  queue-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: make e2e

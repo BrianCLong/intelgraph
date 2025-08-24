@@ -1,0 +1,29 @@
+name: PR Gates
+on: [pull_request]
+jobs:
+  build-test-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Lint & Unit
+        run: |
+          npm run lint
+          npm test
+      - name: Policy Tests (OPA)
+        run: make opa_test
+      - name: SBOM & License
+        run: |
+          make sbom
+          make license_scan
+      - name: SAST (semgrep)
+        run: make semgrep
+      - name: Container Scan (Trivy)
+        run: make trivy
+      - name: Conventional Commits
+        uses: webiny/action-conventional-commits@v1.3.0
