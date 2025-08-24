@@ -1,0 +1,46 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: example
+    ports:
+      - '5432:5432'
+  redis:
+    image: redis:7
+    ports:
+      - '6379:6379'
+  neo4j:
+    image: neo4j:5
+    environment:
+      NEO4J_AUTH: neo4j/devpass
+    ports:
+      - '7474:7474'
+      - '7687:7687'
+  minio:
+    image: minio/minio
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: miniopass
+    ports:
+      - '9000:9000'
+  graphai:
+    build: ../packages/graphai
+    environment:
+      DATABASE_URL: postgresql://postgres:example@postgres:5432/postgres
+    ports:
+      - '8000:8000'
+  gateway:
+    build: ../packages/gateway
+    ports:
+      - '4000:4000'
+  worker:
+    build: ../packages/worker
+    depends_on:
+      - graphai
+      - redis
+  web:
+    build: ../packages/web
+    ports:
+      - '3000:3000'

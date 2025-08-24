@@ -1,0 +1,19 @@
+[project]
+name = "graphai"
+version = "0.1.0"
+description = "GA-GraphAI service"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi",
+  "uvicorn",
+  "networkx",
+  "numpy",
+  "pandas",
+  "node2vec",
+  "scikit-learn"
+]
+[project.optional-dependencies]
+test = ["pytest"]
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
