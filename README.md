@@ -901,3 +901,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **IntelGraph Platform** - Next-Generation Intelligence Analysis
+
+## GA-Ontology Vertical Slice
+
+```
+define → propose → approve → validate → map → migrate → export
+```
+
+A minimal ontology service, gateway API, and web console live under `packages/`. Run `docker-compose up` inside `infra/` to explore the baseline ontology and governance workflow.

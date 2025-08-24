@@ -1,0 +1,20 @@
+[project]
+name = "ontology-service"
+version = "0.1.0"
+description = "GA-Ontology FastAPI service"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi",
+  "uvicorn",
+  "pydantic",
+  "rdflib",
+  "pyshacl",
+  "jinja2",
+  "networkx"
+]
+
+[project.optional-dependencies]
+test = ["pytest", "httpx"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
