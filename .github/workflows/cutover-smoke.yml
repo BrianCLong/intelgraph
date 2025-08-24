@@ -1,0 +1,281 @@
+name: Cutover Smoke (Rebrand)
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Legacy docs base URL (e.g., https://docs.intelgraph.com)
+        required: true
+      new_ok_host:
+        description: New docs host (e.g., https://docs.summit.com) for 200 checks
+        required: false
+      image_tag:
+        description: Image tag or commit SHA to verify dual tags
+        required: true
+      sdk_smoke:
+        description: Run optional SDK install smoke (requires NPM_TOKEN)
+        required: false
+        default: 'false'
+  workflow_call:
+    inputs:
+      base_url:
+        required: true
+        type: string
+      new_ok_host:
+        required: false
+        type: string
+        default: ''
+      image_tag:
+        required: true
+        type: string
+      sdk_smoke:
+        required: false
+        type: string
+        default: 'false'
+    outputs:
+      issue_number:
+        description: Created Cutover Checklist issue number
+        value: ${{ jobs.checklist.outputs.issue_number }}
+      issue_url:
+        description: Created Cutover Checklist issue URL
+        value: ${{ jobs.checklist.outputs.issue_url }}
+
+jobs:
+  checklist:
+    runs-on: ubuntu-latest
+    outputs:
+      issue_number: ${{ steps.issue.outputs.number }}
+      issue_url: ${{ steps.issue.outputs.url }}
+    steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+      - name: Create Cutover Checklist issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        id: issue
+        run: |
+          set -euo pipefail
+          title="Summit Cutover Checklist — $(date -u +%Y-%m-%dT%H:%MZ)"
+          body=$(cat <<'MD'
+# Summit Cutover Checklist
+
+This issue was auto-created by the Cutover Smoke workflow to guide run-of-show.
+
+## Pre-rename (T‑2 → T‑0)
+- [ ] Confirm branch protection patterns and required checks
+- [ ] Inventory webhooks/integrations to re-auth after rename
+- [ ] Verify Actions use `${{ github.repository }}`
+- [ ] Dual-publish containers/SDKs (aliases live)
+
+## Rename & Redirects (T‑0)
+- [ ] Rename repo (intelgraph → summit)
+- [ ] Run Post-Rename GitHub Checks
+- [ ] Run Post-Rename Redirect Smoke
+- [ ] Enable docs redirects (Netlify/redirects.map)
+- [ ] Run Redirects Smoke (top‑100)
+
+## Brand Flip (T‑0)
+- [ ] Set PRODUCT_BRAND=Summit (Rollback: IntelGraph)
+- [ ] Purge CDN / cache
+- [ ] UI toast/banner shows notice
+
+## Aliases & Installs
+- [ ] Verify dual-tag images share digest for target tag
+- [ ] Helm install via summit and intelgraph alias
+- [ ] SDK install `@summit/sdk` and meta `@intelgraph/sdk`
+
+## Identity & SSO
+- [ ] Display/logo updated; EntityID/client_id unchanged
+- [ ] SSO smoke passes — no re-consent required
+
+## Observability & Backoffice
+- [ ] Metrics stable; dashboards cloned under Summit
+- [ ] Alerts healthy; brand=Summit dimension visible
+
+## Comms
+- [ ] Status banner live; in‑app toast live
+- [ ] T‑0 customer announcement published
+- [ ] FAQ updated and live
+
+## Acceptance
+- [ ] Availability ≥ 99.9% / 24h; error rate unchanged
+- [ ] Top‑100 docs 301→200; no chains > 1
+- [ ] Exports show “Summit (formerly IntelGraph)” and verify
+
+## Rollback (≤72h)
+- [ ] Flip PRODUCT_BRAND=IntelGraph; disable 301s; keep aliases
+- [ ] Restore prior HSTS; revert banners; publish advisory; open RCA
+MD
+          )
+          data=$(jq -n --arg t "$title" --arg b "$body" '{title:$t, body:$b, labels:["rebrand","cutover"]}')
+          curl -sS -X POST \
+            -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -d "$data" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues" | tee /tmp/issue.json
+          num=$(jq -r .number /tmp/issue.json)
+          url=$(jq -r .html_url /tmp/issue.json)
+          echo "Created issue: $url (#$num)"
+          echo "number=$num" >> $GITHUB_OUTPUT
+          echo "url=$url" >> $GITHUB_OUTPUT
+  redirects:
+    runs-on: ubuntu-latest
+    needs: [checklist]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run redirects smoke
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+          NEW_OK_HOST: ${{ inputs.new_ok_host }}
+        run: |
+          chmod +x scripts/smoke-redirects.sh
+          ./scripts/smoke-redirects.sh docs/legacy-top100.txt
+
+  images:
+    runs-on: ubuntu-latest
+    needs: [checklist]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify dual tags share digest (server + client)
+        env:
+          TAG: ${{ inputs.image_tag }}
+          REPO: ${{ github.repository }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+          check_pair() {
+            local intel=$1 summit=$2
+            echo "Pulling $intel and $summit"
+            docker pull "$intel" >/dev/null
+            docker pull "$summit" >/dev/null
+            # Extract digests from RepoDigests
+            d1=$(docker inspect --format='{{join .RepoDigests "\n"}}' $(docker images -q "$intel")).
+            d1=$(docker inspect --format='{{index .RepoDigests 0}}' $(docker images -q "$intel"))
+            d2=$(docker inspect --format='{{index .RepoDigests 0}}' $(docker images -q "$summit"))
+            echo "IntelGraph digest: $d1"
+            echo "Summit digest:     $d2"
+            d1=${d1#*@}
+            d2=${d2#*@}
+            if [ "$d1" != "$d2" ]; then
+              echo "Digests differ for $intel vs $summit" >&2
+              exit 1
+            fi
+            echo "[OK] Digests match: $d1"
+          }
+          check_pair \
+            ghcr.io/${REPO}-server:${TAG} \
+            ghcr.io/${OWNER}/summit-server:${TAG}
+          check_pair \
+            ghcr.io/${REPO}-client:${TAG} \
+            ghcr.io/${OWNER}/summit-client:${TAG}
+
+  helm:
+    runs-on: ubuntu-latest
+    needs: [checklist]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.0
+      - name: Lint Summit chart and verify alias
+        run: |
+          helm lint helm/summit
+          grep -q '^aliases:' -n helm/summit/Chart.yaml
+          grep -q 'intelgraph' helm/summit/Chart.yaml
+
+  sdk:
+    if: inputs.sdk_smoke == 'true'
+    runs-on: ubuntu-latest
+    needs: [checklist]
+    steps:
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with: { node-version: '18' }
+      - name: Optional SDK install smoke (skipped if no token)
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NPM_TOKEN" ]; then
+            echo "Skipping SDK smoke (no NPM_TOKEN)"; exit 0; fi
+          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
+          npm view @summit/sdk version && npm view @intelgraph/sdk version || exit 1
+          echo "[OK] SDK versions resolve"
+  summarize:
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [checklist, redirects, images, helm, sdk]
+    steps:
+      - name: Post cutover summary comment to checklist issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ needs.checklist.outputs.issue_number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          R_RESULT: ${{ needs.redirects.result }}
+          I_RESULT: ${{ needs.images.result }}
+          H_RESULT: ${{ needs.helm.result }}
+          S_RESULT: ${{ needs.sdk.result }}
+        run: |
+          set -euo pipefail
+          echo "Checklist issue #$ISSUE_NUMBER"
+          body=$(cat <<MD
+Cutover Smoke summary for run: $RUN_URL
+
+- Redirects: $R_RESULT
+- Images (dual-tag digests): $I_RESULT
+- Helm alias: $H_RESULT
+- SDK (optional): ${S_RESULT:-skipped}
+
+If any job failed, click the run link above for details.
+MD
+          )
+          jq -n --arg body "$body" '{body:$body}' > /tmp/comment.json
+          curl -sS -X POST \
+            -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -d @/tmp/comment.json \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${ISSUE_NUMBER}/comments"
+      - name: Slack notify (optional)
+        if: always()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          R_RESULT: ${{ needs.redirects.result }}
+          I_RESULT: ${{ needs.images.result }}
+          H_RESULT: ${{ needs.helm.result }}
+          S_RESULT: ${{ needs.sdk.result }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SLACK_WEBHOOK_URL:-}" ]; then echo "No SLACK_WEBHOOK_URL, skipping"; exit 0; fi
+          text="Summit Cutover Smoke: <$RUN_URL|workflow run>\n• Redirects: $R_RESULT\n• Images: $I_RESULT\n• Helm: $H_RESULT\n• SDK: ${S_RESULT:-skipped}"
+          payload=$(jq -n --arg t "$text" '{text:$t}')
+          curl -sS -X POST -H 'Content-type: application/json' --data "$payload" "$SLACK_WEBHOOK_URL"
+      - name: Teams notify (optional)
+        if: always()
+        env:
+          TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          R_RESULT: ${{ needs.redirects.result }}
+          I_RESULT: ${{ needs.images.result }}
+          H_RESULT: ${{ needs.helm.result }}
+          S_RESULT: ${{ needs.sdk.result }}
+        run: |
+          set -euo pipefail
+          if [ -z "${TEAMS_WEBHOOK_URL:-}" ]; then echo "No TEAMS_WEBHOOK_URL, skipping"; exit 0; fi
+          cat > card.json <<CARD
+          {
+            "@type": "MessageCard",
+            "@context": "http://schema.org/extensions",
+            "summary": "Summit Cutover Smoke",
+            "themeColor": "0076D7",
+            "title": "Summit Cutover Smoke",
+            "text": "Run: [$RUN_URL]($RUN_URL)\n\n- Redirects: $R_RESULT\n- Images: $I_RESULT\n- Helm: $H_RESULT\n- SDK: ${S_RESULT:-skipped}"
+          }
+          CARD
+          curl -sS -H 'Content-Type: application/json' -d @card.json "$TEAMS_WEBHOOK_URL"

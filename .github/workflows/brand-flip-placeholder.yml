@@ -1,0 +1,44 @@
+name: Brand Flip Placeholder (No-Op)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_brand:
+        description: Desired PRODUCT_BRAND (Summit or IntelGraph)
+        required: true
+        default: Summit
+      confirm:
+        description: Type 'ack' to acknowledge this workflow does NOT flip runtime brand
+        required: false
+        default: ''
+  workflow_call:
+    inputs:
+      target_brand:
+        required: true
+        type: string
+      confirm:
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  announce:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Announce no-op brand flip
+        run: |
+          echo "Requested target brand: '${{ inputs.target_brand }}'"
+          echo "NOTE: This workflow does NOT change runtime configuration."
+          echo "Flip PRODUCT_BRAND at your deployment layer (e.g., Helm values, K8s env, or secret)."
+          echo "Examples:"
+          echo "- Helm: --set env.PRODUCT_BRAND=${{ inputs.target_brand }}"
+          echo "- K8s: patch Deployment env var PRODUCT_BRAND=${{ inputs.target_brand }}"
+          echo "- Compose: export PRODUCT_BRAND=${{ inputs.target_brand }} and restart"
+          echo "Rollback: set PRODUCT_BRAND=IntelGraph"
+      - name: Require explicit ack (no-op safeguard)
+        run: |
+          if [ "${{ inputs.confirm }}" != "ack" ]; then
+            echo "Skipping (no-op). Provide confirm=ack to acknowledge this does not change runtime config." >&2
+            exit 0
+          fi
+          echo "Acknowledged no-op. Proceed with external flip as per runbook."

@@ -1,0 +1,638 @@
+# ⚖️ Multi-Vertical Policy Engine Configuration
+# Comprehensive Policy Framework for Intelligence Verticals
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: multi-vertical-policies
+  namespace: intelgraph-ga
+  labels:
+    component: policy-engine
+    version: v1.0.0
+data:
+  # Core Policy Engine Configuration
+  policy-engine-config.yaml: |
+    engine:
+      version: "2.0.0"
+      mode: "strict"
+      evaluation_timeout: "5s"
+      cache_ttl: "300s"
+      decision_logging: true
+      metrics_enabled: true
+      
+    decisions:
+      default_effect: "DENY"
+      require_reason: true
+      human_readable: true
+      appeal_process: true
+      audit_all: true
+      
+    performance:
+      max_concurrent_evaluations: 1000
+      policy_cache_size: 10000
+      decision_cache_size: 50000
+      batch_evaluation: true
+
+  # OSINT (Open Source Intelligence) Policies
+  osint-policies.yaml: |
+    # OSINT Domain Policies
+    policies:
+    - id: "osint-001"
+      name: "OSINT Source Access Control"
+      version: "1.0"
+      priority: 100
+      effect: "ALLOW"
+      conditions:
+        - role: ["ANALYST", "ADMIN", "OWNER"]
+        - purpose: "OSINT_COLLECTION"
+        - classification: ["PUBLIC", "INTERNAL"]
+        - source_verified: true
+        - attribution_required: true
+      resources:
+        - "osint:sources:*"
+        - "osint:collections:*"
+      actions: ["read", "collect", "verify"]
+      
+    - id: "osint-002"
+      name: "OSINT Source Protection"
+      version: "1.0"
+      priority: 200
+      effect: "DENY"
+      conditions:
+        - role: ["VIEWER"]
+        - source_protection_level: "CONFIDENTIAL"
+      resources:
+        - "osint:sources:protected:*"
+      reason: "Source protection requires elevated privileges"
+      
+    - id: "osint-003"
+      name: "OSINT Attribution Requirements"
+      version: "1.0"
+      priority: 150
+      effect: "CONDITIONAL"
+      conditions:
+        - action: ["publish", "distribute"]
+        - attribution_complete: true
+        - licensing_verified: true
+      resources:
+        - "osint:products:*"
+      requirements:
+        - "Complete source attribution"
+        - "License compliance verification"
+        - "Export control clearance"
+
+  # FinIntel (Financial Intelligence) Policies  
+  fintel-policies.yaml: |
+    # Financial Intelligence Domain Policies
+    policies:
+    - id: "fintel-001"
+      name: "Financial Data Access Control"
+      version: "1.0"
+      priority: 100
+      effect: "ALLOW"
+      conditions:
+        - role: ["ANALYST", "ADMIN", "OWNER"]
+        - purpose: "FINANCIAL_ANALYSIS"
+        - classification: ["INTERNAL", "CONFIDENTIAL"]
+        - pci_dss_trained: true
+        - aml_certified: true
+      resources:
+        - "fintel:transactions:*"
+        - "fintel:entities:*"
+        - "fintel:analysis:*"
+      actions: ["read", "analyze", "correlate"]
+      
+    - id: "fintel-002" 
+      name: "PII Protection in Financial Data"
+      version: "1.0"
+      priority: 200
+      effect: "CONDITIONAL"
+      conditions:
+        - data_contains_pii: true
+        - gdpr_applicable: true
+      resources:
+        - "fintel:data:personal:*"
+      requirements:
+        - "Data minimization applied"
+        - "Pseudonymization or anonymization"
+        - "Retention policy enforced"
+        - "Subject consent verified"
+      reason: "Personal data protection under GDPR/CCPA"
+      
+    - id: "fintel-003"
+      name: "AML/BSA Compliance Monitoring"
+      version: "1.0" 
+      priority: 150
+      effect: "REQUIRE"
+      conditions:
+        - action: ["flag_suspicious", "file_sar"]
+        - aml_threshold_exceeded: true
+      resources:
+        - "fintel:suspicious_activity:*"
+      requirements:
+        - "Dual analyst review"
+        - "Compliance officer approval"
+        - "Regulatory timeline adherence"
+        - "Audit trail maintenance"
+
+  # Cyber (Cybersecurity Intelligence) Policies
+  cyber-policies.yaml: |
+    # Cybersecurity Intelligence Domain Policies
+    policies:
+    - id: "cyber-001"
+      name: "Threat Intelligence Access Control"
+      version: "1.0"
+      priority: 100
+      effect: "ALLOW"
+      conditions:
+        - role: ["ANALYST", "ADMIN", "OWNER"]
+        - purpose: "THREAT_ANALYSIS"
+        - security_clearance: ["CONFIDENTIAL", "SECRET", "TOP_SECRET"]
+        - need_to_know: true
+      resources:
+        - "cyber:threats:*"
+        - "cyber:indicators:*"
+        - "cyber:attribution:*"
+      actions: ["read", "analyze", "correlate", "attribute"]
+      
+    - id: "cyber-002"
+      name: "TLP (Traffic Light Protocol) Enforcement"
+      version: "1.0"
+      priority: 200
+      effect: "CONDITIONAL"
+      conditions:
+        - tlp_marking: ["RED", "AMBER"]
+      resources:
+        - "cyber:intel:classified:*"
+      requirements:
+        - "Recipient verification"
+        - "Need-to-know validation"
+        - "Sharing restrictions enforced"
+        - "Distribution tracking"
+      reason: "TLP restrictions limit information sharing"
+      
+    - id: "cyber-003"
+      name: "Cyber Attribution Standards"
+      version: "1.0"
+      priority: 150
+      effect: "REQUIRE"
+      conditions:
+        - action: ["publish_attribution", "share_ioc"]
+        - confidence_level: ">= 85%"
+      resources:
+        - "cyber:attribution:public:*"
+      requirements:
+        - "Multi-source verification"
+        - "Peer review completed"
+        - "False positive analysis"
+        - "Legal review for public attribution"
+
+  # Tradecraft (Intelligence Methods) Policies
+  tradecraft-policies.yaml: |
+    # Intelligence Tradecraft Domain Policies
+    policies:
+    - id: "tradecraft-001"
+      name: "OPSEC Compliance Validation"
+      version: "1.0"
+      priority: 100
+      effect: "REQUIRE"
+      conditions:
+        - operation_type: ["COLLECTION", "ANALYSIS", "DISSEMINATION"]
+        - opsec_review_required: true
+      resources:
+        - "tradecraft:operations:*"
+        - "tradecraft:methods:*"
+      requirements:
+        - "OPSEC checklist completion"
+        - "Risk assessment approval"
+        - "Method validation"
+        - "Security review sign-off"
+      reason: "Operational security critical for intelligence operations"
+      
+    - id: "tradecraft-002"
+      name: "Source Protection Standards"  
+      version: "1.0"
+      priority: 200
+      effect: "CONDITIONAL"
+      conditions:
+        - source_protection_required: true
+        - compartmentalization_level: ">= 3"
+      resources:
+        - "tradecraft:sources:protected:*"
+      requirements:
+        - "Identity protection measures"
+        - "Communication security protocols"
+        - "Compartmentalized access only"
+        - "Burn notice procedures established"
+        
+    - id: "tradecraft-003"
+      name: "Intelligence Cycle Quality Control"
+      version: "1.0"
+      priority: 150
+      effect: "REQUIRE"
+      conditions:
+        - stage: ["PROCESSING", "ANALYSIS", "DISSEMINATION"]
+        - quality_gate: true
+      resources:
+        - "tradecraft:cycle:*"
+      requirements:
+        - "Structured analytical techniques applied"
+        - "Bias mitigation implemented" 
+        - "Confidence levels assigned"
+        - "Peer review completed"
+
+  # Forensics (Digital Evidence) Policies
+  forensics-policies.yaml: |
+    # Digital Forensics Domain Policies
+    policies:
+    - id: "forensics-001"
+      name: "Chain of Custody Requirements"
+      version: "1.0"
+      priority: 100
+      effect: "REQUIRE"
+      conditions:
+        - evidence_type: ["DIGITAL", "PHYSICAL", "DOCUMENTARY"]
+        - legal_admissibility_required: true
+      resources:
+        - "forensics:evidence:*"
+        - "forensics:custody:*"
+      requirements:
+        - "Cryptographic integrity verification"
+        - "Custody documentation complete"
+        - "Access logging enabled"
+        - "Tamper-evident storage"
+        - "Legal hold procedures"
+      reason: "Legal admissibility requires complete chain of custody"
+      
+    - id: "forensics-002"
+      name: "Evidence Handling Standards"
+      version: "1.0"
+      priority: 200
+      effect: "CONDITIONAL"
+      conditions:
+        - handling_standard: ["ISO_27037", "NIST_SP_800_86", "ACPO"]
+        - examiner_certification: true
+      resources:
+        - "forensics:examination:*"
+      requirements:
+        - "Standard operating procedures followed"
+        - "Tool validation completed"
+        - "Quality assurance review"
+        - "Expert testimony preparation"
+        
+    - id: "forensics-003"
+      name: "Digital Evidence Privacy Protection"
+      version: "1.0"
+      priority: 150
+      effect: "CONDITIONAL"
+      conditions:
+        - contains_personal_data: true
+        - jurisdiction: ["EU", "CA", "UK"]
+      resources:
+        - "forensics:data:personal:*"
+      requirements:
+        - "Minimization principles applied"
+        - "Proportionality assessment"
+        - "Data protection impact assessment"
+        - "Legal basis documentation"
+
+  # Cross-Vertical Integration Policies
+  cross-vertical-policies.yaml: |
+    # Cross-Domain Intelligence Integration Policies
+    policies:
+    - id: "cross-001"
+      name: "Multi-Vertical Intelligence Synthesis"
+      version: "1.0"
+      priority: 100
+      effect: "ALLOW"
+      conditions:
+        - synthesis_approved: true
+        - contributing_verticals: ">= 2"
+        - quality_threshold: ">= 90%"
+      resources:
+        - "cross:synthesis:*"
+        - "cross:fusion:*"
+      actions: ["read", "correlate", "synthesize"]
+      requirements:
+        - "All source verticals authorized"
+        - "Cross-domain validation"
+        - "Integrated quality control"
+        
+    - id: "cross-002"
+      name: "Intelligence Sharing Restrictions"
+      version: "1.0"
+      priority: 200
+      effect: "CONDITIONAL"
+      conditions:
+        - sharing_classification: ["CONFIDENTIAL", "SECRET"]
+        - recipient_clearance_verified: true
+      resources:
+        - "cross:sharing:classified:*"
+      requirements:
+        - "Recipient authorization"
+        - "Need-to-know validation"
+        - "Sharing agreement in place"
+        - "Usage restrictions acknowledged"
+        
+    - id: "cross-003"
+      name: "Workflow Handoff Validation"
+      version: "1.0"
+      priority: 150
+      effect: "REQUIRE"
+      conditions:
+        - workflow_stage: "HANDOFF"
+        - receiving_vertical: ["OSINT", "FINTEL", "CYBER", "TRADECRAFT", "FORENSICS"]
+      resources:
+        - "cross:handoff:*"
+      requirements:
+        - "Handoff checklist completion"
+        - "Context preservation"
+        - "Quality metrics transfer"
+        - "Responsibility acknowledgment"
+
+  # Policy Evaluation Rules
+  evaluation-rules.yaml: |
+    # Policy Evaluation Configuration
+    evaluation:
+      order: "priority_desc"  # Highest priority first
+      combination: "first_applicable"
+      conflict_resolution: "deny_overrides"
+      
+    context_variables:
+      user:
+        - "user_id"
+        - "tenant_id" 
+        - "roles"
+        - "permissions"
+        - "clearance_level"
+        - "certifications"
+        - "last_training"
+      
+      request:
+        - "resource"
+        - "action"
+        - "purpose"
+        - "classification"
+        - "timestamp"
+        - "ip_address"
+        - "user_agent"
+        
+      environment:
+        - "time_of_day"
+        - "day_of_week" 
+        - "location"
+        - "device_trust_level"
+        - "network_security_level"
+        
+    functions:
+      - name: "time_in_range"
+        description: "Check if current time is within specified range"
+      - name: "ip_in_subnet" 
+        description: "Check if IP address is in allowed subnet"
+      - name: "role_hierarchy"
+        description: "Validate role hierarchy and inheritance"
+      - name: "classification_dominates"
+        description: "Check classification level dominance"
+
+  # Appeal Process Configuration
+  appeals-config.yaml: |
+    # Policy Decision Appeal Process
+    appeals:
+      enabled: true
+      timeout: "72h"  # 72 hours to file appeal
+      
+    workflow:
+      - stage: "submission"
+        description: "User submits appeal with rationale"
+        timeout: "1h"
+        
+      - stage: "initial_review"
+        description: "Automated feasibility check"
+        timeout: "15m"
+        reviewers: ["system"]
+        
+      - stage: "domain_review" 
+        description: "Domain expert review"
+        timeout: "24h"
+        reviewers: ["domain_expert"]
+        
+      - stage: "security_review"
+        description: "Security team assessment"  
+        timeout: "24h"
+        reviewers: ["security_team"]
+        
+      - stage: "final_decision"
+        description: "Final decision and notification"
+        timeout: "24h"
+        reviewers: ["appeals_board"]
+        
+    notifications:
+      submission: "Appeal submitted successfully"
+      approved: "Appeal approved - access granted"
+      denied: "Appeal denied - policy upheld"
+      escalated: "Appeal escalated for additional review"
+
+  # Human-Readable Explanations
+  explanations-config.yaml: |
+    # Policy Decision Explanation Templates
+    explanations:
+      templates:
+        access_denied_role:
+          message: "Access denied: Your role '{role}' does not have permission to {action} {resource}"
+          recommendation: "Contact your administrator to request the appropriate role"
+          
+        access_denied_classification:
+          message: "Access denied: Resource classification '{resource_classification}' requires clearance level '{required_clearance}' or higher"
+          recommendation: "Ensure you have the appropriate security clearance"
+          
+        access_denied_purpose:
+          message: "Access denied: Purpose '{purpose}' is not authorized for resource '{resource}'"
+          recommendation: "Specify a valid business purpose for this access request"
+          
+        access_denied_time:
+          message: "Access denied: Resource access restricted outside of business hours ({start_time} - {end_time})"
+          recommendation: "Access this resource during authorized hours or request after-hours approval"
+          
+        access_conditional:
+          message: "Access granted with conditions: {conditions}"
+          recommendation: "Ensure all specified conditions are met throughout your session"
+          
+      context_enrichment:
+        include_policy_hierarchy: true
+        include_alternative_actions: true
+        include_approval_workflow: true
+        include_training_resources: true
+
+  # Metrics and Monitoring
+  metrics-config.yaml: |
+    # Policy Engine Metrics Configuration
+    metrics:
+      collection:
+        decision_latency: true
+        policy_evaluation_count: true
+        access_denied_reasons: true
+        appeal_success_rate: true
+        compliance_score: true
+        
+      dashboards:
+        executive:
+          - "overall_compliance_score"
+          - "access_denial_rate" 
+          - "appeal_resolution_time"
+          - "policy_effectiveness"
+          
+        operational:
+          - "policy_evaluation_latency"
+          - "cache_hit_rate"
+          - "error_rate"
+          - "concurrent_evaluations"
+          
+        security:
+          - "suspicious_access_patterns"
+          - "privilege_escalation_attempts"
+          - "classification_violations"
+          - "after_hours_access"
+          
+      alerting:
+        high_denial_rate:
+          threshold: "> 15%"
+          window: "5m"
+          severity: "warning"
+          
+        policy_evaluation_errors:
+          threshold: "> 5%"  
+          window: "1m"
+          severity: "critical"
+          
+        classification_violations:
+          threshold: "> 0"
+          window: "1m" 
+          severity: "critical"
+
+---
+# Policy Engine Service Account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ga-policy-engine
+  namespace: intelgraph-ga
+  labels:
+    component: policy-engine
+
+---
+# Policy Engine RBAC
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: policy-engine-reader
+rules:
+- apiGroups: [""]
+  resources: ["configmaps", "secrets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["services", "endpoints"]
+  verbs: ["get", "list"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: policy-engine-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: policy-engine-reader
+subjects:
+- kind: ServiceAccount
+  name: ga-policy-engine
+  namespace: intelgraph-ga
+
+---
+# Policy Engine Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ga-policy-engine
+  namespace: intelgraph-ga
+  labels:
+    app: ga-policy-engine
+    component: policy-engine
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ga-policy-engine
+  template:
+    metadata:
+      labels:
+        app: ga-policy-engine
+        component: policy-engine
+      annotations:
+        sidecar.istio.io/inject: "true"
+    spec:
+      serviceAccountName: ga-policy-engine
+      containers:
+      - name: policy-engine
+        image: intelgraph/ga-policy-engine:latest
+        ports:
+        - containerPort: 8080
+          name: http
+        - containerPort: 9090
+          name: metrics
+        env:
+        - name: POLICY_CONFIG_PATH
+          value: "/etc/policies"
+        - name: CACHE_ENABLED
+          value: "true"
+        - name: METRICS_ENABLED
+          value: "true"
+        - name: LOG_LEVEL
+          value: "INFO"
+        volumeMounts:
+        - name: policy-config
+          mountPath: /etc/policies
+          readOnly: true
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi" 
+            cpu: "500m"
+      volumes:
+      - name: policy-config
+        configMap:
+          name: multi-vertical-policies
+
+---
+# Policy Engine Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: ga-policy-engine
+  namespace: intelgraph-ga
+  labels:
+    app: ga-policy-engine
+    component: policy-engine
+spec:
+  selector:
+    app: ga-policy-engine
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  - name: metrics
+    port: 9090
+    targetPort: 9090

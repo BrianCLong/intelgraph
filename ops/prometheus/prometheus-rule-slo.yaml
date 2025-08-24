@@ -1,0 +1,20 @@
+groups:
+- name: intelgraph-slos
+  interval: 30s
+  rules:
+  - record: job:graph_query_latency_p95:rate5m
+    expr: histogram_quantile(0.95, sum(rate(graph_query_latency_seconds_bucket[5m])) by (le))
+  - alert: GraphQuerySLOBurnFast
+    expr: job:graph_query_latency_p95:rate5m > 1.5
+    for: 10m
+    labels: { severity: page, domain: "graph" }
+    annotations:
+      summary: "p95 graph query latency breaching"
+      description: "p95 > 1.5s for 10m (N=3 hops, ~50k nodes)."
+  - alert: ErrorBudgetBurn2x
+    expr: (sum(rate(http_request_errors_total[5m])) / sum(rate(http_requests_total[5m]))) > 0.02
+    for: 15m
+    labels: { severity: page, domain: "api" }
+    annotations:
+      summary: "Error budget burning >2x"
+      description: "Investigate hot paths; check cost guards & caches."

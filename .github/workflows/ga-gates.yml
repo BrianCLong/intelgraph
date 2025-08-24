@@ -1,0 +1,73 @@
+name: GA Gates (release)
+on:
+  push: { branches: [ "release/ga-2025-08" ] }
+  workflow_dispatch: {}
+jobs:
+  slo-k6:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: grafana/k6-action@v0.3.1
+        with: { filename: load/k6-graphql-slo.js }
+        env:
+          GRAPHQL_URL: ${{ secrets.GRAPHQL_URL }}
+          SEED_NODE: ${{ vars.SEED_NODE }}
+  opa-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: open-policy-agent/opa-gh-action@v2
+        with:
+          query: 'data.intelgraph.policy.export.allow'
+          policy-path: 'policy/opa'
+          input: '{"action":"export","dataset":{"sources":[{"license":"DISALLOW_EXPORT","owner":"Acme"}]}}'
+          expect: 'false'
+  cypher-acceptance:
+    runs-on: ubuntu-latest
+    services:
+      neo4j:
+        image: neo4j:5
+        ports: [ "7474:7474", "7687:7687" ]
+        env: { NEO4J_AUTH: neo4j/test }
+        options: >-
+          --health-cmd "cypher-shell -u neo4j -p test 'RETURN 1'"
+          --health-interval 10s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cypher probes
+        run: |
+          echo "MATCH (n) RETURN count(n)" | cypher-shell -u neo4j -p test
+          cat db/cypher/acceptance.cypher | cypher-shell -u neo4j -p test
+  prov-verifier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - name: Run verifier against sample bundle
+        run: |
+          python -m tools.prov-verifier.igprov ./samples/disclosure-bundle || exit 1
+  golden-prompts:
+    runs-on: ubuntu-latest
+    services:
+      neo4j:
+        image: neo4j:5
+        ports: [ "7474:7474", "7687:7687" ]
+        env: { NEO4J_AUTH: neo4j/test }
+        options: >-
+          --health-cmd "cypher-shell -u neo4j -p test 'RETURN 1'"
+          --health-interval 10s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '18' }
+      - name: Validate golden prompts (≥95% valid of 50)
+        env:
+          PROMPTS_DIR: samples/golden-prompts/cypher
+          THRESHOLD: '0.95'
+          MIN_COUNT: '50'
+          NEO4J_HOST: localhost
+          NEO4J_USER: neo4j
+          NEO4J_PASS: test
+        run: |
+          node tools/golden-prompts/validate.js

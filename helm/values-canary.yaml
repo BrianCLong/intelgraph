@@ -1,0 +1,24 @@
+
+ingress:
+  annotations:
+    nginx.ingress.kubernetes.io/canary: "true"
+    nginx.ingress.kubernetes.io/canary-weight: "5"
+
+gateway:
+  graphql:
+    persistedQueriesOnly: true
+    introspection: false
+    depthLimit: 10
+    complexityLimit: 5000
+  tracing:
+    otel: { enabled: true }
+
+opa:
+  enabled: true
+  policiesConfigMap: intelgraph-opa-policies
+
+prometheusRules:
+  enabled: true
+  ruleFiles:
+    - ops/prometheus/prometheus-rule-slo.yaml
+

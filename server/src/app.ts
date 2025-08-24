@@ -21,6 +21,7 @@ import { fileURLToPath } from "url";
 import jwt from "jsonwebtoken"; // Assuming jsonwebtoken is available or will be installed
 import { Request, Response, NextFunction } from "express"; // Import types for middleware
 import logger from './config/logger';
+import { brandHeaders } from './middleware/brandHeaders';
 
 export const createApp = async () => {
   const __filename = fileURLToPath(import.meta.url);
@@ -37,6 +38,8 @@ export const createApp = async () => {
   );
   app.use(pinoHttp({ logger: appLogger, redact: ["req.headers.authorization"] }));
   app.use(auditLogger);
+  // Brand header alias and banner
+  app.use(brandHeaders());
 
   // Rate limiting (exempt monitoring endpoints)
   app.use("/monitoring", monitoringRouter);

@@ -1,0 +1,1 @@
+MATCH (n)-[:REL]->(m) RETURN DISTINCT m LIMIT 1;

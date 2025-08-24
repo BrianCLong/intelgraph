@@ -1,0 +1,64 @@
+name: Post-Rename GitHub Checks
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_repo:
+        description: Expected repo name after rename (e.g., summit or summit-platform)
+        required: false
+        default: ''
+      expected_owner:
+        description: Expected owner/org (optional)
+        required: false
+        default: ''
+  workflow_call:
+    inputs:
+      expected_repo:
+        description: Expected repo name after rename (e.g., summit or summit-platform)
+        required: false
+        type: string
+        default: ''
+      expected_owner:
+        description: Expected owner/org (optional)
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  sanity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print repository context
+        run: |
+          echo "GITHUB_REPOSITORY=$GITHUB_REPOSITORY"
+          echo "GITHUB_REPOSITORY_OWNER=$GITHUB_REPOSITORY_OWNER"
+          echo "GITHUB_REF=$GITHUB_REF"
+          echo "Repo URL: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+      - name: Verify expected repo/owner (optional)
+        env:
+          EXPECTED_REPO: ${{ inputs.expected_repo }}
+          EXPECTED_OWNER: ${{ inputs.expected_owner }}
+        run: |
+          set -euo pipefail
+          if [ -n "$EXPECTED_REPO" ]; then
+            name=${GITHUB_REPOSITORY##*/}
+            if [ "$name" != "$EXPECTED_REPO" ]; then
+              echo "Expected repo '$EXPECTED_REPO' but found '$name'" >&2
+              exit 1
+            fi
+            echo "[OK] Repo name matches: $name"
+          fi
+          if [ -n "$EXPECTED_OWNER" ]; then
+            if [ "$GITHUB_REPOSITORY_OWNER" != "$EXPECTED_OWNER" ]; then
+              echo "Expected owner '$EXPECTED_OWNER' but found '$GITHUB_REPOSITORY_OWNER'" >&2
+              exit 1
+            fi
+            echo "[OK] Owner matches: $GITHUB_REPOSITORY_OWNER"
+          fi
+      - name: actions/checkout works against current repo
+        uses: actions/checkout@v4
+      - name: Trivial CI sanity command
+        run: |
+          echo "Checked out $(git rev-parse --short HEAD) on $(git rev-parse --abbrev-ref HEAD)"
+          echo "Workflow token perms ok: printing a file list"
+          git ls-files | head -n 20

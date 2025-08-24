@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- GA Gates: Prometheus SLO rules, OPA export guard, k6 GraphQL p95 smoke, Cypher acceptance probes, and provenance verifier CLI.
+- GA docs: Committee report (Wolf’s Hand), Advisory Report, Executive Board One-Pager, Customer Announcement, Commander’s GO Packet, Exec Go/No-Go & Day-0 Runbook.
+- Canary Helm values and GA workflow `ga-gates.yml`.
+- Sample disclosure bundle for provenance verifier.
+
 ## [1.0.0] - 2025-08-18
 
 ### Added

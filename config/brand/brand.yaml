@@ -1,0 +1,14 @@
+product_name: "Summit"
+formerly: "IntelGraph"
+logo:
+  light: "assets/brand/summit-logo-light.svg"
+  dark: "assets/brand/summit-logo-dark.svg"
+colors:
+  primary: "#0E5AA7"
+  secondary: "#0B3C5D"
+  accent: "#F5A623"
+email:
+  from_name: "Summit Team"
+feature_flags:
+  brand_summit: true
+
