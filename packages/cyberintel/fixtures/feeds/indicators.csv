@@ -1,0 +1,4 @@
+type,value,labels,tlp,confidence
+DOMAIN,bad.com,"phishing","TLP:CLEAR",60
+IP,10.0.0.5,,TLP:CLEAR,50
+DOMAIN,bad.com,"phishing","TLP:CLEAR",30

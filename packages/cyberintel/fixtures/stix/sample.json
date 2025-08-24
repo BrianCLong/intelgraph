@@ -1,0 +1,14 @@
+{
+  "type": "bundle",
+  "id": "bundle--00000000-0000-4000-8000-000000000000",
+  "objects": [
+    {
+      "type": "indicator",
+      "id": "indicator--11111111-1111-4111-8111-111111111111",
+      "pattern": "[domain-name:value = 'evil.com']",
+      "confidence": 80,
+      "labels": ["malware"],
+      "tlp": "TLP:AMBER"
+    }
+  ]
+}
