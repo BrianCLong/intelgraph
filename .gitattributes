@@ -14,3 +14,12 @@ yarn.lock -diff
 *.png filter=lfs diff=lfs merge=lfs -text
 *.jpg filter=lfs diff=lfs merge=lfs -text
 *.mp4 filter=lfs diff=lfs merge=lfs -text
+# Binary artifacts
+*.ipynb binary
+*.onnx binary
+*.pdf binary
+*.zip binary
+*.db binary
+*.sqlite binary
+*.pkl binary
+*.bin binary
