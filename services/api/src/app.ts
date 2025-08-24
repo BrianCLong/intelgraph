@@ -1,6 +1,6 @@
 /**
  * IntelGraph API Application Setup
- * 
+ *
  * MIT License
  * Copyright (c) 2025 IntelGraph
  */
@@ -29,18 +29,22 @@ export async function createApp() {
   const httpServer = createServer(app);
 
   // Security middleware
-  app.use(helmet({
-    contentSecurityPolicy: process.env.NODE_ENV === 'production',
-    crossOriginEmbedderPolicy: false
-  }));
+  app.use(
+    helmet({
+      contentSecurityPolicy: process.env.NODE_ENV === 'production',
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
 
   // CORS configuration
-  app.use(cors({
-    origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
-    credentials: true,
-    methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Tenant-ID']
-  }));
+  app.use(
+    cors({
+      origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+      credentials: true,
+      methods: ['GET', 'POST', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Tenant-ID'],
+    }),
+  );
 
   // General middleware
   app.use(compression());
@@ -51,33 +55,39 @@ export async function createApp() {
     res.json({
       status: 'healthy',
       timestamp: new Date().toISOString(),
-      version: process.env.npm_package_version || '1.0.0'
+      version: process.env.npm_package_version || '1.0.0',
     });
   });
 
-  // Metrics endpoint for monitoring
+  // Metrics endpoint for monitoring (Prometheus format)
   app.get('/metrics', (req, res) => {
-    // TODO: Implement Prometheus metrics
-    res.json({
-      uptime: process.uptime(),
-      memory: process.memoryUsage(),
-      timestamp: new Date().toISOString()
-    });
+    const uptime = process.uptime();
+    const memory = process.memoryUsage().rss;
+
+    const metrics = [
+      '# HELP process_uptime_seconds Node.js process uptime in seconds',
+      '# TYPE process_uptime_seconds gauge',
+      `process_uptime_seconds ${uptime}`,
+      '# HELP process_resident_memory_bytes Resident memory size in bytes',
+      '# TYPE process_resident_memory_bytes gauge',
+      `process_resident_memory_bytes ${memory}`,
+    ].join('\n');
+
+    res.set('Content-Type', 'text/plain');
+    res.send(metrics);
   });
 
   // Create Apollo Server
   const server = new ApolloServer({
     typeDefs,
     resolvers,
-    plugins: [
-      ApolloServerPluginDrainHttpServer({ httpServer })
-    ],
+    plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
     formatError: (error) => {
       logger.error({
         message: 'GraphQL Error',
         error: error.message,
         path: error.path,
-        extensions: error.extensions
+        extensions: error.extensions,
       });
 
       // Don't expose internal errors in production
@@ -88,21 +98,22 @@ export async function createApp() {
       }
 
       return error;
-    }
+    },
   });
 
   // Start Apollo Server
   await server.start();
 
   // Apply GraphQL middleware with authentication and tenant isolation
-  app.use('/graphql',
+  app.use(
+    '/graphql',
     rateLimitMiddleware,
     authMiddleware,
     tenantMiddleware,
     auditMiddleware,
     expressMiddleware(server, {
-      context: createContext
-    })
+      context: createContext,
+    }),
   );
 
   return app;
