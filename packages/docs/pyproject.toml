@@ -1,0 +1,14 @@
+[project]
+name = "docs-service"
+version = "0.1.0"
+description = "FastAPI service for document processing"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic>=2",
+]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+pythonpath = ["src"]
