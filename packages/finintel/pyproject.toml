@@ -1,0 +1,15 @@
+[project]
+name = "finintel"
+version = "0.1.0"
+description = "FinIntel service"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi",
+  "uvicorn[standard]",
+  "pytest",
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
