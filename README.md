@@ -901,3 +901,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **IntelGraph Platform** - Next-Generation Intelligence Analysis
+
+## Geo Hotspot Service
+
+The monorepo contains a new FastAPI-based Geo service under `packages/geo`. It
+implements an `/hotspots/h3` endpoint that aggregates latitude/longitude points
+into H3 cells with exponential time decay. Refer to [docs/hotspots.md](docs/hotspots.md)
+for algorithm details.
