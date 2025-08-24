@@ -1,0 +1,23 @@
+[
+  {
+    "id": "1",
+    "type": "Person",
+    "name": "Alice Smith",
+    "attributes": {"email": "alice@example.com"},
+    "policy": {"sensitivity": "low", "legal_basis": "consent", "retention": "30d"}
+  },
+  {
+    "id": "2",
+    "type": "Person",
+    "name": "Alicia Smyth",
+    "attributes": {"email": "alice@example.com"},
+    "policy": {"sensitivity": "low", "legal_basis": "consent", "retention": "30d"}
+  },
+  {
+    "id": "3",
+    "type": "Person",
+    "name": "Bob Jones",
+    "attributes": {"email": "bob@example.com"},
+    "policy": {"sensitivity": "low", "legal_basis": "consent", "retention": "30d"}
+  }
+]
