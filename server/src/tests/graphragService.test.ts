@@ -54,11 +54,35 @@ describe("GraphRAGService", () => {
     const neo4jDriver = { session: () => neo4jSession } as any;
 
     const store = new Map<string, string>();
+    const freq = new Map<string, number>();
+    const zset = new Map<string, number>();
     const redis = {
       get: jest.fn(async (key: string) => store.get(key) || null),
       setex: jest.fn(async (key: string, _ttl: number, val: string) => {
         store.set(key, val);
       }),
+      incr: jest.fn(async (key: string) => {
+        const val = (freq.get(key) || 0) + 1;
+        freq.set(key, val);
+        return val;
+      }),
+      expire: jest.fn(async () => true),
+      zincrby: jest.fn(async (_set: string, inc: number, key: string) => {
+        const val = (zset.get(key) || 0) + inc;
+        zset.set(key, val);
+        return val;
+      }),
+      zrevrange: jest.fn(
+        async (_set: string, start: number, stop: number, withScores: string) => {
+          const arr = [...zset.entries()]
+            .sort((a, b) => b[1] - a[1])
+            .slice(start, stop + 1);
+          if (withScores === "WITHSCORES") {
+            return arr.flatMap(([k, v]) => [k, v.toString()]);
+          }
+          return arr.map(([k]) => k);
+        },
+      ),
     } as any;
 
     const llmService = {
@@ -108,5 +132,21 @@ describe("GraphRAGService", () => {
     const { service } = createService(["not-json", "not-json"]);
     await expect(service.answer(baseRequest)).rejects.toBeInstanceOf(UserFacingError);
     expect(graphragSchemaFailuresTotal.get().values[0].value).toBe(2);
+  });
+
+  test("reports popular subgraphs", async () => {
+    const valid = JSON.stringify({
+      answer: "Test",
+      confidence: 0.9,
+      citations: { entityIds: ["e1"] },
+      why_paths: [
+        { from: "e1", to: "e1", relId: "r1", type: "REL" },
+      ],
+    });
+    const { service } = createService([valid]);
+    await service.answer(baseRequest);
+    const popular = await service.getPopularSubgraphs();
+    expect(popular.length).toBeGreaterThan(0);
+    expect(popular[0].count).toBeGreaterThan(0);
   });
 });

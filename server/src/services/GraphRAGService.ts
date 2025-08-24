@@ -13,7 +13,7 @@ import { Driver, Session } from "neo4j-driver";
 import { Redis } from "ioredis";
 import { z } from "zod";
 import { createHash } from "crypto";
-import logger from '../config/logger';
+import baseLogger from '../config/logger';
 import { CircuitBreaker } from "../utils/CircuitBreaker.js"; // Import CircuitBreaker
 import { rankPaths, ScoreBreakdown } from "./PathRankingService.js";
 import {
@@ -23,7 +23,7 @@ import {
 import { mapGraphRAGError, UserFacingError } from "../lib/errors.js";
 import graphragConfig from "../config/graphrag.js";
 
-const logger = logger.child({ name: "GraphRAGService" });
+const logger = baseLogger.child({ name: "GraphRAGService" });
 
 // Zod schemas for type safety and validation
 const GraphRAGRequestSchema = z.object({
@@ -652,6 +652,33 @@ Respond with JSON only:`;
         confidence: props.confidence || 1.0,
       });
     });
+  }
+
+  /**
+   * Retrieve most frequently requested subgraphs from cache metrics
+   */
+  async getPopularSubgraphs(
+    limit = 10,
+  ): Promise<{ key: string; count: number }[]> {
+    if (!this.redis) {
+      return [];
+    }
+    try {
+      const results = await this.redis.zrevrange(
+        "graphrag:popular_subgraphs",
+        0,
+        limit - 1,
+        "WITHSCORES",
+      );
+      const popular: { key: string; count: number }[] = [];
+      for (let i = 0; i < results.length; i += 2) {
+        popular.push({ key: results[i], count: Number(results[i + 1]) });
+      }
+      return popular;
+    } catch (error) {
+      logger.warn(`Redis popular subgraphs read failed. Error: ${error}`);
+      return [];
+    }
   }
 
   /**

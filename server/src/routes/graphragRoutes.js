@@ -260,6 +260,38 @@ router.post('/embeddings/generate', validateRequest(embeddingSchema), async (req
 
 /**
  * @swagger
+ * /api/graphrag/popular:
+ *   get:
+ *     summary: List popular subgraph cache keys
+ *     tags: [GraphRAG]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *           minimum: 1
+ *           maximum: 100
+ *     responses:
+ *       200:
+ *         description: Popular subgraphs
+ */
+router.get('/popular', async (req, res) => {
+  initializeServices();
+  const limit = Math.min(parseInt(req.query.limit, 10) || 10, 100);
+  try {
+    const popular = await graphRAGService.getPopularSubgraphs(limit);
+    res.json({ popular });
+  } catch (error) {
+    logger.error('Failed to get popular subgraphs', { error: error.message });
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @swagger
  * /api/graphrag/health:
  *   get:
  *     summary: Get GraphRAG service health
