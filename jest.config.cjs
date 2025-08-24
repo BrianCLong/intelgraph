@@ -42,6 +42,17 @@ module.exports = {
       testMatch: ['<rootDir>/client/**/*.{test,spec}.{js,jsx,ts,tsx}'],
       testEnvironment: 'jsdom',
       setupFilesAfterEnv: ['<rootDir>/client/src/setupTests.js']
+    },
+    {
+      displayName: 'copilot',
+      testMatch: ['<rootDir>/services/copilot/**/*.test.{js,ts}'],
+      preset: 'ts-jest/presets/default-esm',
+      extensionsToTreatAsEsm: ['.ts'],
+      globals: {
+        'ts-jest': {
+          useESM: true
+        }
+      }
     }
   ]
 };
